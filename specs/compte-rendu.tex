@@ -1,0 +1,123 @@
+\documentclass[a4paper, 12pt]{report}
+
+\usepackage{lmodern} % Police standard sous LaTeX : Latin Modern
+% (alternative à la police d'origine développée par Donald
+	%Knuth : Computer Modern)
+\usepackage[french]{babel} % Pour la langue fran¸caise
+\usepackage[utf8]{inputenc} % Pour l'UTF-8
+\usepackage[T1]{fontenc} % Pour les césures des caractères accentués
+\renewcommand{\thesection}{\Roman{section}}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\renewcommand{\arraystretch}{1.3}
+\usepackage{pifont}
+\usepackage{xcolor}
+\usepackage{stmaryrd}
+\usepackage{amsmath,amsfonts, amssymb}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric}
+\usetikzlibrary{automata, arrows.meta, positioning}
+\usepackage{tabularx}
+\renewcommand\tabularxcolumn[1]{m{#1}}% for vertical centering text in X column
+
+\newcommand{\diagr}[1]{\begin{center}\begin{tikzpicture}[node distance = 2cm, on grid, auto]
+#1
+\end{tikzpicture}\end{center}}
+
+\begin{document}
+\tikzset{square state/.style={draw,regular polygon,regular polygon sides=4}}
+
+\section{Exercice 1 -}
+
+\begin{enumerate}
+
+\item 
+\begin{itemize}[label=$\bullet$]
+
+\item \underline{Parcours en profondeur}
+\begin{center}
+\begin{tabular}{|c|l|l|}
+\hline
+Itération & Contenu de la pile & Ordre de parcours des n{\oe}uds\\
+\hline
+0 & [] & []\\
+\hline
+1 & [D] & [D] \\
+\hline
+2 & [D, A] & [D, A]\\
+\hline
+3 & [D, A, E] & [D, A, E]\\
+\hline
+4 & [D, A] & [D, A, E]\\
+\hline
+5 & [D, A, F] & [D, A, E, F]\\
+\hline
+6 & [D, A] & [D, A, E, F]\\
+\hline
+7 & [D, A, G] & [D, A, E, F, G]\\
+\hline
+8 & [D, A, G, B] & [D, A, E, F, G, B]\\
+\hline
+9 & [D, A, G] & [D, A, E, F, G, B]\\
+\hline
+10 & [D, A] & [D, A, E, F, G, B]\\
+\hline
+11 & [D] & [D, A, E, F, G, B]\\
+\hline
+12 & [D,C] & [D, A, E, F, G, B,C]\\
+\hline
+13 & [D] & [D, A, E, F, G, B,C]\\
+\hline
+14 & [] & [D, A, E, F, G, B,C]\\
+\hline
+\end{tabular}
+\end{center}
+
+\item \underline{Parcours en largeur}
+\begin{center}
+\begin{tabular}{|c|l|l|}
+\hline
+Itération & Contenu de la file & Ordre de parcours des n{\oe}uds\\
+\hline
+0 & [] & []\\
+\hline
+1 & [D] & [D]\\
+\hline
+2 & [A,C] & [D, A, C]\\
+\hline
+3 & [C,E,F,G] & [D, A, C, E, F, G]\\
+\hline
+4 & [E,F,G] & [D, A, C, E, F, G]\\
+\hline
+5 & [F,G] & [D, A, C, E, F, G]\\
+\hline
+6 & [G] & [D, A, C, E, F, G]\\
+\hline
+7 & [B] & [D, A, C, E, F, G, B]\\
+\hline
+8 & [] & [D, A, C, E, F, G, B]\\
+\hline
+\end{tabular}
+\end{center}
+
+\end{itemize}
+
+\item 
+% def explorer(noeud P):
+    % marquer(P)
+    % Tant q'il existe un successeur Q de P non marqué, faire :
+        % explorer(Q)
+
+\item
+\begin{enumerate}
+
+\item On prend, dans l'ordre de dépilement, les sommets du graphe lors du parcours en profondeur, que l'on range dans une liste. Cela donne le tri topologique en ordre inverse du graphe. Il ne reste plus qu'à inverser cette liste pour obtenir le tri topologique.\\
+
+\item Il suffit d'initialiser une liste $L$ vide au début de l'algorithme, et, lors de la suppression de $Q$ de la pile, il faut l'ajouter à $L$, et enfin de retourner $L$ pour obtenir le tri topologique.\\
+
+\end{enumerate}
+
+\end{enumerate}
+
+\end{document}

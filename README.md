@@ -1,146 +1,218 @@
-# [Project Name] Compiler
+# compile-project
 
+## [PROJET DE COMPILATION - Mini Python]
 
-    How to Use the Template:
+### Objectif du Projet
 
-    1. Replace [Project Name] with your compiler's name.
-    1. Fill in placeholders like [language], [tool version], and other details specific to your project.
-    1. You can expand on the sections, such as providing detailed usage instructions or more examples.
+L'objectif de ce projet est de développer un compilateur pour un langage de haut niveau, appelé **Mini Python**, qui représente un fragment du langage Python. Le projet couvre toutes les étapes de compilation, y compris la conception des analyseurs lexical et syntaxique, la construction de l'arbre abstrait et sa visualisation.
 
-    Feel free to modify this based on your project's requirements!
+### Instructions Générales
 
+- Aucun générateur d'analyseur lexical et syntaxique ne doit être utilisé. Vous devez développer vous-même l'automate de reconnaissance des unités lexicales et l'analyseur syntaxique.
+- L'analyseur syntaxique descendant doit être construit à l'aide de "fonctions récursives".
+- Le langage de développement pour votre compilateur est **Python**.
+- Il est nécessaire de définir complètement la grammaire du langage, la conception des analyseurs lexical et syntaxique, ainsi que la construction et la visualisation de l'arbre abstrait.
 
+### Gestion des Erreurs
 
-## Table of Contents
+Votre compilateur doit signaler les erreurs lexicales et syntaxiques rencontrées. Chaque erreur doit être accompagnée d'un message explicite, incluant, si possible, un numéro de ligne. Le compilateur ne doit pas s'arrêter après avoir rencontré une erreur ; il doit tenter de continuer l'analyse syntaxique.
 
-1. [Introduction](#introduction)
-1. [Team](#team)
-1. [Features](#features)
-1. [Installation](#installation)
-1. [Usage](#usage)
-1. [Examples](#examples)
-1. [Testing](#testing)
-1. [Acknowledgements](#acknowledgements)
+### Tests
+
+Vous devez tester votre compilateur avec des exemples variés de programmes corrects en Mini Python, ainsi qu'avec des exemples comportant des erreurs lexicales et syntaxiques.
 
 ---
 
-## Introduction
+## [1 Présentation du langage : aspects lexical et syntaxique]
 
-The **[Project Name] Compiler** is a [insert language(s)] compiler designed to [brief description of the compiler's purpose]. It translates [language name] source code into [output (e.g., machine code, bytecode, intermediate representation)] and includes optimizations for [specific features or targets].
+### [1.1 Conventions lexicales]
 
-### Team
+- Le symbole `^x` indique que le symbole `x` est en exposant, tandis que `_y` signifie qu'il est en indice. Par exemple, `<motif>^*_` signifie que `<motif>` a pour exposant le symbole `*` et pour indice le symbole `,` (virgule).
+- Un commentaire débute par `#` et s'étend jusqu'à la fin de la ligne.
+- Les identificateurs d'un programme sont définis par l'expression régulière suivante :  
+  `<digit> ::= 0-9`  
+  `<alpha> ::= a-z | A-Z`  
+  `<ident> ::= (<alpha> | _) (<alpha> | _ | <digit>)^*`
 
-- Willie Dietrich
-- Geoffrey Streich
-- Casey Cronin
-- Wilson Rogahn DVM
+- Les constantes entières sont définies par l'expression régulière suivante :  
+  `<integer> ::= 0 | 1-9 <digit>^*`
 
-### Why use [Project Name]?
+### Types du Langage
 
-- Fast and efficient compilation
-- Support for [languages or standards]
-- [Any unique features or goals]
+Les types du langage sont les suivants :  
+`{int, str}`  
+_Remarque :_ Les chaînes de caractères doivent être écrites entre guillemets (symbole `"`).
+_Remarque :_ Deux séquences d'échappement sont définies : `\"` pour le caractère `"` et `\n` pour le saut de ligne.
 
-## Features
+### Mots Clés
 
-- **Cross-platform:** Runs on [list of supported platforms]
-- **Optimization:** Implements advanced optimizations like [list of optimizations: e.g., constant folding, dead code elimination]
-- **Error Reporting:** Detailed syntax and semantic error messages
-- **[Other features]**
+Les mots clés du langage incluent :  
+`{if, else, and, or, not, True, False, None, def, return, print, for, in}`
 
-## Installation
+### Opérateurs Binaires, Unaires et d'Assignation
 
-### Prerequisites
+Les opérateurs binaires du langage sont les suivants :  
+`{+, -, *, //, %, <=, >=, >, <, !=, ==, and, or}`
 
-- **[Language/Tool Version(s)]:** Ensure you have [required language/tools] installed.
+Les opérateurs unaires du langage sont les suivants :  
+`{-, not}`
+_Remarque :_ L'opérateur `-` peut être soit binaire soit unaire.
+_Remarque :_ Une expression comme `x < y < z` n'est pas autorisée.
 
-#### Example:
+L'opérateur d'assignation du langage est :
+`{=}`
 
-```bash
-$ sudo apt-get install [required-dependencies]
+### Délimiteurs
+
+Les délimiteurs du langage sont :  
+`{(, ), [, ], :, ,}`
+
+### Type de Tokens (mylexer.py)
+
+1. Identation et Fin de Fichier (NEWLINE, BEGIN, END, EOF)
+   Le token qui indique un saut à une nouvelle ligne :
+
+Token : NEWLINE
+`Token(NEWLINE, line)`
+
+Le token qui marque le début d'une indentation :
+
+Token : BEGIN
+`Token(BEGIN, indent, line)`
+
+Le token qui signale la fin d'une indentation :
+
+Token : END
+`Token(END, indent, line)`
+
+Le token qui indique la fin du fichier :
+
+Token : EOF
+`Token(EOF, line)`
+
+2. Identifiants (IDENTIFIER)
+   L'identifiant représentant une variable, une fonction ou un paramètre :
+
+Token : IDENTIFIER
+`Token(IDENTIFIER, ident, line)`
+
+3. Mots-clés (KEYWORD)
+   Les mots-clés réservés qui ne peuvent pas être utilisés comme identifiants :
+
+`Token(KEYWORD, and, line)`
+`Token(KEYWORD, def, line)`
+`Token(KEYWORD, else, line)`
+`Token(KEYWORD, for, line)`
+`Token(KEYWORD, if, line)`
+`Token(KEYWORD, True, line)`
+`Token(KEYWORD, False, line)`
+`Token(KEYWORD, in, line)`
+`Token(KEYWORD, not, line)`
+`Token(KEYWORD, or, line)`
+`Token(KEYWORD, print, line)`
+`Token(KEYWORD, return, line)`
+`Token(KEYWORD, None, line)`
+
+4. Opérateurs Binaires, Unaires et d'Assignation (OPERATOR, ASSIGNMENT)
+   Les opérateurs binaires utilisés pour effectuer des opérations binaires :
+
+`Token(PLUS, line)`
+`Token(MINUS,line)`
+`Token(MULTIPLY, line)`
+`Token(FLOOR_DIVIDE, line)`
+`Token(MODULO, line)`
+`Token(LESS_EQUAL, line)`
+`Token(GREATER_EQUAL, line)`
+`Token(LESS, line)`
+`Token(GREATER, line)`
+`Token(NOT_EQUAL, line)`
+`Token(EQUAL, line)`
+`Token(AND, line)`
+`Token(OR, line)`
+
+Les opérateurs unaires utilisés pour effectuer des opérations unaires :
+
+`Token(UNARY_MINUS, line)`
+`Token(NOT, line)`
+
+L'opérateur d'assignation utilisés pour assigner des valeurs aux variables :
+
+Token : ASSIGNMENT
+`Token(ASSIGNMENT, line)`
+
+6. Types (INTEGER, STRING, BOOLEAN, NONE)
+   Les types de données pris en charge par le langage :
+
+Token : INTEGER
+`Token(INTEGER, int, line)`
+
+Token : STRING
+`Token(STRING, str, line)`
+
+7. Délimiteurs (DELIMITER)
+   Les caractères utilisés pour délimiter des expressions ou des blocs de code :
+
+Token :
+`Token(LBRACKET, line)`
+`Token(RBRACKET, line)`
+`Token(LPAREN, line)`
+`Token(RPAREN, line)`
+`Token(COMMA, line)`
+`Token(COLON, line)`
+
+---
+
+### [1.2 Syntaxe]
+
+Pour la spécification de la grammaire, nous utiliserons les notations suivantes :
+
+- `<motif>^*` : répétition de `<motif>` un nombre quelconque de fois ou aucune fois.
+- `<motif>^*_t` : comme précédemment, mais avec des occurrences séparées par le terminal `t`.
+- `<motif>^+` : répétition de `<motif>` au moins une fois.
+- `<motif>^+_t` : comme précédemment, avec des occurrences séparées par le terminal `t`.
+- `<motif>?` : utilisation optionnelle de `<motif>` (0 ou 1 fois).
+
+### Associativité et Précédence des Opérateurs
+
+Les associativités et précédences des opérateurs sont récapitulées dans le tableau suivant, allant de la plus faible à la plus forte priorité.
+
+```
++---------------------------+--------------------+------------------+
+|    Opérateur              |    Associativité   |     Priorité     |
++---------------------------+--------------------+------------------+
+| or                        | gauche             | plus faible      |
+| and                       | gauche             | ...              |
+| not                       | - (Non applicable) | ...              |
+| <, <=, >, >=, ==, !=      | - (Non applicable) | ...              |
+| +, -                      | gauche             | ...              |
+| *, //, %                  | gauche             | ...              |
+| - (Unaire)                | - (Non applicable) | plus forte       |
++---------------------------+--------------------+------------------+
 ```
 
-### Installing the Compiler
+### Indentation et Gestion des Blocs
 
-Clone the repository and install any required dependencies:
+En Python, les structures de blocs sont définies par l'indentation. L'indentation se fait par groupes de quatre espaces. L'analyseur lexical produit trois tokens pour gérer les indentations : `NEWLINE`, `BEGIN` et `END`, qui correspondent respectivement à la fin de ligne, à l'incrémentation et à la décrémentation de l'indentation.
 
-```bash
-$ git clone https://gibson.telecomnancy.univ-lorraine.fr/projets/2425/compil/[project-name].git
-$ cd [project-name]
-$ ./configure
-$ make
-$ sudo make install
+#### Algorithme d'Indentation
+
+L'analyseur lexical utilise une pile d'entiers pour représenter les indentations successives, initialement contenant la valeur `0`. Lorsqu'un passage à la ligne est détecté, le token `NEWLINE` est produit. L'indentation de la nouvelle ligne, notée `n`, est comparée à la valeur au sommet de la pile, notée `m`. Les cas possibles sont :
+
+1. Si `n = m`, aucune action n'est nécessaire.
+2. Si `n > m`, empiler `n` et produire le token `BEGIN`.
+3. Si `n < m`, dépiler jusqu'à trouver la valeur `n`, produisant un token `END` pour chaque valeur dépilée strictement supérieure à `n`. Si aucune valeur égale à `n` n'est trouvée, émettre le message `indentation error`.
+
+### Grammaire du Langage Mini Python
+
+La grammaire du langage Mini Python est définie comme suit (le symbole `|` sépare les différentes productions) :
+
 ```
-
-## Usage
-
-### Basic Command
-
-To compile a [language] source file:
-
-```bash
-$ [project-name] [options] [source-file]
+<file> ::= NEWLINE? <def>^* <stmt>^+ EOF
+<def> ::= def <ident> (<ident>^*_,): <suite>
+<suite> ::= <simple_stmt> NEWLINE | NEWLINE BEGIN <stmt>^+ END
+<simple_stmt> ::= return <expr> | <ident> = <expr> | <expr> [<expr>] = <expr> | print(<expr>) | <expr>
+<stmt> ::= <simple_stmt> NEWLINE | if <expr>: <suite> | if <expr>: <suite> else: <suite> | for <ident> in <expr>: <suite>
+<expr> ::= <const> | <ident> | <expr> [<expr>] | -<expr>| not <expr> | <expr> <binop> <expr> | <ident> (<expr>^*_,) | [<expr>^*_,] | (<expr>)
+<binop> ::= + | - | * | // | % | <= | >= | > | < | != | == | and | or
+<const> ::= <integer> | <string> | True | False | None
 ```
-
-### Command-line Options
-
-- `-o [file]`: Specify output file name
-- `-O`: Enable optimizations
-- `--debug`: Enable debug mode
-- `--help`: Show help message
-
-### Examples
-
-#### Compiling a simple program:
-
-```bash
-$ [project-name] -o output.exe example.lang
-```
-
-#### Running in debug mode:
-
-```bash
-$ [project-name] --debug example.lang
-```
-
-## Examples
-
-Here are some sample programs you can compile using [Project Name]:
-
-1. **Hello World:**
-
-```language
-// Example code for Hello World in [language]
-```
-
-2. **Fibonacci Sequence:**
-
-```language
-// Example code for Fibonacci in [language]
-```
-
-For more examples, refer to the `examples/` directory.
-
-## Testing
-
-To run tests, make sure you have [testing framework] installed:
-
-```bash
-$ make test
-```
-
-You can also add specific test cases in the `tests/` folder and run them with:
-
-```bash
-$ ./run_tests.sh
-```
-
-### Reporting Issues
-
-If you encounter any issues or have feature requests, please open an issue on the GitHub repository.
-
-## Acknowledgements
-
-- [Tool/Libraries] used in this project
-- Special thanks to [contributors, advisors, etc.]
-
