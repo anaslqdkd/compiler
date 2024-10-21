@@ -18,8 +18,6 @@
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric}
 \usetikzlibrary{automata, arrows.meta, positioning}
-\usepackage{tabularx}
-\renewcommand\tabularxcolumn[1]{m{#1}}% for vertical centering text in X column
 
 \newcommand{\diagr}[1]{\begin{center}\begin{tikzpicture}[node distance = 2cm, on grid, auto]
 #1
@@ -28,96 +26,231 @@
 \begin{document}
 \tikzset{square state/.style={draw,regular polygon,regular polygon sides=4}}
 
-\section{Exercice 1 -}
+\chapter{Conception du lexeur}
+
+\section{Conventions de notation}
+
+\subsection{Types de \textit{Token}}
+
+Dans cette partie, on désignera par $i$ (avec $i \in \mathbb{N}^*$) le numéro de la ligne où le \textit{Token} a été lu.\\
 
 \begin{enumerate}
 
-\item 
-\begin{itemize}[label=$\bullet$]
+\item Retours chariot \& délimitations de blocs
+\begin{itemize}
+\item Token indiquant un saut de ligne : \textbf{Token(NEWLINE, $i$)} ;
+\item Token signalant le début d'une indentation : \textbf{Token(BEGIN, $i$)} ;
+\item Token marquant la fin d'une indentation : \textbf{Token(END, $i$)} ;
+\item Token indiquant la fin du fichier source : \textbf{Token(EOF, $i$)}.\\
+\end{itemize}
 
-\item \underline{Parcours en profondeur}
-\begin{center}
-\begin{tabular}{|c|l|l|}
-\hline
-Itération & Contenu de la pile & Ordre de parcours des n{\oe}uds\\
-\hline
-0 & [] & []\\
-\hline
-1 & [D] & [D] \\
-\hline
-2 & [D, A] & [D, A]\\
-\hline
-3 & [D, A, E] & [D, A, E]\\
-\hline
-4 & [D, A] & [D, A, E]\\
-\hline
-5 & [D, A, F] & [D, A, E, F]\\
-\hline
-6 & [D, A] & [D, A, E, F]\\
-\hline
-7 & [D, A, G] & [D, A, E, F, G]\\
-\hline
-8 & [D, A, G, B] & [D, A, E, F, G, B]\\
-\hline
-9 & [D, A, G] & [D, A, E, F, G, B]\\
-\hline
-10 & [D, A] & [D, A, E, F, G, B]\\
-\hline
-11 & [D] & [D, A, E, F, G, B]\\
-\hline
-12 & [D,C] & [D, A, E, F, G, B,C]\\
-\hline
-13 & [D] & [D, A, E, F, G, B,C]\\
-\hline
-14 & [] & [D, A, E, F, G, B,C]\\
-\hline
-\end{tabular}
-\end{center}
+\item Identificateur, représentant une variable, une fonction ou un paramètre : \textbf{Token(IDENTIFIER, <identificateur>, $i$)}.\\
 
-\item \underline{Parcours en largeur}
-\begin{center}
-\begin{tabular}{|c|l|l|}
-\hline
-Itération & Contenu de la file & Ordre de parcours des n{\oe}uds\\
-\hline
-0 & [] & []\\
-\hline
-1 & [D] & [D]\\
-\hline
-2 & [A,C] & [D, A, C]\\
-\hline
-3 & [C,E,F,G] & [D, A, C, E, F, G]\\
-\hline
-4 & [E,F,G] & [D, A, C, E, F, G]\\
-\hline
-5 & [F,G] & [D, A, C, E, F, G]\\
-\hline
-6 & [G] & [D, A, C, E, F, G]\\
-\hline
-7 & [B] & [D, A, C, E, F, G, B]\\
-\hline
-8 & [] & [D, A, C, E, F, G, B]\\
-\hline
-\end{tabular}
-\end{center}
+\item Mot-clé : \textbf{Token(KEYWORD, <mot clé>, $i$)}. On rappelle que les mots-clé, réservés par le langage et ne pouvant pas être utilisées comme identifiants, sont les suivants : \textit{and}, \textit{or}, \textit{if}, \textit{else}, \textit{for}, \textit{in}, \textit{not}, \textit{True}, \textit{False}, \textit{print}, \textit{def}, \textit{return} et \textit{None}.\\
+
+\item Opérateurs binaires (utilisés pour faire des opérations binaires) :
+\begin{itemize}
+\item \textbf{Token(PLUS, $i$)} ;
+\item \textbf{Token(MINUS, $i$)} ;
+\item \textbf{Token(MULTIPLY, $i$)} ;
+\item \textbf{Token(FLOOR{\_}DIVIDE, $i$)} ;
+\item \textbf{Token(MODULO, $i$)}\footnote{On considère l'opérateur "\textit{modulo}" comme étant l'opérateur binaire qui associe à deux entiers naturels le reste de la division euclidienne du premier par le second.} ;
+\item \textbf{Token(LESS{\_}EQUAL, $i$)} ;
+\item \textbf{Token(GREATER{\_}EQUAL, $i$)} ;
+\item \textbf{Token(LESS, $i$)} ;
+\item \textbf{Token(GREATER, $i$)} ;
+\item \textbf{Token(NOT{\_}EQUAL, $i$)} ;
+\item \textbf{Token(EQUAL, $i$)} ;
+\item \textbf{Token(AND, $i$)} ;
+\item \textbf{Token(OR, $i$)}.\\
+\end{itemize}
+
+\item Opérateurs unaires (c'est-à-dire utilisés pour faire des opérations unaires) : \textbf{Token(UNARY{\_}MINUS, $i$)} et \textbf{Token(NOT, $i$)}.\\
+
+\item Opérateur d'assignation ("$:=$") : \textbf{Token(ASSIGNMENT, $i$)}.\\
+
+\item Types pris en charge par le langage : \textbf{Token(INTEGER, <int>, $i$)} et \textbf{Token(STRING, <str>, $i$)}.\\
+
+\item Délimiteurs :
+\begin{itemize}
+\item Crochet ouvrant ("[") : \textbf{Token(LBRACKET,$i$)} ;
+\item Crochet fermant ("]") : \textbf{Token(RBRACKET,$i$)} ;
+\item Parenthèse ouvrante ("(") : \textbf{Token(LPAREN,$i$)} ;
+\item Parenthèse fermante (")") : \textbf{Token(RPAREN,$i$)} ;
+\item Virgule : \textbf{Token(COMMA,$i$)} ;
+\item Point-virgule : \textbf{Token(COLON,$i$)}.\\
+\end{itemize}
+
+\end{enumerate}
+
+\subsection{Ensembles}
+
+Pour alléger les notations dans les automates qui suivent, on propose les notations suivantes :
+\begin{itemize}[label=-]
+
+\item $\alpha$ désignera tout caractère alphanumérique (minuscule ou majuscule) :
+\[ \alpha = [a-z] \ | \ [A-Z]. \]
+
+\item $\mathcal{D}$ désignera tout chiffre :
+\[ \mathcal{D} = [0-9]	. \]
+
+\item $\mathcal{O}$ désignera tout opérateur formé d'un seul symbole :
+\[ \mathcal{O} = [+ \ | \ - \ | \ * \ | \ \% ]	. \]
+
+\item $\mathcal{A}$ désignera n'importe quel symbole reconnu par la grammaire.
 
 \end{itemize}
 
-\item 
-% def explorer(noeud P):
-    % marquer(P)
-    % Tant q'il existe un successeur Q de P non marqué, faire :
-        % explorer(Q)
+\newpage
 
-\item
-\begin{enumerate}
+\section{Sous-automates}
 
-\item On prend, dans l'ordre de dépilement, les sommets du graphe lors du parcours en profondeur, que l'on range dans une liste. Cela donne le tri topologique en ordre inverse du graphe. Il ne reste plus qu'à inverser cette liste pour obtenir le tri topologique.\\
+\subsection{Identificateurs \& mots-clés}
 
-\item Il suffit d'initialiser une liste $L$ vide au début de l'algorithme, et, lors de la suppression de $Q$ de la pile, il faut l'ajouter à $L$, et enfin de retourner $L$ pour obtenir le tri topologique.\\
+\begin{center}\begin{tikzpicture}[node distance = 4cm, on grid, auto]
+\node (q0) [state,accepting,initial,initial text = {}] {$q_0$};
+\node (q1)  [state,right = of q0] {$q_1$};
+\node  (q2) [state,accepting,right = of q1] {$q_2$};
+\node(q2d)[below=1cm of q2] {<IDENTIFIER,value>};
+\node[below=0.5cm of q2d] {ou <KEYWORD,value>};
 
-\end{enumerate}
+\path [-stealth, thick]
+	(q0) edge node {$\alpha \ | \ \_$} (q1)
+	(q1) edge node {$\wedge(\alpha \ | \ \_ \ | \ \mathcal{D})$} (q2)
+	(q1) edge [loop above]  node {$\alpha \ | \ \_ \ | \ \mathcal{D}$}();
+\end{tikzpicture}\end{center}
 
-\end{enumerate}
+\subsection{Délimiteurs}
+
+\begin{center}\begin{tikzpicture}[node distance = 6cm, on grid, auto]
+\node (q0) [state,accepting,initial,initial text = {}] {$q_0$};
+\node (q1) [state,accepting,right = of q0] {$q_1$};
+\node(q1d)[below=1cm of q1] {<value>};
+
+\path [-stealth, thick]
+	(q0) edge node {$[ [ \ | \ ] \ | \ ( \ | \ ) \ | \ , \ | \ ; ]$} (q1);
+\end{tikzpicture}\end{center}
+
+\subsection{Chaînes de caractère}
+
+\begin{center}\begin{tikzpicture}[node distance = 3.5cm, on grid, auto]
+\node (q0) [state,accepting,initial,initial text = {}] {$q_0$};
+\node (q1)  [state,right = of q0] {$q_1$};
+\node (q2) [state,accepting,right = of q1] {$q_2$};
+\node (q3) [state, below = of q1] {$q_3$};
+\node(q2d)[below=1cm of q2] {<STRING,value>};
+
+\path [-stealth, thick]
+	(q0) edge node {$"$} (q1)
+	(q1) edge node {$"$} (q2)
+	(q1) edge [loop above]  node {$\wedge [" \ | \ \backslash]$}()
+	(q1) edge [bend left = 20] node {$\backslash$} (q3)
+	(q3) edge [bend left = 20] node {$\mathcal{A}$} (q1);
+\end{tikzpicture}\end{center}
+
+\subsection{Entiers}
+
+\begin{center}\begin{tikzpicture}[node distance = 4cm, on grid, auto]
+\node (q0) [state,accepting,initial,initial text = {}] {$q_0$};
+\node (q1)  [state,right = of q0] {$q_1$};
+\node  (q2) [state,accepting,right = of q1] {$q_2$};
+\node(q2d)[below=1cm of q2] {<INTEGER,value>};
+
+\path [-stealth, thick]
+	(q0) edge node {$\mathcal{D}$} (q1)
+	(q1) edge node {$\wedge(\mathcal{D})$} (q2)
+	(q1) edge [loop above]  node {$\mathcal{D}$}();
+\end{tikzpicture}\end{center}
+
+\subsection{Opérateurs unaires}
+
+\begin{center}\begin{tikzpicture}[node distance = 4cm, on grid, auto]
+\node (q0) [state,accepting,initial,initial text = {}] {$q_0$};
+\node (q2) [state,right = of q0] {$q_2$};
+\node (q3) [state,right = of q2] {$q_3$};
+\node (q4) [state,accepting,right = of q3] {$q_4$};
+\node (q5) [state,accepting,below = of q4] {$q_5$};
+\node (q1) [state,accepting,above = of q3] {$q_1$};
+\node(q1d)[below=1cm of q1] {<UNARY{\_}MINUS>};
+\node(q4d)[below=1cm of q4] {<NOT>};
+\node(q5d)[below=1cm of q5] {\textit{raise error}};
+
+\path [-stealth, thick]
+	(q0) edge [bend left = 25] node {$-$} (q1)
+	(q0) edge node {$n$} (q2)
+	(q2) edge node {$o$} (q3)
+	(q3) edge node {$t$} (q4)
+	(q2) edge [bend right = 25] node {$\wedge[o]$} (q5)
+	(q3) edge node {$\wedge[t]$} (q5)	;
+\end{tikzpicture}\end{center}
+
+\subsection{Opérateurs binaires}
+
+\begin{center}\begin{tikzpicture}[node distance = 3.5cm, on grid, auto]
+\node (q8) [state,accepting] {$q_2$};
+\node (q9) [state,accepting,below = of q8] {$q_3$};
+\node (q11) [state,accepting,below = of q9] {$q_5$};
+\node (q12) [state,accepting,below = of q11] {$q_6$};
+\node (q14) [state,accepting,below = of q12] {$q_8$};
+\node (q15) [state,accepting,below = of q14] {$q_9$};
+\node[below=1cm of q8] {<value>};
+\node[below=1cm of q9] {<value>};
+\node[below=1cm of q11] {<NOT{\_}EQUAL>};
+\node[below=1cm of q12] {\textit{raise error}};
+\node[below=1cm of q14] {<FLOOR{\_}DIVIDE>};
+\node[below=1cm of q15] {\textit{raise error}};
+
+\node (q7) [state, left = of q9] {$q_1$};
+\node (q10) [state, left = of q12] {$q_4$};
+\node (q13) [state, left = of q14] {$q_7$};
+\node (q6) [state,accepting,initial, left = of q10,initial text = {}] {$q_0$};
+\node (q16) [state,accepting,below = of q6] {$q_{10}$};
+\node[below=1cm of q16] {<value>};
+
+\path [-stealth, thick]
+	(q6) edge node {$(< \ | \ = \ | \ : \ | \ >)$} (q7)
+	(q6) edge node {$!$} (q10)
+	(q6) edge node {$/$} (q13)
+	(q6) edge node {$\mathcal{O}$} (q16)
+	
+	(q7) edge [bend left = 35] node {$=$} (q8)
+	(q7) edge node {$\wedge[=]$} (q9)
+	(q10) edge [bend left = 35] node {$=$} (q11)
+	(q10) edge node {$\wedge[=]$} (q12)
+	(q13) edge node {$/$} (q14)
+	(q13) edge [bend right = 35] node {$\wedge[/]$} (q15);
+\end{tikzpicture}\end{center}
+
+\newpage
+
+\section{Automate fini déterministe}
+
+Dans cette section, on va détailler l'automate fini déterministe correspondant au lexeur du "Mini-Python". Ce dernier implémentera les sous-automates détaillés précédemment, qui seront tous appelés simultanément à l'état 1 (représenté rectangulaire) de l'automate ci-dessous. Ainsi, n'importe quelle unité lexicale sera reconnue et verra son \textit{Token} ajouté tant qu'aucun des autres symboles "$\backslash n$", "$\#$" ou un caractère non-accepté par le langage.\\
+
+\begin{center}\begin{tikzpicture}[node distance = 5cm, on grid, auto]
+\node (q0) [state,initial,initial text = {}] {$q_0$};
+\node (q1) [square state,right = of q0] {$q_1$};
+\node (q2) [state,right = of q1] {$q_2$};
+\node (q3) [state,accepting,above = of q2] {$q_3$};
+\node (q4) [state,below = of q2] {$q_4$};
+\node (q5) [state,below = of q0] {$q_5$};
+\node (q6) [state,accepting,right = of q5] {$q_6$};
+\node(q4d)[below=1cm of q4] {<NEWLINE>};
+\node(q5d)[below=1cm of q5] {<EOF>};
+\node(q3d)[below=1cm of q3] {\textit{raise error}};
+
+\path [-stealth, thick]
+	(q0) edge node {} (q1)
+	(q1) edge [loop above]  node {\textit{space}}()
+	(q1) edge [bend left = 10] node {$\#$} (q2)
+	(q2) edge [bend left = 10] node {$\backslash n$} (q1)
+	(q2) edge [loop above]  node {$\wedge (\backslash n)$}()
+	(q1) edge node {$\wedge (\mathcal{A})$} (q3)
+	(q1) edge node {$\backslash n$} (q4)
+	(q4) edge [bend left = 25] node {} (q1)
+	(q1) edge node {\textit{eof}} (q5)
+	(q5) edge node {} (q6)
+	;
+\end{tikzpicture}\end{center}
 
 \end{document}
