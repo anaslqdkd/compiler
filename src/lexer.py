@@ -177,3 +177,11 @@ class Lexer:
     
     def advance(self):
         self.position += 1
+        
+with open("../tests/source_code.txt", "r") as f:
+    source_code = f.read()
+
+lexer = Lexer(source_code)
+tokens = lexer.tokenize()
+for token in tokens:
+    print(token)
