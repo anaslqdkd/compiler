@@ -80,3 +80,21 @@ class Lexer:
     def skip_comment(self):
         while self.position < len(self.source_code) and self.source_code[self.position] != "\n":
             self.advance()
+            
+    def handle_indentation(self):
+        indent_level = 0
+        while self.position < len(self.source_code) and self.source_code[self.position] == " ":
+            indent_level += 1
+            self.advance()
+        if indent_level % 4 != 0:
+            raise SyntaxError(f"Indentation error at line {self.line_number}: Indentation must be multiple of 4")
+        
+        if indent_level > self.indent_stack[-1]:
+            self.indent_stack.append(indent_level)
+            self.tokens.append(Token(TokenType.INDENT, indent_level, self.line_number))
+        elif indent_level < self.indent_stack[-1]:
+            while self.indent_stack and self.indent_stack[-1] > indent_level:
+                self.indent_stack.pop()
+                self.tokens.append(Token(TokenType.DEDENT, self.indent_stack[-1], self.line_number))
+            if self.indent_stack[-1] != indent_level:
+                raise SyntaxError(f"Indentation error at line {self.line_number}")
