@@ -106,3 +106,10 @@ class Lexer:
         value = self.source_code[start_pos:self.position]
         token_type = TokenType.KEYWORD if value in self.keywords else TokenType.IDENTIFIER
         return Token(token_type, value, self.line_number)
+    
+    def process_integer(self):
+        start_pos = self.position
+        while self.position < len(self.source_code) and self.source_code[self.position].isdigit():
+            self.advance()
+        value = int(self.source_code[start_pos:self.position])
+        return Token(TokenType.INTEGER, value, self.line_number)
