@@ -22,3 +22,12 @@ class TokenType:
     DEDENT = "DEDENT"
     NEWLINE = "NEWLINE"
     EOF = "EOF"
+        
+class Token:
+    def __init__(self, type_, value, line_number):
+        self.type = type_
+        self.value = value
+        self.line_number = line_number
+
+    def __repr__(self):
+        return f"Token({self.type}, {self.value}, {self.line_number})"
