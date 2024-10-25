@@ -31,3 +31,14 @@ class Token:
 
     def __repr__(self):
         return f"Token({self.type}, {self.value}, {self.line_number})"
+
+class Lexer:
+    def __init__(self, source_code):
+        self.source_code = source_code
+        self.position = 0
+        self.line_number = 1
+        self.indent_stack = [0]
+        self.tokens = []
+
+        self.keywords = {"if", "else", "and", "or", "not", "True", "False", "None", "def", "return", "print", "for", "in"}
+        self.symbols = {"(", ")", "{", "}", "[", "]", ":", ","}
