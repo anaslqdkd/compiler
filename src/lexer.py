@@ -135,3 +135,42 @@ class Lexer:
                 string_value += char
             self.advance()
         raise SyntaxError(f"Unterminated string literal at line {self.line_number}")
+    
+    def process_operator(self):
+        char = self.source_code[self.position]
+        next_char = self.source_code[self.position + 1] if self.position + 1 < len(self.source_code) else ""
+
+        if char == "+":
+            token = Token(TokenType.PLUS, "+", self.line_number)
+        elif char == "-":
+            token = Token(TokenType.MINUS, "-", self.line_number)
+        elif char == "*":
+            token = Token(TokenType.MULTIPLY, "*", self.line_number)
+        elif char == "/" and next_char == "/":
+            token = Token(TokenType.DIVIDE, "//", self.line_number)
+            self.advance()
+        elif char == "%":
+            token = Token(TokenType.MODULO, "%", self.line_number)
+        elif char == "<" and next_char == "=":
+            token = Token(TokenType.LESS_THAN_EQUAL, "<=", self.line_number)
+            self.advance()
+        elif char == ">" and next_char == "=":
+            token = Token(TokenType.GREATER_THAN_EQUAL, ">=", self.line_number)
+            self.advance()
+        elif char == ">":
+            token = Token(TokenType.GREATER_THAN, ">", self.line_number)
+        elif char == "<":
+            token = Token(TokenType.LESS_THAN, "<", self.line_number)
+        elif char == "!" and next_char == "=":
+            token = Token(TokenType.NOT_EQUAL, "!=", self.line_number)
+            self.advance()
+        elif char == "=" and next_char == "=":
+            token = Token(TokenType.EQUAL, "==", self.line_number)
+            self.advance()
+        elif char == "=":
+            token = Token(TokenType.ASSIGN, "=", self.line_number)
+        else:
+            raise SyntaxError(f"Unexpected operator '{char}' at line {self.line_number}")
+
+        self.advance()
+        return token
