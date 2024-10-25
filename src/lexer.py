@@ -113,3 +113,25 @@ class Lexer:
             self.advance()
         value = int(self.source_code[start_pos:self.position])
         return Token(TokenType.INTEGER, value, self.line_number)
+    
+    def process_string(self):
+        self.advance()
+        string_value = ""
+        while self.position < len(self.source_code):
+            char = self.source_code[self.position]
+            if char == '"':
+                self.advance()
+                return Token(TokenType.STRING, f"\"{string_value}\"", self.line_number)
+            elif char == "\\":
+                self.advance()
+                next_char = self.source_code[self.position]
+                if next_char == '"':
+                    string_value += '\\"'
+                elif next_char == "n":
+                    string_value += "\\n"
+                else:
+                    raise SyntaxError(f"Invalid escape sequence at line {self.line_number}")
+            else:
+                string_value += char
+            self.advance()
+        raise SyntaxError(f"Unterminated string literal at line {self.line_number}")
