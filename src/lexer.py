@@ -174,3 +174,6 @@ class Lexer:
 
         self.advance()
         return token
+    
+    def advance(self):
+        self.position += 1
