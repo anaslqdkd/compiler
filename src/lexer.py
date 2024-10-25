@@ -76,3 +76,7 @@ class Lexer:
         
         self.tokens.append(Token(TokenType.EOF, None, self.line_number))
         return self.tokens
+    
+    def skip_comment(self):
+        while self.position < len(self.source_code) and self.source_code[self.position] != "\n":
+            self.advance()
