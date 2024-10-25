@@ -98,3 +98,11 @@ class Lexer:
                 self.tokens.append(Token(TokenType.DEDENT, self.indent_stack[-1], self.line_number))
             if self.indent_stack[-1] != indent_level:
                 raise SyntaxError(f"Indentation error at line {self.line_number}")
+
+    def process_identifier(self):
+        start_pos = self.position
+        while self.position < len(self.source_code) and (self.source_code[self.position].isalnum() or self.source_code[self.position] == "_"):
+            self.advance()
+        value = self.source_code[start_pos:self.position]
+        token_type = TokenType.KEYWORD if value in self.keywords else TokenType.IDENTIFIER
+        return Token(token_type, value, self.line_number)
