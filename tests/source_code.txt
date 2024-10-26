@@ -1,4 +1,4 @@
-# source_code.py
+# source_code.txt
 a = 123
 a = -1
 a = -(1 + 2) - 3 * 4 // (5 % 6)
