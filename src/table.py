@@ -1,93 +1,120 @@
 from enum import Enum
 
 
+class NonTerminal(Enum):
+    S = "S"
+    S1 = "S'"
+    S2 = "S''"
+    A = "A"
+    I = "I"
+    I1 = "I'"
+    B = "B"
+    B1 = "B'"
+    C = "C"
+    C1 = "C'"
+    C2 = "C''"
+    C3 = "C'''"
+    D = "D"
+    D1 = "D"
+    E = "E"
+    E1 = "E'"
+    E2 = "E''"
+    E3 = "E'''"
+    ES = "E*"
+    F = "F"
+    G = "G"
+    G1 = "G'"
+    H = "H"
+    H1 = "H'"
+
+
 production_rules = {
-    1: ("S", ["NEWLINE", "S'"]),
-    2: ("S", ["S'"]),
-    3: ("S'", ["A", "S'"]),
-    4: ("S'", ["D", "S''"]),
-    5: ("S''", ["D", "S''"]),
-    6: ("S''", ["EOF"]),
-    7: ("A", ["def", "IDENTIFIER", "(", "I", ")", ":", "B"]),
-    8: ("I", ["IDENTIFIER", "I'"]),
-    9: ("I'", [",", "IDENTIFIER", "I'"]),
-    10: ("I'", ["''"]),
-    11: ("B", ["C", "NEWLINE"]),
-    12: ("B", ["NEWLINE", "Begin", "D", "B'", "End"]),
-    13: ("B'", ["NEWLINE", "D", "B'"]),
-    14: ("B'", ["''"]),
-    15: ("C", ["return", "E"]),
-    16: ("C", ["IDENTIFIER", "C''"]),
-    17: ("C", ["E", "C'"]),
-    18: ("C", ["print", "(", "E", ")"]),
-    19: ("C'", ["[", "E", "]", "=", "E"]),
-    20: ("C'", ["''"]),
-    21: ("C''", ["=", "E"]),
-    22: ("C''", ["(", "E'''", ")"]),
-    23: ("C''", ["''"]),
-    24: ("D", ["C", "NEWLINE"]),
-    25: ("D", ["if", "E", ":", "B", "D'"]),
-    26: ("D", ["for", "IDENTIFIER", "in", "E", ":", "B"]),
-    27: ("D'", ["else", ":", "B"]),
-    28: ("D'", ["''"]),
-    29: ("E", ["G", "E*"]),
-    30: ("E", ["H", "E*"]),
-    31: ("E", ["True", "E*"]),
-    32: ("E", ["False", "E*"]),
-    33: ("E", ["None", "E*"]),
-    34: ("E", ["-", "E", "E*"]),
-    35: ("E", ["not", "E", "E*"]),
-    36: ("E", ["[", "E''", "]", "E*"]),
-    37: ("E", ["(", "E", ")", "E*"]),
-    38: ("E*", ["E'", "E*"]),
-    39: ("E*", ['"']),
-    40: ("E'", ["F", "E"]),
-    41: ("E'", ["[", "E", "]"]),
-    42: ("E''", ["E", "E'''"]),
-    43: ("E''", ["''"]),
-    44: ("E'''", [",", "E", "E'''"]),
-    45: ("E'''", ["''"]),
-    46: ("F", ["+"]),
-    47: ("F", ["-"]),
-    48: ("F", ["//"]),
-    49: ("F", ["%"]),
-    50: ("F", ["<="]),
-    51: ("F", [">="]),
-    52: ("F", ["<"]),
-    53: ("F", [">"]),
-    54: ("F", ["!="]),
-    55: ("F", ["=="]),
-    56: ("F", ["and"]),
-    57: ("F", ["or"]),
-    58: ("G", ["0", "G'"]),
-    59: ("G", ["1", "G'"]),
-    60: ("G", ["2", "G'"]),
-    61: ("G", ["3", "G'"]),
-    62: ("G", ["4", "G'"]),
-    63: ("G", ["5", "G'"]),
-    64: ("G", ["6", "G'"]),
-    65: ("G", ["7", "G'"]),
-    66: ("G", ["8", "G'"]),
-    67: ("G", ["9", "G'"]),
-    68: ("G'", ["0", "G'"]),
-    69: ("G'", ["1", "G'"]),
-    70: ("G'", ["2", "G'"]),
-    71: ("G'", ["3", "G'"]),
-    72: ("G'", ["4", "G'"]),
-    73: ("G'", ["5", "G'"]),
-    74: ("G'", ["6", "G'"]),
-    75: ("G'", ["7", "G'"]),
-    76: ("G'", ["8", "G'"]),
-    77: ("G'", ["9", "G'"]),
-    78: ("G'", ["''"]),
-    79: ("H", ['"', "H'", '"']),
-    80: ("H'", ["b", "H'"]),
+    1: (NonTerminal.S, ["NEWLINE", NonTerminal.S1]),
+    2: (NonTerminal.S, [NonTerminal.S1]),
+    3: (NonTerminal.S1, [NonTerminal.A, NonTerminal.S1]),
+    4: (NonTerminal.S1, [NonTerminal.D, NonTerminal.S2]),
+    5: (NonTerminal.S2, [NonTerminal.D, NonTerminal.S2]),
+    6: (NonTerminal.S2, ["EOF"]),
+    7: (NonTerminal.A, ["def", "IDENTIFIER", "(", "I", ")", ":", NonTerminal.B]),
+    8: (NonTerminal.I, ["IDENTIFIER", NonTerminal.I1]),
+    9: (NonTerminal.I1, [",", "IDENTIFIER", NonTerminal.I1]),
+    10: (NonTerminal.I1, ["''"]),
+    11: (NonTerminal.B, [NonTerminal.C, "NEWLINE"]),
+    12: (NonTerminal.B, ["NEWLINE", "Begin", NonTerminal.D, NonTerminal.B1, "End"]),
+    13: (NonTerminal.B1, ["NEWLINE", NonTerminal.D, NonTerminal.B1]),
+    14: (NonTerminal.B1, ["''"]),
+    15: (NonTerminal.C, ["return", NonTerminal.E]),
+    16: (NonTerminal.C, ["IDENTIFIER", NonTerminal.C2]),
+    17: (NonTerminal.C, [NonTerminal.E, NonTerminal.C1]),
+    18: (NonTerminal.C, ["print", "(", NonTerminal.E, ")"]),
+    19: (NonTerminal.C1, ["[", NonTerminal.E, "]", "=", NonTerminal.E]),
+    20: (NonTerminal.C1, ["''"]),
+    21: (NonTerminal.C2, ["=", NonTerminal.E]),
+    22: (NonTerminal.C2, ["(", NonTerminal.E3, ")"]),
+    23: (NonTerminal.C2, ["''"]),
+    24: (NonTerminal.D, [NonTerminal.C, "NEWLINE"]),
+    25: (NonTerminal.D, ["if", NonTerminal.E, ":", NonTerminal.B, NonTerminal.D1]),
+    26: (NonTerminal.D, ["for", "IDENTIFIER", "in", NonTerminal.E, ":", NonTerminal.B]),
+    27: (NonTerminal.D1, ["else", ":", NonTerminal.B]),
+    28: (NonTerminal.D1, ["''"]),
+    29: (NonTerminal.E, [NonTerminal.G, NonTerminal.ES]),
+    30: (NonTerminal.E, [NonTerminal.H, NonTerminal.ES]),
+    31: (NonTerminal.E, ["True", NonTerminal.ES]),
+    32: (NonTerminal.E, ["False", NonTerminal.ES]),
+    33: (NonTerminal.E, ["None", NonTerminal.ES]),
+    34: (NonTerminal.E, ["-", NonTerminal.E, NonTerminal.ES]),
+    35: (NonTerminal.E, ["not", NonTerminal.E, NonTerminal.ES]),
+    36: (NonTerminal.E, ["[", NonTerminal.E2, "]", NonTerminal.ES]),
+    37: (NonTerminal.E, ["(", NonTerminal.E, ")", NonTerminal.ES]),
+    38: (NonTerminal.ES, [NonTerminal.E1, NonTerminal.ES]),
+    39: (NonTerminal.ES, ['"']),
+    40: (NonTerminal.E1, [NonTerminal.F, NonTerminal.E]),
+    41: (NonTerminal.E1, ["[", NonTerminal.E, "]"]),
+    42: (NonTerminal.E2, [NonTerminal.E, NonTerminal.E3]),
+    43: (NonTerminal.E2, ["''"]),
+    44: (NonTerminal.E3, [",", NonTerminal.E, NonTerminal.E3]),
+    45: (NonTerminal.E3, ["''"]),
+    46: (NonTerminal.F, ["+"]),
+    47: (NonTerminal.F, ["-"]),
+    48: (NonTerminal.F, ["//"]),
+    49: (NonTerminal.F, ["%"]),
+    50: (NonTerminal.F, ["<="]),
+    51: (NonTerminal.F, [">="]),
+    52: (NonTerminal.F, ["<"]),
+    53: (NonTerminal.F, [">"]),
+    54: (NonTerminal.F, ["!="]),
+    55: (NonTerminal.F, ["=="]),
+    56: (NonTerminal.F, ["and"]),
+    57: (NonTerminal.F, ["or"]),
+    58: (NonTerminal.G, ["0", NonTerminal.G1]),
+    59: (NonTerminal.G, ["1", NonTerminal.G1]),
+    60: (NonTerminal.G, ["2", NonTerminal.G1]),
+    61: (NonTerminal.G, ["3", NonTerminal.G1]),
+    62: (NonTerminal.G, ["4", NonTerminal.G1]),
+    63: (NonTerminal.G, ["5", NonTerminal.G1]),
+    64: (NonTerminal.G, ["6", NonTerminal.G1]),
+    65: (NonTerminal.G, ["7", NonTerminal.G1]),
+    66: (NonTerminal.G, ["8", NonTerminal.G1]),
+    67: (NonTerminal.G, ["9", NonTerminal.G1]),
+    68: (NonTerminal.G1, ["0", NonTerminal.G1]),
+    69: (NonTerminal.G1, ["1", NonTerminal.G1]),
+    70: (NonTerminal.G1, ["2", NonTerminal.G1]),
+    71: (NonTerminal.G1, ["3", NonTerminal.G1]),
+    72: (NonTerminal.G1, ["4", NonTerminal.G1]),
+    73: (NonTerminal.G1, ["5", NonTerminal.G1]),
+    74: (NonTerminal.G1, ["6", NonTerminal.G1]),
+    75: (NonTerminal.G1, ["7", NonTerminal.G1]),
+    76: (NonTerminal.G1, ["8", NonTerminal.G1]),
+    77: (NonTerminal.G1, ["9", NonTerminal.G1]),
+    78: (NonTerminal.G1, ["''"]),
+    79: (NonTerminal.H, ['"', NonTerminal.H1, '"']),
+    80: (NonTerminal.H1, ["b", NonTerminal.H1]),
 }
 
 
 parsing_table = (
     {
-        "S": {
+        NonTerminal.S: {
             "NEWLINE": 1,
             "def": 2,
             "IDENTIFIER": 2,
@@ -114,7 +141,7 @@ parsing_table = (
             "9": 2,
             '"': 2,
         },
-        "S'": {
+        NonTerminal.S1: {
             "def": 3,
             "IDENTIFIER": 4,
             "(": 4,
@@ -140,7 +167,7 @@ parsing_table = (
             "9": 4,
             '"': 4,
         },
-        "S''": {
+        NonTerminal.S2: {
             "EOF": 6,
             "IDENTIFIER": 5,
             "(": 5,
@@ -166,17 +193,17 @@ parsing_table = (
             "9": 5,
             '"': 5,
         },
-        "A": {
+        NonTerminal.A: {
             "def": 7,
         },
-        "I": {
+        NonTerminal.I: {
             "IDENTIFIER": 8,
         },
-        "I'": {
+        NonTerminal.I1: {
             "''": 10,
             ",IDENTIFIER": 9,
         },
-        "B": {
+        NonTerminal.B: {
             "NEWLINE": 12,
             "IDENTIFIER": 11,
             "(": 11,
@@ -200,11 +227,11 @@ parsing_table = (
             "9": 11,
             '"': 11,
         },
-        "B'": {
+        NonTerminal.B1: {
             "NEWLINE": 13,
             "END": 14,
         },
-        "C": {
+        NonTerminal.C: {
             "IDENTIFIER": 16,
             "return": 15,
             "print(": 18,
@@ -227,16 +254,16 @@ parsing_table = (
             "9": 17,
             '"': 17,
         },
-        "C'": {
+        NonTerminal.C1: {
             "NEWLINE": 20,
             "[": 19,
         },
-        "C''": {
+        NonTerminal.C2: {
             "NEWLINE": 23,
             "(": 22,
             "=": 21,
         },
-        "D": {
+        NonTerminal.D: {
             "if": 25,
             "for": 26,
             "IDENTIFIER": 24,
@@ -261,7 +288,7 @@ parsing_table = (
             "9": 24,
             '"': 24,
         },
-        "D'": {
+        NonTerminal.D1: {
             "else": 27,
             "NEWLINE": 28,
             "EOF": 28,
@@ -290,7 +317,7 @@ parsing_table = (
             "9": 28,
             '"': 28,
         },
-        "E": {
+        NonTerminal.E: {
             "(": 37,
             "[": 36,
             "True": 31,
@@ -310,7 +337,7 @@ parsing_table = (
             "9": 29,
             ",": 30,
         },
-        "E*": {
+        NonTerminal.ES: {
             "NEWLINE": 39,
             ")": 39,
             ":": 39,
@@ -326,7 +353,7 @@ parsing_table = (
             "<": [38, 39],
             ">": [38, 39],
         },
-        "F": {
+        NonTerminal.F: {
             "+": 46,
             "-": 47,
             "//": 48,
@@ -339,7 +366,7 @@ parsing_table = (
             "and": 56,
             "or": 57,
         },
-        "G": {
+        NonTerminal.G: {
             "0": 58,
             "1": 59,
             "2": 60,
@@ -351,7 +378,7 @@ parsing_table = (
             "8": 66,
             "9": 67,
         },
-        "G'": {
+        NonTerminal.G1: {
             "NEWLINE": 78,
             ")": 78,
             ":": 78,
@@ -380,13 +407,13 @@ parsing_table = (
             "8": 76,
             "9": 77,
         },
-        "H": {
+        NonTerminal.H: {
             '"': 79,
         },
-        "b": {
-            80,
+        NonTerminal.H1: {
+            "b": 80,
         },
-        "E'": {
+        NonTerminal.E1: {
             "[": 41,
             "-": 40,
             "+": 40,
@@ -401,7 +428,7 @@ parsing_table = (
             "and": 40,
             "or": 40,
         },
-        "E''": {
+        NonTerminal.E2: {
             "]": 43,
             "(": 42,
             "[": 42,
@@ -421,11 +448,10 @@ parsing_table = (
             "8": 42,
             "9": 42,
         },
-        "E'''": {
+        NonTerminal.E3: {
             ")": 45,
             "]": 45,
             ",": 44,
         },
     },
 )
-# à faire un enum de tous les non terminaux
