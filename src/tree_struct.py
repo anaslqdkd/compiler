@@ -21,6 +21,8 @@ class Tree:
 
     def is_leaf(self) -> bool:
         return len(self.children) == 0
+    def contains_non_terminals(self) -> bool:
+        return any(not child.is_terminal for child in self.children)
     
     def remove_child(self, child: "Tree") ->None:
         if child in self.children:
@@ -55,10 +57,15 @@ class Tree:
 # Converter
 # -------------------------------------------------------------------------------------------------
 
-def transform_into_AST(Tree:"Tree")->"Tree":
-    # TODO: fonction à faire
-    AST = Tree()
-    return AST
+def transform_into_AST(given_tree:"Tree")->"Tree":
+    def transform_into_AST_recursive(given_recursive_tree:"Tree")->"Tree":
+        if not given_recursive_tree.contains_non_terminals():
+            return given_recursive_tree
+        AST = Tree(given_recursive_tree.data, given_recursive_tree.line_index, given_recursive_tree.is_terminal)
+        for child in given_recursive_tree.children:
+            AST.add_tree_child(transform_into_AST_recursive(child))
+        return AST
+    return transform_into_AST_recursive(given_tree)
 
 # -------------------------------------------------------------------------------------------------
 # Tests
