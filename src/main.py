@@ -1,15 +1,19 @@
 from lexer import Lexer
-from parser import Parser
-from ast_nodes import visualize_ast
 
-with open("tests/source_code.txt", "r") as f:
-    source_code = f.read()
+def main():
+    with open("../tests/source_code.txt", "r") as file:
+        source_code = file.read()
 
-lexer = Lexer(source_code)
-tokens = lexer.tokenize()
-for token in tokens:
-    print(token)
-# parser = Parser(tokens)
-# ast = parser.parse()
-# dot = visualize_ast(ast)
-# dot.render('ast', format='png', cleanup=True)
+    lexer = Lexer(source_code)
+
+    while True:
+        token = lexer.get_next_token()
+        if token.type == "EOF":
+            break
+        else:
+            print(token)
+            
+    print(lexer.identifier_lexicon)
+
+if __name__ == "__main__":
+    main()
