@@ -45,7 +45,7 @@ class TokenType:
     NEWLINE = "NEWLINE"
 
     EOF = "EOF"
-        
+
 class Token:
     def __init__(self, type, line_number, value = None):
         self.type = type
@@ -61,44 +61,37 @@ class Lexer:
         self.position = 0
         self.line_number = 1
         self.indent_stack = [0]
-        self.tokens = []
-
         self.keywords = {"if", "else", "and", "or", "not", "True", "False", "None", "def", "return", "print", "for", "in"}
         self.operators = {"+", "-", "*", "/", "%", "<", ">", "=", "!"}
         self.symbols = {"(", ")", "{", "}", "[", "]", ":", ","}
+        self.identifier_lexicon = {}
+        self.next_identifier_index = 1
 
-    def tokenize(self):
+    def get_next_token(self):
         while self.position < len(self.source_code):
             char = self.source_code[self.position]
             
             if char == " " or char == "\t":
-                self.position += 1
+                self.advance()
             elif char == "#":
                 self.skip_comment()
             elif char == "\n":
                 self.advance()
-                self.tokens.append(Token(TokenType.NEWLINE, self.line_number))
-                self.line_number += 1
-                self.handle_indentation()
+                return Token(TokenType.NEWLINE, self.line_number)
             elif char.isalpha() or char == "_":
-                self.tokens.append(self.process_identifier())
+                return self.process_identifier()
             elif char.isdigit():
-                self.tokens.append(self.process_integer())
+                return self.process_integer()
             elif char == '"':
-                self.tokens.append(self.process_string())
+                return self.process_string()
             elif char in self.operators:
-                self.tokens.append(self.process_operator())
+                return self.process_operator()
             elif char in self.symbols:
-                self.tokens.append(self.process_symbol())
+                return self.process_symbol()
             else:
                 raise SyntaxError(f"Unexpected character '{char}' at line {self.line_number}")
 
-        while len(self.indent_stack) > 1:
-            self.indent_stack.pop()
-            self.tokens.append(Token(TokenType.END, self.indent_stack[-1], self.line_number))
-        
-        self.tokens.append(Token(TokenType.EOF, self.line_number))
-        return self.tokens
+        return Token(TokenType.EOF, self.line_number)
     
     def skip_comment(self):
         while self.position < len(self.source_code) and self.source_code[self.position] != "\n":
@@ -114,11 +107,11 @@ class Lexer:
         
         if indent_level > self.indent_stack[-1]:
             self.indent_stack.append(indent_level)
-            self.tokens.append(Token(TokenType.BEGIN, self.line_number, indent_level))
+            return Token(TokenType.BEGIN, self.line_number, indent_level)
         elif indent_level < self.indent_stack[-1]:
             while self.indent_stack and self.indent_stack[-1] > indent_level:
                 self.indent_stack.pop()
-                self.tokens.append(Token(TokenType.END, self.line_number, self.indent_stack[-1]))
+                yield Token(TokenType.END, self.line_number, self.indent_stack[-1])
             if self.indent_stack[-1] != indent_level:
                 raise SyntaxError(f"Indentation error at line {self.line_number}")
 
@@ -144,7 +137,15 @@ class Lexer:
             self.advance()
         value = self.source_code[start_pos:self.position]
         token_type = keyword_tokens[value] if value in self.keywords else TokenType.IDENTIFIER
-        return Token(token_type, self.line_number, value)
+
+        # Gestion du lexique des identificateurs
+        if token_type == TokenType.IDENTIFIER:
+            if value not in self.identifier_lexicon:
+                self.identifier_lexicon[value] = self.next_identifier_index
+                self.next_identifier_index += 1
+            return Token(token_type, self.line_number, self.identifier_lexicon[value])
+        else:
+            return Token(token_type, self.line_number, value)
     
     def process_integer(self):
         start_pos = self.position
@@ -223,6 +224,7 @@ class Lexer:
         self.advance()
         return Token(symbols_tokens[char], self.line_number)
 
-    
     def advance(self):
         self.position += 1
+        if self.source_code[self.position-1] == "\n":
+            self.line_number += 1
