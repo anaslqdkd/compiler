@@ -6,19 +6,14 @@ with open("../tests/source_code.txt", "r") as file:
 lexer = Lexer(source_code)
 
 
-# print(parser.lexer.get_next_token())
-# print(parser.current_token)
-# print(parser.next_token())
-# current_token = parser.next_token()
-# print(parser.current_token)
-
-
 class Parser:
     "Parser class"
 
     def __init__(self, lexer):
         self.lexer = lexer
         self.current_token = self.lexer.get_next_token()
+
+        # faut faire une fonction get_lexicon
 
     def next_token(self):
         self.current_token = self.lexer.get_next_token()
@@ -463,24 +458,177 @@ class Parser:
     def parse_e(self):
         "E"
         # on ajoute E à l'arbre
+        token = self.get_token()
+        if token.type == TokenType.LPAREN:
+            # on ajoute token à l'arbre
+            self.next_token()
+            token = self.get_token()
+            self.parse_e()
+            token = self.get_token()
+            if token.type == TokenType.RPAREN:
+                # on ajoute token à l'arbre
+                self.next_token()
+                token = self.get_token()
+                self.parse_e_1()
+        if token.type == TokenType.LSQUARE:
+            # on ajoute token à l'arbre
+            self.next_token()
+            token = self.get_token()
+            self.parse_e_2()
+            token = self.get_token()
+            if token.type == TokenType.RSQUARE:
+                # on ajoute token à l'arbre
+                self.next_token()
+                token = self.get_token()
+                self.parse_e_s()
+        if token.type == TokenType.TRUE:
+            # on ajoute token à l'arbre
+            self.next_token()
+            self.parse_e_s()
+        if token.type == TokenType.FALSE:
+            # on ajoute token à l'arbre
+            self.next_token()
+            self.parse_e_s()
+        if token.type == TokenType.NONE:
+            # on ajoute token à l'arbre
+            self.next_token()
+            self.parse_e_s()
+        if token.type == TokenType.MINUS:
+            # on ajoute token à l'arbre
+            self.next_token()
+            self.parse_e()
+            self.parse_e_s()
+        if token.type == TokenType.NOT:
+            # on ajoute token à l'arbre
+            self.next_token()
+            self.parse_e()
+            self.parse_e_s()
+        if token.type == TokenType.INTEGER:
+            # on ajoute token à l'arbre
+            self.next_token()
+            self.parse_g()
+            self.parse_e_s()
+        # if token.type == TokenType.STRING:
+        # à voir pour string
+        #
+        #     self.parse_h()
+        #     self.parse_e_s()
 
     def parse_e_1(self):
         "E'"
         # on ajoute E à l'arbre
+        token = self.get_token()
+
+        if token.type == TokenType.LSQUARE:
+            # on ajoute token à l'arbre
+            self.next_token()
+            self.parse_e()
+            self.next_token()
+            token = self.get_token()
+            if token.type == TokenType.RSQUARE:
+                # on ajoute token à l'arbre
+                pass
+        if token.type in [
+            TokenType.MINUS,
+            TokenType.PLUS,
+            TokenType.FLOOR_DIVIDE,
+            TokenType.MODULO,
+            TokenType.MULTIPLY,
+            TokenType.FLOOR_DIVIDE,
+            TokenType.LESS_EQUAL,
+            TokenType.GREATER_EQUAL,
+            TokenType.LESS,
+            TokenType.GREATER,
+            TokenType.NOT_EQUAL,
+            TokenType.AND,
+            TokenType.OR,
+        ]:
+            self.parse_f()
+            self.parse_e()
 
     def parse_e_2(self):
         "E''"
         # on ajoute E à l'arbre
+        token = self.get_token()
+        if token.type == TokenType.RSQUARE:
+            # ajoute token à l'arbre
+            pass
+        if token.type in [
+            TokenType.INTEGER,
+            TokenType.TRUE,
+            TokenType.FALSE,
+            TokenType.NONE,
+            TokenType.MINUS,
+            TokenType.LSQUARE,
+        ]:
+            self.parse_e()
+            self.parse_e_3()
 
     def parse_e_3(self):
         "E'''"
         # on ajoute E à l'arbre
+        token = self.get_token()
+        if token.type == [TokenType.RSQUARE, TokenType.RPAREN]:
+            # on ajoute token à l'arbre
+            pass
+        if token.type == TokenType.COMMA:
+            # on ajoute token à l'arbre
+            self.next_token()
+            self.parse_e()
+            self.parse_e_3()
 
     def parse_e_s(self):
         "E*"
-        # on ajoute E à l'arbre
+        token = self.get_token()
 
+        if token.type in [
+            TokenType.NEWLINE,
+            TokenType.RPARAN,
+            TokenType.COLON,
+            TokenType.RSQUARE,
+            TokenType.COMMA,
+        ]:
+            # on ajoute token à l'arbre
+            pass
 
-# parser = Parser(lexer)
-# parser.parse()
-# print(parser.parse())
+        if token.type in [
+            TokenType.RSQUARE,
+            TokenType.MINUS,
+            TokenType.PLUS,
+            TokenType.FLOOR_DIVIDE,
+            TokenType.MODULO,
+            TokenType.MULTIPLY,
+            TokenType.FLOOR_DIVIDE,
+            TokenType.LESS_EQUAL,
+            TokenType.GREATER_EQUAL,
+            TokenType.LESS,
+            TokenType.GREATER,
+            TokenType.NOT_EQUAL,
+            TokenType.AND,
+            TokenType.OR,
+        ]:
+            self.next_token()
+            token = self.next_token()
+            if (
+                token.type
+                in TokenType[
+                    TokenType.MINUS,
+                    TokenType.PLUS,
+                    TokenType.FLOOR_DIVIDE,
+                    TokenType.MODULO,
+                    TokenType.MULTIPLY,
+                    TokenType.FLOOR_DIVIDE,
+                    TokenType.LESS_EQUAL,
+                    TokenType.GREATER_EQUAL,
+                    TokenType.LESS,
+                    TokenType.GREATER,
+                    TokenType.NOT_EQUAL,
+                    TokenType.AND,
+                    TokenType.OR,
+                    TokenType.LSQUARE,
+                    TokenType.RSQUARE,
+                ]
+            ):
+                # on revient en arrière
+                self.parse_e_1()
+                self.parse_e_s()
