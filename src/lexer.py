@@ -1,65 +1,42 @@
 class TokenType:
-    KEYWORDS = {
-        "if": "IF",
-        "else": "ELSE",
-        "and": "AND",
-        "or": "OR",
-        "not": "NOT",
-        "True": "TRUE",
-        "False": "FALSE",
-        "None": "NONE",
-        "def": "DEF",
-        "return": "RETURN",
-        "print": "PRINT",
-        "for": "FOR",
-        "in": "IN"
+    # Numérotation des tokens
+    TOKEN_NUMBERS = {
+        "STRUCTURE": {
+            "BEGIN": 1, "END": 2, "NEWLINE": 3, "EOF": 4
+        },
+        "VALUE": {
+            "IDENTIFIER": 10, "INTEGER": 11, "STRING": 12
+        },
+        "KEYWORDS": {
+            "if": 20, "else": 21, "and": 22, "or": 23, "not": 24, 
+            "True": 25, "False": 26, "None": 27, "def": 28, 
+            "return": 29, "print": 30, "for": 31, "in": 32
+        },
+        "OPERATORS": {
+            "+": 40, "-": 41, "*": 42, "//": 43, "%": 44, 
+            "<=": 45, ">=": 46, ">": 47, "<": 48, 
+            "!=": 49, "==": 50, "=": 51, "/": 52, "!": 53
+        },
+        "SYMBOLS": {
+            "(": 60, ")": 61, "{": 62, "}": 63, 
+            "[": 64, "]": 65, ":": 66, ",": 67
+        }
     }
 
-    OPERATORS = {
-        "+": "PLUS",
-        "-": "MINUS",
-        "*": "MULTIPLY",
-        "/": "DIVIDE", # Unused
-        "//": "FLOOR_DIVIDE",
-        "%": "MODULO",
-        "<=": "LESS_EQUAL",
-        ">=": "GREATER_EQUAL",
-        ">": "GREATER",
-        "<": "LESS",
-        "!": "NOT", # Unused
-        "!=": "NOT_EQUAL",
-        "==": "EQUAL_EQUAL",
-        "=": "EQUALS"
-    }
-
-    SYMBOLS = {
-        "(": "LPAREN",
-        ")": "RPAREN",
-        "{": "LCURLY",
-        "}": "RCURLY",
-        "[": "LSQUARE",
-        "]": "RSQUARE",
-        ":": "COLON",
-        ",": "COMMA"
-    }
-
-    # Add BEGIN, END, NEWLINE, INTEGER, STRING, IDENTIFIER, EOF tokens as needed by the lexer
-    BEGIN = "BEGIN"
-    END = "END"
-    NEWLINE = "NEWLINE"
-    INTEGER = "INTEGER"
-    STRING = "STRING"
-    IDENTIFIER = "IDENTIFIER"
-    EOF = "EOF"
+    # Méthode pour récupérer les numéros de token
+    @classmethod
+    def get_token_number(cls, category, token):
+        return cls.TOKEN_NUMBERS[category].get(token)
 
 class Token:
-    def __init__(self, type, line_number, value=None):
+    def __init__(self, type, line_number, token_number, value=None):
         self.type = type
         self.line_number = line_number
+        self.token_number = token_number
         self.value = value
 
     def __repr__(self):
-        return f"Token({self.type}, {self.value}, line={self.line_number})" if self.value else f"Token({self.type}, line={self.line_number})"
+        return f"Token({self.type}, {self.token_number}, {self.value}, line={self.line_number})"
 
 class Lexer:
     def __init__(self, source_code):
@@ -67,58 +44,66 @@ class Lexer:
         self.position = 0
         self.line_number = 1
         self.indent_stack = [0]
-        self.identifier_lexicon = {}
-        self.next_identifier_index = 1
-
-    def get_next_token(self):
-        while self.position < len(self.source_code):
-            char = self.source_code[self.position]
-            
-            if char in " \t":
-                self.advance()
-            elif char == "#":
-                self.skip_comment()
-            elif char == "\n":
-                self.advance()
-                return Token(TokenType.NEWLINE, self.line_number)
-            elif char.isalpha() or char == "_":
-                return self.process_identifier()
-            elif char.isdigit():
-                return self.process_integer()
-            elif char == '"':
-                return self.process_string()
-            elif char in TokenType.OPERATORS:
-                return self.process_operator()
-            elif char in TokenType.SYMBOLS:
-                return self.process_symbol()
-            else:
-                raise SyntaxError(f"Unexpected character '{char}' at line {self.line_number}")
-
-        return Token(TokenType.EOF, self.line_number)
-
-    def skip_comment(self):
-        while self.position < len(self.source_code) and self.source_code[self.position] != "\n":
-            self.advance()
-
-    def handle_indentation(self):
-        indent_level = 0
-        while self.position < len(self.source_code) and self.source_code[self.position] == " ":
-            indent_level += 1
-            self.advance()
-        if indent_level % 4 != 0:
-            raise SyntaxError(f"Indentation error at line {self.line_number}: Indentation must be multiple of 4")
         
-        if indent_level > self.indent_stack[-1]:
-            self.indent_stack.append(indent_level)
-            return Token(TokenType.BEGIN, self.line_number, indent_level)
-        elif indent_level < self.indent_stack[-1]:
-            tokens = []
-            while self.indent_stack and self.indent_stack[-1] > indent_level:
-                self.indent_stack.pop()
-                tokens.append(Token(TokenType.END, self.line_number))
-            if self.indent_stack[-1] != indent_level:
-                raise SyntaxError(f"Indentation error at line {self.line_number}")
-            return tokens
+        # Deux lexiques séparés
+        self.identifier_lexicon = {}
+        self.constant_lexicon = {}
+        
+        # Compteurs pour les indices des lexiques
+        self.next_identifier_index = 1
+        self.next_constant_index = 1
+
+    def get_next_token(self, advance_cursor=True):
+        original_position = self.position
+        original_line_number = self.line_number
+
+        try:
+            while self.position < len(self.source_code):
+                char = self.source_code[self.position]
+                
+                if char in " \t":
+                    self.advance()
+                elif char == "#":
+                    self.skip_comment()
+                elif char == "\n":
+                    self.advance()
+                    token = Token("NEWLINE", self.line_number, 
+                                 TokenType.get_token_number('STRUCTURE', 'NEWLINE'))
+                    break
+                elif char.isalpha() or char == "_":
+                    token = self.process_identifier()
+                    break
+                elif char.isdigit():
+                    token = self.process_integer()
+                    break
+                elif char == '"':
+                    token = self.process_string()
+                    break
+                elif char in TokenType.TOKEN_NUMBERS['OPERATORS']:
+                    token = self.process_operator()
+                    break
+                elif char in TokenType.TOKEN_NUMBERS['SYMBOLS']:
+                    token = self.process_symbol()
+                    break
+                else:
+                    raise SyntaxError(f"Unexpected character '{char}' at line {self.line_number}")
+
+            else:
+                token = Token("EOF", self.line_number, 
+                             TokenType.get_token_number('STRUCTURE', 'EOF'))
+
+            # Si on ne veut pas avancer, on repositionne
+            if not advance_cursor:
+                self.position = original_position
+                self.line_number = original_line_number
+
+            return token
+
+        except Exception as e:
+            # En cas d'erreur, repositionner
+            self.position = original_position
+            self.line_number = original_line_number
+            raise e
 
     def process_identifier(self):
         start_pos = self.position
@@ -126,21 +111,42 @@ class Lexer:
             self.advance()
         value = self.source_code[start_pos:self.position]
         
-        token_type = TokenType.KEYWORDS.get(value, TokenType.IDENTIFIER)
-        if token_type == TokenType.IDENTIFIER:
-            if value not in self.identifier_lexicon:
-                self.identifier_lexicon[value] = self.next_identifier_index
-                self.next_identifier_index += 1
-            return Token(token_type, self.line_number, self.identifier_lexicon[value])
+        # Vérifier si c'est un mot-clé
+        if value in TokenType.TOKEN_NUMBERS['KEYWORDS']:
+            token_number = TokenType.get_token_number('KEYWORDS', value)
+            return Token(value, self.line_number, token_number, value)
+        
+        # Sinon c'est un IDENTIFIER
+        if value not in self.identifier_lexicon.values():
+            self.identifier_lexicon[self.next_identifier_index] = value
+            index = self.next_identifier_index
+            self.next_identifier_index += 1
         else:
-            return Token(token_type, self.line_number, value)
+            # Trouver l'index existant
+            index = next(k for k, v in self.identifier_lexicon.items() if v == value)
+        
+        return Token("IDENTIFIER", self.line_number, 
+                     TokenType.get_token_number('VALUE', 'IDENTIFIER'), 
+                     index)
 
     def process_integer(self):
         start_pos = self.position
         while self.position < len(self.source_code) and self.source_code[self.position].isdigit():
             self.advance()
         value = int(self.source_code[start_pos:self.position])
-        return Token(TokenType.INTEGER, self.line_number, value)
+        
+        # Ajouter au lexique des constantes si pas déjà présent
+        if value not in self.constant_lexicon.values():
+            self.constant_lexicon[self.next_constant_index] = value
+            index = self.next_constant_index
+            self.next_constant_index += 1
+        else:
+            # Trouver l'index existant
+            index = next(k for k, v in self.constant_lexicon.items() if v == value)
+        
+        return Token("INTEGER", self.line_number, 
+                     TokenType.get_token_number('VALUE', 'INTEGER'), 
+                     index)
 
     def process_string(self):
         self.advance()
@@ -149,7 +155,20 @@ class Lexer:
             char = self.source_code[self.position]
             if char == '"':
                 self.advance()
-                return Token(TokenType.STRING, self.line_number, f"\"{string_value}\"")
+                
+                # Ajouter au lexique des constantes si pas déjà présent
+                full_string = f'"{string_value}"'
+                if full_string not in self.constant_lexicon.values():
+                    self.constant_lexicon[self.next_constant_index] = full_string
+                    index = self.next_constant_index
+                    self.next_constant_index += 1
+                else:
+                    # Trouver l'index existant
+                    index = next(k for k, v in self.constant_lexicon.items() if v == full_string)
+                
+                return Token("STRING", self.line_number, 
+                             TokenType.get_token_number('VALUE', 'STRING'), 
+                             index)
             elif char == "\\":
                 self.advance()
                 next_char = self.source_code[self.position]
@@ -168,22 +187,62 @@ class Lexer:
         start_pos = self.position
         two_char_op = self.source_code[self.position:self.position + 2]
 
-        if two_char_op in TokenType.OPERATORS:
+        if two_char_op in TokenType.TOKEN_NUMBERS['OPERATORS']:
             self.advance(2)
-            return Token(TokenType.OPERATORS[two_char_op], self.line_number)
-        elif self.source_code[start_pos] in TokenType.OPERATORS:
+            return Token("OPERATOR", self.line_number, 
+                         TokenType.get_token_number('OPERATORS', two_char_op))
+        elif self.source_code[start_pos] in TokenType.TOKEN_NUMBERS['OPERATORS']:
             op = self.source_code[start_pos]
             self.advance()
-            return Token(TokenType.OPERATORS[op], self.line_number)
+            return Token("OPERATOR", self.line_number, 
+                         TokenType.get_token_number('OPERATORS', op))
         else:
             raise SyntaxError(f"Unexpected operator '{self.source_code[start_pos]}' at line {self.line_number}")
 
     def process_symbol(self):
         char = self.source_code[self.position]
         self.advance()
-        return Token(TokenType.SYMBOLS[char], self.line_number)
+        return Token("SYMBOL", self.line_number, 
+                     TokenType.get_token_number('SYMBOLS', char))
+
+    def skip_comment(self):
+        while self.position < len(self.source_code) and self.source_code[self.position] != "\n":
+            self.advance()
+            
+    def peek_next_token(self):
+        return self.get_next_token(advance_cursor=False)
 
     def advance(self, steps=1):
         self.position += steps
-        if self.source_code[self.position - steps] == "\n":
+        if self.position > 0 and self.source_code[self.position - steps] == "\n":
             self.line_number += 1
+
+# Fonction de test
+def test_lexer():
+    source_code = 'x = "a"\ny = 1'
+    lexer = Lexer(source_code)
+    
+    tokens = []
+    while True:
+        token = lexer.get_next_token()
+        tokens.append(token)
+        if token.type == "EOF":
+            break
+    
+    print("Tokens:", tokens)
+    print("\nIdentifier Lexicon:", lexer.identifier_lexicon)
+    print("Constant Lexicon:", lexer.constant_lexicon)
+
+    # Test de lookahead
+    print("\nTest Lookahead:")
+    lexer = Lexer(source_code)
+    token1 = lexer.get_next_token()
+    token2 = lexer.peek_next_token()
+    token3 = lexer.get_next_token()
+    
+    print("Token 1:", token1)
+    print("Token 2 (peek):", token2)
+    print("Token 3:", token3 is token2)
+
+# Décommentez la ligne suivante pour tester
+test_lexer()
