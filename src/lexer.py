@@ -216,33 +216,3 @@ class Lexer:
         self.position += steps
         if self.position > 0 and self.source_code[self.position - steps] == "\n":
             self.line_number += 1
-
-# Fonction de test
-def test_lexer():
-    source_code = 'x = "a"\ny = 1'
-    lexer = Lexer(source_code)
-    
-    tokens = []
-    while True:
-        token = lexer.get_next_token()
-        tokens.append(token)
-        if token.type == "EOF":
-            break
-    
-    print("Tokens:", tokens)
-    print("\nIdentifier Lexicon:", lexer.identifier_lexicon)
-    print("Constant Lexicon:", lexer.constant_lexicon)
-
-    # Test de lookahead
-    print("\nTest Lookahead:")
-    lexer = Lexer(source_code)
-    token1 = lexer.get_next_token()
-    token2 = lexer.peek_next_token()
-    token3 = lexer.get_next_token()
-    
-    print("Token 1:", token1)
-    print("Token 2 (peek):", token2)
-    print("Token 3:", token3 is token2)
-
-# Décommentez la ligne suivante pour tester
-test_lexer()
