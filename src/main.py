@@ -9,19 +9,17 @@ def main():
     while True:
         token = lexer.get_next_token()
         
-        if token.type in TokenType.TOKEN_NUMBERS["VALUE"]:
-            print((token.token_number, token.value))
-            # print((token.token_number, token.value, token.line_number))
+        if token.value:
+            print((token.number, token.value), TokenType.lexicon[token.number])
         else:
-            print((token.token_number))
-            # print((token.token_number, token.line_number))
+            print((token.number))
             
-        if token.type == "EOF":
+        if token.number == 4:  # EOF token
             break
     
-                
+    print("\nToken lexicon", TokenType.lexicon)
     print("\nIdentifier Lexicon:\n", lexer.identifier_lexicon)
-    print("Constant Lexicon:\n", lexer.constant_lexicon)
+    print("\nConstant Lexicon:\n", lexer.constant_lexicon)
     
     print("\nTest Lookahead:")
     lexer = Lexer(source_code)
