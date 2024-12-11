@@ -284,8 +284,10 @@ $\langle$ \textit{expr} $\rangle$ & ::= & $\langle$ \textit{const} $\rangle$\\
 & | & $\langle$ \textit{ident} $\rangle$ ($\langle$ \textit{expr} $\rangle^*$)\\
 & | & [ $\langle$ \textit{expr} $\rangle^*$ ]\\
 & | & ( $\langle$ \textit{expr} $\rangle$ )\\
-$\langle$ \textit{binop} $\rangle$ & ::= &+ | - | * | // | \% | <= | >= | < | > | != | == | \textbf{and} | \textbf{or} \\
-$\langle$ \textit{const} $\rangle$ & ::= & $\langle$ \textit{integer} $\rangle$ | $\langle$ \textit{string} $\rangle$ | \textbf{True} | \textbf{False} | \textbf{None}
+$\langle$ \textit{binop} $\rangle$ & ::= &+ | - | * | // | \% | <= | >= \\
+&&| < | > | != | == | \textbf{and} | \textbf{or} \\
+$\langle$ \textit{const} $\rangle$ & ::= & $\langle$ \textit{integer} $\rangle$ | $\langle$ \textit{string} $\rangle$ | \textbf{True}\\
+&& | \textbf{False} | \textbf{None}
 \end{tabular}
 }
 \caption{\textcolor{blue}{Grammaire proposée, sous forme de \textit{regex}}}
@@ -298,36 +300,44 @@ On propose la grammaire suivante, obtenue à partir de celle-ci dessus, dont les
 \[ G = ( \mathcal{N}, \mathcal{T}, \to, S), \quad \text{où}\]
 \[  \mathcal{N} = \lbrace S,S',S'',A,B,B',C,C',D,D',E,E',E'',E''',F,G,G',H,H',I,I' \rbrace \]
 \[ \text{et } \mathcal{T} = \alpha \cup \mathcal{D} \cup \lbrace +;-;*;/;\%;(;[;);];\backslash, ",:,!,=\rbrace.\]
-Il est à noter qu'elle n'est pas tout-à-fait LL(1) : l'ensemble de règles partant de $E$, $E'$ et $E''$ rend la grammaire LL(2). Détaillons quelques étapes qui ont abouties à cette construction.\\
 
 \begin{figure}[!h]\begin{center}
 \fbox{
 \begin{tabular}{lcl}
 $S$ & $\to$ & \textbf{Newline} $S' \ | \ S'$\\
-$S'$ & $\to$ & $AS' \ | \ DS''$\\
-$S''$ & $\to$ & $DS''$ | \textbf{EOF}\\
+$S_1$ & $\to$ & $AS' \ | \ DS''$\\
+$S_2$ & $\to$ & $DS''$ | \textbf{EOF}\\
 $A$ & $\to$ & \textbf{def} \textbf{ident} $(I):B$\\
 $I$ & $\to$ & \textbf{ident} $I'$\\
-$I'$ & $\to$ & , \textbf{ident} $I' \ | \ \varepsilon$\\
+$I_1$ & $\to$ & , \textbf{ident} $I' \ | \ \varepsilon$\\
 $B$ & $\to$ & $C$ \textbf{Newline} | \textbf{Newline} \textbf{Begin} $DB'$ \textbf{End}\\
-$B'$ & $\to$ & \textbf{Newline} $DB' \ | \ \varepsilon$\\
+$B_1$ & $\to$ & \textbf{Newline} $DB' \ | \ \varepsilon$\\
 $C$ & $\to$ & \textbf{return} $E$ | \textbf{ident} $C''$ | $EC'$ | \textbf{print}$(E)$\\
-$C'$ & $\to$ & $[E]=E \ | \ \varepsilon$\\
-$C''$ & $\to$ & $= E \ | \ (E''') \ | \ \varepsilon$\\
+$C_1$ & $\to$ & $[E]=E \ | \ \varepsilon$\\
+$C_2$ & $\to$ & $= E \ | \ (E_1) \ | \ \varepsilon$\\
 $D$ & $\to$ & $C$ \textbf{Newline} | \textbf{if} $E$ : $BD'$ | \textbf{for} \textbf{indent} \textbf{in} $E$ : $B$\\
-$D'$ & $\to$ & \textbf{else :} $B$ | $\varepsilon$\\
-$E$ & $\to$ & $G \ | \ H \ | \ $ \textbf{True} | \textbf{False} | \textbf{None} | $EE' \ | \ -E$ | \textbf{not} $E \ | \ [E''] \ | \ (E)$\\
-$E'$ & $\to$ & $FE \ | \ [E]$\\
-$E''$ & $\to$ & $EE''' \ | \ \varepsilon$\\
-$E'''$ & $\to$ & $,EE''' \ | \ \varepsilon$\\
-$F$ & $\to$ & + | - | * | // | \% | <= | >= | < | > | != | == | \textbf{and} | \textbf{or} \\
-$G$ & $\to$ & $0G' \ | \ 1G' \ | \ 2G' \ | \ 3G' \ | \ 4G' \ | \ 5G' \ | \ 6G' \ | \ 7G' \ | \ 8G' \ | \ 9G'$\\
-$G'$ & $\to$ & $0G' \ | \ 1G' \ | \ 2G' \ | \ 3G' \ | \ 4G' \ | \ 5G' \ | \ 6G' \ | \ 7G' \ | \ 8G' \ | \ 9G \ | \ \varepsilon$\\
-$H$ & $\to$ & "$H'$"\\
-$H'$ & $\to$ & $\beta H'$ où $\beta \in \alpha \cup \mathcal{D} \cup \lbrace +;-;*;/;\%;(;[;);];\backslash \rbrace \cup \lbrace \backslash "\rbrace$
+$D_1$ & $\to$ & \textbf{else :} $B$ | $\varepsilon$\\
+$E$ & $\to$ & $E_\text{or}$\\
+$E_\text{or}$ & $\to$ & $E_\text{and} E_\text{or\_tail}$\\
+$E_\text{or\_tail}$ & $\to$ & \textbf{or} $E_\text{and} E_\text{or\_tail} \ | \ \varepsilon$\\
+$E_\text{and}$ & $\to$ & $E_\text{not} E_\text{and\_tail}$\\
+$E_\text{and\_tail}$ & $\to$ & \textbf{and} $E_\text{not} E_\text{and\_tail} \ | \ \varepsilon$\\
+$E_\text{not}$ & $\to$ & \textbf{not} $E_\text{rel} \ | \ E_\text{rel}$\\
+$E_\text{rel}$ & $\to$ & $E_\text{add} E_\text{rel\_tail}$\\
+$E_\text{rel\_tail}$ & $\to$ & $O_r E_\text{add} E_\text{rel\_tail} \ | \ \varepsilon$\\
+$E_\text{add}$ & $\to$ & $E_\text{mult} E_\text{add\_tail}$\\
+$E_\text{add\_tail}$ & $\to$ & $O_+ E_\text{mult} E_\text{add\_tail} \ | \ \varepsilon$\\
+$E_\text{mult}$ & $\to$ & $E_\text{un}E_\text{mult\_tail}$\\
+$E_\text{mult\_tail}$ & $\to$ & $O_* E_\text{un} E_\text{mult\_tail} \ | \ \varepsilon$\\
+$E_\text{un}$ & $\to$ & $- E_\text{un} \ | \  [E] \ | \ (E) \ | \ O_\text{un}$\\
+$E_1$ & $\to$ & $E E_2 \ | \ \varepsilon$\\
+$E_2$ & $\to$ & $, E E_2 \ | \ \varepsilon$\\
+$O_r$ & $\to$ & <= | >= | < | > | != | ==\\
+$O_+$ & $\to$ & + | -\\
+$O_*$ & $\to$ & $\times$ | // | \%\\
+$O_\text{un}$ & $\to$ &  \textbf{ident} | \textbf{const} | \textbf{True} | \textbf{False} | \textbf{None}
 \end{tabular}
 }
-\caption{\textcolor{blue}{Grammaire LL(2)}}
 \label{grammar_ll2}
 \end{center}\end{figure}
 
