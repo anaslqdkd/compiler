@@ -267,8 +267,7 @@ class Parser:
                 TokenType.LPAREN,
                 TokenType.EQUALS,
             ]:
-                # on ajoute token identifier à l'arbre
-                token = self.next_token()
+                self.next_token()
                 self.parse_c_2()
             if snd_token.type in [
                 TokenType.IDENTIFIER,
@@ -560,7 +559,7 @@ class Parser:
             TokenType.NONE,
         ]:
             self.parse_e_not()
-            self.parse_and_tail()
+            self.parse_e_and_tail()
         return False
 
     def parse_e_and_tail(self):
@@ -607,7 +606,7 @@ class Parser:
         token = self.get_token()
 
         if token.type in [
-            TokenType.IDENT,
+            TokenType.IDENTIFIER,
             TokenType.LPAREN,
             TokenType.LSQUARE,
             TokenType.MINUS,
