@@ -71,7 +71,7 @@ E_mult       ::= E_un E_mult_tail
 E_mult_tail  ::= O_* E_un E_mult_tail 
 E_mult_tail ::= ''
 
-E_un         ::= -E_un 
+E_un         ::= - E_un 
 E_un        ::= [ E ]
 E_un        ::= ( E )
 E_un ::= O_un

@@ -1,6 +1,9 @@
 from lexer import *
 
-pylint: disable = all
+
+# TODO: à voir pour les constantes, conflit grammaire et impl,
+# et reverifier les tokens, notamment les == et = dus aux erreurs de remplacement
+
 
 with open("../tests/source_code.txt", "r") as file:
     source_code = file.read()
@@ -32,25 +35,25 @@ class Parser:
         "S"
         # ajouter S à l'arbre
         token = self.get_token()
-        if token.type == TokenType.NEWLINE:
+        if TokenType.lexicon[token.number] == "NEWLINE":
             # ajouter token à l'arbre
             self.next_token()
             return self.parse_s_1()
 
-        if token.type in [
-            TokenType.DEF,
-            TokenType.LSQUARE,
-            TokenType.IDENTIFIER,
-            TokenType.RETURN,
-            TokenType.LPAREN,
-            TokenType.PRINT,
-            TokenType.IF,
-            TokenType.FOR,
-            TokenType.TRUE,
-            TokenType.FALSE,
-            TokenType.NONE,
-            TokenType.MINUS,
-            TokenType.NOT,
+        if TokenType.lexicon[token.number] in [
+            "def",
+            "[",
+            "IDENTIFIER",
+            "return",
+            "(",
+            "print",
+            "if",
+            "for",
+            "True",
+            "False",
+            "None",
+            "-",
+            "not",
             TokenType.CONST,
         ]:
 
@@ -62,23 +65,23 @@ class Parser:
         # ajouter S' à l'arbre
         token = self.get_token()
 
-        if token.type == TokenType.DEF:
+        if TokenType.lexicon[token.number] == "def":
             # ajouter token à l'arbre
             self.parse_a()
             self.parse_s_1()
-        if token.type in [
-            TokenType.LSQUARE,
-            TokenType.IDENTIFIER,
-            TokenType.LPAREN,
-            TokenType.RETURN,
-            TokenType.PRINT,
-            TokenType.IF,
-            TokenType.FOR,
-            TokenType.TRUE,
-            TokenType.FALSE,
-            TokenType.NONE,
-            TokenType.MINUS,
-            TokenType.NOT,
+        if TokenType.lexicon[token.number] in [
+            "[",
+            "IDENTIFIER",
+            "(",
+            "return",
+            "print",
+            "if",
+            "for",
+            "True",
+            "False",
+            "None",
+            "-",
+            "not",
             TokenType.CONST,
         ]:
             # ajouter token à l'arbre
@@ -92,24 +95,24 @@ class Parser:
         # ajout S'' à l'arbre
         token = self.get_token()
 
-        if token.type == TokenType.EOF:
+        if TokenType.lexicon[token.number] == "EOF":
             # ajout token à l'arbre
             # on renvoie l'arbre
             return True
 
-        if token.type in [
-            TokenType.IDENTIFIER,
-            TokenType.LSQUARE,
-            TokenType.LPAREN,
-            TokenType.RETURN,
-            TokenType.PRINT,
-            TokenType.IF,
-            TokenType.FOR,
-            TokenType.TRUE,
-            TokenType.FALSE,
-            TokenType.NONE,
-            TokenType.MINUS,
-            TokenType.NOT,
+        if TokenType.lexicon[token.number] in [
+            "IDENTIFIER",
+            "[",
+            "(",
+            "return",
+            "print",
+            "if",
+            "for",
+            "True",
+            "False",
+            "None",
+            "-",
+            "not",
             TokenType.CONST,
         ]:
             self.parse_d()
@@ -121,23 +124,23 @@ class Parser:
         # on ajoute A à l'arbre
         token = self.get_token()
 
-        if token.type == TokenType.DEF:
+        if TokenType.lexicon[token.number] == "def":
             # on ajoute token à l'arbre
             self.next_token()
             token = self.get_token()
-            if token.type == TokenType.IDENTIFIER:
+            if TokenType.lexicon[token.number] == "IDENTIFIER":
                 # on ajoute token à l'arbre
                 self.next_token()
                 token = self.get_token()
-                if token.type == TokenType.LPAREN:
+                if TokenType.lexicon[token.number] == "(":
                     # on ajoute token à l'arbre
                     self.parse_i()
                     token = self.get_token()
-                    if token.type == TokenType.RPAREN:
+                    if TokenType.lexicon[token.number] == ")":
                         # on ajoute token à l'arbre
                         self.next_token()
                         token = self.get_token()
-                        if token.type == TokenType.COLON:
+                        if TokenType.lexicon[token.number] == ":":
                             # on ajoute token à l'arbre
                             self.next_token()
                             self.parse_b()
@@ -148,7 +151,7 @@ class Parser:
         # on ajoute I à l'arbre
         "I"
         token = self.get_token()
-        if token.type == TokenType.IDENTIFIER:
+        if TokenType.lexicon[token.number] == "IDENTIFIER":
             # on ajoute le token à l'arbre
             self.next_token()
             self.parse_i_1()
@@ -158,15 +161,15 @@ class Parser:
         "I'"
         # on ajoute I' à l'arbre
         token = self.get_token()
-        if token.type == TokenType.COMMA:
+        if TokenType.lexicon[token.number] == ",":
             # on ajoute token à l'arbre
             self.next_token()
             token = self.get_token()
-            if token.type == TokenType.IDENTIFIER:
+            if TokenType.lexicon[token.number] == "IDENTIFIER":
                 # on ajoute token à l'arbre
                 self.next_token()
                 self.parse_i_1()
-        if token.type == TokenType.RPAREN:
+        if TokenType.lexicon[token.number] == ")":
             pass
         return False
 
@@ -174,36 +177,36 @@ class Parser:
         "B"
         # on ajoute B à l'arbre
         token = self.get_token()
-        if token.type == TokenType.NEWLINE:
+        if TokenType.lexicon[token.number] == "NEWLINE":
             # on ajoute token à l'arbre
             self.next_token()
             token = self.get_token()
-            if token.type == TokenType.BEGIN:
+            if TokenType.lexicon[token.number] == "BEGIN":
                 # on ajoute token à l'arbre
                 self.next_token()
                 self.parse_d()
                 self.parse_b_1()
                 token = self.get_token()
-                if token.type == TokenType.END:
+                if TokenType.lexicon[token.number] == "END":
                     # on ajoute token à l'arbre
                     self.next_token()
 
-        if token.type in [
-            TokenType.IDENTIFIER,
-            TokenType.LPAREN,
-            TokenType.LSQUARE,
-            TokenType.RETURN,
-            TokenType.PRINT,
-            TokenType.TRUE,
-            TokenType.FALSE,
-            TokenType.NONE,
-            TokenType.MINUS,
-            TokenType.NOT,
+        if TokenType.lexicon[token.number] in [
+            "IDENTIFIER",
+            "(",
+            "[",
+            "return",
+            "print",
+            "True",
+            "False",
+            "None",
+            "-",
+            "not",
             TokenType.CONST,
         ]:
             self.parse_c()
             token = self.get_token()
-            if token.type == TokenType.NEWLINE:
+            if TokenType.lexicon[token.number] == "NEWLINE":
                 # on ajoute token à l'arbre
                 self.next_token()
         return False
@@ -214,12 +217,12 @@ class Parser:
         "B1"
         # on ajoute B' à l'arbre
         token = self.get_token()
-        if token.type == TokenType.NEWLINE:
+        if TokenType.lexicon[token.number] == "NEWLINE":
             # on ajoute token à l'arbre
             self.next_token()
             self.parse_d()
             self.parse_b_1()
-        if token.type == TokenType.END:
+        if TokenType.lexicon[token.number] == "END":
             pass
         return False
 
@@ -227,58 +230,58 @@ class Parser:
         "C"
         # on ajoute C à l'arbre
         token = self.get_token()
-        if token.type == TokenType.RETURN:
+        if TokenType.lexicon[token.number] == "return":
             # on ajoute token à l'arbre
             self.next_token()
             self.parse_e()
-        if token.type == TokenType.IDENTIFIER:
+        if TokenType.lexicon[token.number] == "IDENTIFIER":
             # on ajoute token à l'arbre
             self.next_token()
             self.parse_c_2()
-        if token.type == TokenType.PRINT:
+        if TokenType.lexicon[token.number] == "print":
             self.next_token()
             token = self.get_token()
-            if token.type == TokenType.LPAREN:
+            if TokenType.lexicon[token.number] == "(":
                 # on ajoute token à l'arbre
                 self.next_token()
                 self.parse_e()
                 self.parse_c_1()
                 token = self.get_token()
-                if token.type == TokenType.RPAREN:
+                if TokenType.lexicon[token.number] == ")":
                     # on ajoute token à l'arbre
                     self.next_token()
 
-        if token.type in [
-            TokenType.LPAREN,
-            TokenType.LSQUARE,
-            TokenType.TRUE,
-            TokenType.FALSE,
-            TokenType.NONE,
-            TokenType.MINUS,
-            TokenType.NOT,
+        if TokenType.lexicon[token.number] in [
+            "(",
+            "[",
+            "True",
+            "False",
+            "None",
+            "-",
+            "not",
             TokenType.CONST,
         ]:
             self.parse_e()
             self.parse_c_1()
-        if token.type == TokenType.IDENTIFIER:
+        if TokenType.lexicon[token.number] == "IDENTIFIER":
             snd_token = self.peek_next_token()
-            if snd_token.type in [
-                TokenType.NEWLINE,
-                TokenType.LPAREN,
-                TokenType.EQUALS,
+            if TokenType.lexicon[snd_token.number] in [
+                "NEWLINE",
+                "(",
+                "==",
             ]:
                 self.next_token()
                 self.parse_c_2()
-            if snd_token.type in [
-                TokenType.IDENTIFIER,
-                TokenType.LPAREN,
-                TokenType.LSQUARE,
-                TokenType.NOT,
-                TokenType.MINUS,
+            if TokenType.lexicon[snd_token.number] in [
+                "IDENTIFIER",
+                "(",
+                "[",
+                "not",
+                "-",
                 TokenType.CONST,
-                TokenType.TRUE,
-                TokenType.FALSE,
-                TokenType.NONE,
+                "True",
+                "False",
+                "None",
             ]:
                 self.parse_e()
                 self.parse_c_1()
@@ -290,20 +293,20 @@ class Parser:
         # ajouter C' à l'arbre
         token = self.get_token()
 
-        if token.type == TokenType.LSQUARE:
+        if TokenType.lexicon[token.number] == "[":
             # on ajouter token à l'arbre
             self.next_token()
             # self.parse_e()
             token = self.get_token()
-            if token.type == TokenType.RSQUARE:
+            if TokenType.lexicon[token.number] == "]":
                 # on ajoute token à l'arbre
                 self.next_token()
                 token = self.get_token()
-                if token.type == TokenType.EQUALS:
+                if TokenType.lexicon[token.number] == "==":
                     # on ajoute token à l'arbre
                     self.next_token()
                     self.parse_e()
-        if token.type == TokenType.NEWLINE:
+        if TokenType.lexicon[token.number] == "NEWLINE":
             pass
         return False
 
@@ -312,20 +315,20 @@ class Parser:
         # on ajoute C'' à l'arbre
         token = self.get_token()
 
-        if token.type == TokenType.EQUALS:
+        if TokenType.lexicon[token.number] == "==":
             # on ajoute token à l'arbre
             self.next_token()
             self.parse_e()
-        if token.type == TokenType.LPAREN:
+        if TokenType.lexicon[token.number] == "(":
             # on ajoute token à l'arbre
             self.next_token()
             self.parse_e_1()
             token = self.get_token()
-            if token.type == TokenType.RPAREN:
+            if TokenType.lexicon[token.number] == ")":
                 # on ajoute token à l'arbre
                 self.next_token()
 
-        if token.type == TokenType.NEWLINE:
+        if TokenType.lexicon[token.number] == "NEWLINE":
             pass
         return False
 
@@ -334,51 +337,51 @@ class Parser:
         # on ajoute D à l'arbre
         token = self.get_token()
 
-        if token.type == TokenType.IF:
+        if TokenType.lexicon[token.number] == "if":
             # on ajoute token à l'arbre
             self.next_token()
             self.parse_e()
             token = self.get_token()
-            if token.type == TokenType.COLON:
+            if TokenType.lexicon[token.number] == ":":
                 # on ajoute token à l'arbre
                 self.next_token()
                 self.parse_b()
                 self.parse_d_1()
-        if token.type == TokenType.FOR:
+        if TokenType.lexicon[token.number] == "for":
             # on ajoute token à l'arbre
             self.next_token()
             token = self.get_token()
-            if token.type == TokenType.IDENTIFIER:
+            if TokenType.lexicon[token.number] == "IDENTIFIER":
                 # on ajoute token à) l'arbre
                 self.next_token()
                 token = self.get_token()
-                if token.type == TokenType.IN:
+                if TokenType.lexicon[token.number] == "in":
                     # on ajoute token à l'arbre
                     self.next_token()
                     self.parse_e()
                     token = self.get_token()
-                    if token.type == TokenType.COLON:
+                    if TokenType.lexicon[token.number] == ":":
                         # on ajoute token à l'arbre
                         self.next_token()
                         self.parse_b()
 
-        if token.type in [
-            TokenType.IDENTIFIER,
-            TokenType.LPAREN,
-            TokenType.LSQUARE,
-            TokenType.RETURN,
-            TokenType.PRINT,
-            TokenType.TRUE,
-            TokenType.FALSE,
-            TokenType.NONE,
-            TokenType.MINUS,
-            TokenType.NOT,
-            TokenType.INTEGER,
+        if TokenType.lexicon[token.number] in [
+            "IDENTIFIER",
+            "(",
+            "[",
+            "return",
+            "print",
+            "True",
+            "False",
+            "None",
+            "-",
+            "not",
+            "INTEGER",
             TokenType.CONST,
         ]:
             self.parse_c()
             token = self.get_token()
-            if token.type == TokenType.NEWLINE:
+            if TokenType.lexicon[token.number] == "NEWLINE":
                 # on ajoute token à l'arbre
                 self.next_token()
         return False
@@ -388,118 +391,51 @@ class Parser:
         # on ajoute D' à l'arbre
 
         token = self.get_token()
-        if token.type == TokenType.ELSE:
+        if TokenType.lexicon[token.number] == "else":
             # on ajoute token à l'arbre
             self.next_token()
             token = self.get_token()
-            if token.type == TokenType.COLON:
+            if TokenType.lexicon[token.number] == ":":
                 # on ajoute token à l'arbre
                 self.next_token()
                 self.parse_b()
-        if token.type in [
-            TokenType.EOF,
-            TokenType.NEWLINE,
-            TokenType.END,
-            TokenType.IDENTIFIER,
-            TokenType.LPAREN,
-            TokenType.LSQUARE,
-            TokenType.RETURN,
-            TokenType.PRINT,
-            TokenType.IF,
-            TokenType.FOR,
-            TokenType.TRUE,
-            TokenType.FALSE,
-            TokenType.NONE,
-            TokenType.MINUS,
-            TokenType.NOT,
-            TokenType.INTEGER,
+        if TokenType.lexicon[token.number] in [
+            "EOF",
+            "NEWLINE",
+            "END",
+            "IDENTIFIER",
+            "(",
+            "[",
+            "return",
+            "print",
+            "if",
+            "for",
+            "True",
+            "False",
+            "None",
+            "-",
+            "not",
+            "INTEGER",
             TokenType.CONST,
         ]:
             pass
         return False
-
-    def parse_f(self):
-        "F"
-        # on ajoute F à l'arbre
-        token = self.get_token()
-        if token.type in [
-            TokenType.PLUS,
-            TokenType.MINUS,
-            TokenType.MULTIPLY,
-            TokenType.FLOOR_DIVIDE,
-            TokenType.LESS_EQUAL,
-            TokenType.GREATER_EQUAL,
-            TokenType.LESS,
-            TokenType.GREATER,
-            TokenType.NOT_EQUAL,
-            TokenType.AND,
-            TokenType.OR,
-        ]:
-            print("FFF")
-            # on ajoute token à l'arbre
-            self.next_token()
-        return False
-
-    def parse_g(self):
-        "G"
-        # on ajoute G à l'arbre
-        token = self.get_token()
-        if token.type == TokenType.INTEGER:
-            # on ajoute token à l'arbre
-            self.next_token()
-            self.parse_g_1()
-        return False
-
-    def parse_g_1(self):
-        "G'"
-        # on ajoute G' à l'arbre
-        token = self.get_token()
-        if token.type == TokenType.INTEGER:
-            # on ajoute token à l'arbre
-            self.next_token()
-            self.parse_g_1()
-        if token.type in [
-            TokenType.PLUS,
-            TokenType.MINUS,
-            TokenType.MULTIPLY,
-            TokenType.FLOOR_DIVIDE,
-            TokenType.LESS_EQUAL,
-            TokenType.GREATER_EQUAL,
-            TokenType.LESS,
-            TokenType.GREATER,
-            TokenType.NOT_EQUAL,
-            TokenType.AND,
-            TokenType.OR,
-            TokenType.COMMA,
-            TokenType.NEWLINE,
-            TokenType.RPAREN,
-            TokenType.LSQUARE,
-            TokenType.RSQUARE,
-        ]:
-            pass
-        return False
-
-    # à faire la suite
-    def parse_h(self):
-        "H"
-        # on ajoute H à l'arbre
 
     def parse_e(self):
         "E"
         # on ajoute E à l'arbre
         token = self.get_token()
 
-        if token.type in [
-            TokenType.IDENTIFIER,
+        if TokenType.lexicon[token.number] in [
+            "IDENTIFIER",
             TokenType.CONST,
-            TokenType.LPAREN,
-            TokenType.LSQUARE,
-            TokenType.NOT,
-            TokenType.MINUS,
-            TokenType.CONST,
-            TokenType.TRUE,
-            TokenType.FALSE,
-            TokenType.NONE,
+            "(",
+            "[",
+            "not",
+            "-",
+            "True",
+            "False",
+            "None",
         ]:
             self.parse_e_or()
 
@@ -508,34 +444,35 @@ class Parser:
         # on ajoute E à l'arbre
         token = self.get_token()
 
-        if token.type in [
-            TokenType.IDENTIFIER,
-            TokenType.LPAREN,
-            TokenType.LSQUARE,
-            TokenType.NOT,
-            TokenType.MINUS,
+        if TokenType.lexicon[token.number] in [
+            "IDENTIFIER",
+            "(",
+            "[",
+            "not",
+            "-",
             TokenType.CONST,
-            TokenType.TRUE,
-            TokenType.CONST,
-            TokenType.FALSE,
-            TokenType.NONE,
+            "True",
+            "False",
+            "None",
         ]:
             self.parse_e_and()
             self.parse_e_or_tail()
 
     def parse_e_or_tail(self):
+        # on ajoute E_or_tail à l'arbre
+
         token = self.get_token()
 
-        if token.type in [
-            TokenType.NEWLINE,
-            TokenType.LPAREN,
-            TokenType.COLON,
-            TokenType.COMMA,
-            TokenType.LSQUARE,
-            TokenType.RSQUARE,
+        if TokenType.lexicon[token.number] in [
+            "NEWLINE",
+            "(",
+            ":",
+            ",",
+            "[",
+            "]",
         ]:
             pass
-        if token.type == TokenType.OR:
+        if TokenType.lexicon[token.number] == "or":
             # on ajoute token à l'arbre
             self.next_token()
             self.parse_e_and()
@@ -544,37 +481,38 @@ class Parser:
 
     def parse_e_and(self):
         "E''"
-        # on ajoute E à l'arbre
+        # on ajoute E_and à l'arbre
         token = self.get_token()
 
-        if token.type in [
-            TokenType.IDENTIFIER,
-            TokenType.LPAREN,
-            TokenType.LSQUARE,
-            TokenType.NOT,
-            TokenType.MINUS,
+        if TokenType.lexicon[token.number] in [
+            "IDENTIFIER",
+            "(",
+            "[",
+            "not",
+            "-",
             TokenType.CONST,
-            TokenType.TRUE,
-            TokenType.FALSE,
-            TokenType.NONE,
+            "True",
+            "False",
+            "None",
         ]:
             self.parse_e_not()
             self.parse_e_and_tail()
         return False
 
     def parse_e_and_tail(self):
+        # on ajoute e_and_tail à l'arbre
         token = self.get_token()
 
-        if token.type in [
-            TokenType.NEWLINE,
-            TokenType.RPAREN,
-            TokenType.COLON,
-            TokenType.COMMA,
-            TokenType.LSQUARE,
-            TokenType.OR,
+        if TokenType.lexicon[token.number] in [
+            "NEWLINE",
+            ")",
+            ":",
+            ",",
+            "[",
+            "or",
         ]:
             pass
-        if token.type == TokenType.AND:
+        if TokenType.lexicon[token.number] == "and":
             # on ajoute token à l'arbre
             self.next_token()
             self.parse_e_not()
@@ -582,63 +520,66 @@ class Parser:
         return False
 
     def parse_e_not(self):
+        # on ajoute e_not à l'arbre
 
         token = self.get_token()
 
-        if token.type in [
-            TokenType.IDENTIFIER,
-            TokenType.LPAREN,
-            TokenType.LSQUARE,
-            TokenType.MINUS,
+        if TokenType.lexicon[token.number] in [
+            "IDENTIFIER",
+            "(",
+            "[",
+            "-",
             TokenType.CONST,
-            TokenType.TRUE,
-            TokenType.FALSE,
-            TokenType.NONE,
+            "True",
+            "False",
+            "None",
         ]:
             self.parse_e_rel()
-        if token.type == TokenType.NOT:
+        if TokenType.lexicon[token.number] == "not":
             # on ajoute token à l'arbre
             self.next_token()
             self.parse_e_rel()
         return False
 
     def parse_e_rel(self):
+        # on ajoute e_rel à l'arbre
         token = self.get_token()
 
-        if token.type in [
-            TokenType.IDENTIFIER,
-            TokenType.LPAREN,
-            TokenType.LSQUARE,
-            TokenType.MINUS,
+        if TokenType.lexicon[token.number] in [
+            "IDENTIFIER",
+            "(",
+            "[",
+            "-",
             TokenType.CONST,
-            TokenType.TRUE,
-            TokenType.FALSE,
-            TokenType.NONE,
+            "True",
+            "False",
+            "None",
         ]:
             self.parse_e_add()
             self.parse_e_rel_tail()
         return False
 
     def parse_e_rel_tail(self):
+        # on ajoute le e_rel_tail à l'arbre
         token = self.get_token()
-        if token.type in [
-            TokenType.NEWLINE,
-            TokenType.RPAREN,
-            TokenType.COLON,
-            TokenType.COMMA,
-            TokenType.LSQUARE,
-            TokenType.RSQUARE,
-            TokenType.OR,
-            TokenType.AND,
+        if TokenType.lexicon[token.number] in [
+            "NEWLINE",
+            ")",
+            ":",
+            ",",
+            "[",
+            "]",
+            "or",
+            "and",
         ]:
             pass
-        if token.type in [
-            TokenType.GREATER_OR_EQUAL,
-            TokenType.LESS_OR_EQUAL,
-            TokenType.GREATER,
-            TokenType.LESS,
-            TokenType.EQUALS,
-            TokenType.NEQUAL,
+        if TokenType.lexicon[token.number] in [
+            ">=",
+            "<=",
+            ">",
+            "<",
+            "==",
+            "!=",
         ]:
             self.parse_o_r()
             self.parse_e_add()
@@ -646,17 +587,18 @@ class Parser:
         return False
 
     def parse_e_add(self):
+        # on ajoute e_add à l'arbre
         token = self.get_token()
 
-        if token.type in [
-            TokenType.IDENTIFIER,
-            TokenType.LPAREN,
-            TokenType.LSQUARE,
-            TokenType.MINUS,
+        if TokenType.lexicon[token.number] in [
+            "IDENTIFIER",
+            "(",
+            "[",
+            "-",
             TokenType.CONST,
-            TokenType.TRUE,
-            TokenType.FALSE,
-            TokenType.NONE,
+            "True",
+            "False",
+            "None",
         ]:
             self.parse_e_mult()
             self.parse_e_add_tail()
@@ -665,41 +607,42 @@ class Parser:
     def parse_e_add_tail(self):
         token = self.get_token()
 
-        if token.type in [
-            TokenType.NEWLINE,
-            TokenType.RPAREN,
-            TokenType.COLON,
-            TokenType.COMMA,
-            TokenType.LSQUARE,
-            TokenType.RSQUARE,
-            TokenType.OR,
-            TokenType.AND,
-            TokenType.GREATER_EQUAL,
-            TokenType.LESS_EQUAL,
-            TokenType.GREATER,
-            TokenType.LESS,
-            TokenType.NOT_EQUAL,
-            TokenType.EQUALS,
+        if TokenType.lexicon[token.number] in [
+            "NEWLINE",
+            ")",
+            ":",
+            ",",
+            "[",
+            "]",
+            "or",
+            "and",
+            ">=",
+            "<=",
+            ">",
+            "<",
+            "!=",
+            "==",
         ]:
             pass
-        if token.type == TokenType.PLUS:
+        if TokenType.lexicon[token.number] == "+":
             self.parse_o_plus()
             self.parse_e_mult()
             self.parse_e_add_tail()
         return False
 
     def parse_e_mult(self):
+        # on ajoute e_mult à l'arbre
         token = self.get_token()
 
-        if token.type in [
-            TokenType.IDENTIFIER,
-            TokenType.LPAREN,
-            TokenType.LSQUARE,
-            TokenType.MINUS,
+        if TokenType.lexicon[token.number] in [
+            "IDENTIFIER",
+            "(",
+            "[",
+            "-",
             TokenType.CONST,
-            TokenType.TRUE,
-            TokenType.FALSE,
-            TokenType.NONE,
+            "True",
+            "False",
+            "None",
         ]:
             self.parse_e_un()
             self.parse_e_mult_tail()
@@ -708,61 +651,66 @@ class Parser:
     def parse_e_mult_tail(self):
         token = self.get_token()
 
-        if token.type in [
-            TokenType.NEWLINE,
-            TokenType.RPAREN,
-            TokenType.COLON,
-            TokenType.COMMA,
-            TokenType.LSQUARE,
-            TokenType.RSQUARE,
-            TokenType.OR,
-            TokenType.AND,
-            TokenType.LESS_EQUAL,
-            TokenType.GREATER_EQUAL,
-            TokenType.LESS,
-            TokenType.GREATER,
-            TokenType.NOT_EQUAL,
-            TokenType.EQUALS,
-            TokenType.PLUS,
+        if TokenType.lexicon[token.number] in [
+            "NEWLINE",
+            ")",
+            ":",
+            ",",
+            "[",
+            "]",
+            "or",
+            "and",
+            "<=",
+            ">=",
+            "<",
+            ">",
+            "!=",
+            "==",
+            "+",
         ]:
             pass
 
-        if token.type in [TokenType.MULTIPLY, TokenType.FLOOR_DIVIDE, TokenType.MODULO]:
+        if TokenType.lexicon[token.number] in [
+            "*",
+            "//",
+            "%",
+        ]:
             self.parse_o_star()
             self.parse_e_un()
             self.parse_e_mult_tail()
         return False
 
     def parse_e_un(self):
+        # on ajoute e_un à l'arbre
         token = self.get_token()
 
-        if token.type == TokenType.LPAREN:
+        if TokenType.lexicon[token.number] == "(":
             # on ajoute token à l'arbre
             self.next_token()
             self.parse_e()
             token = self.get_token()
-            if token.type == TokenType.RPAREN:
+            if TokenType.lexicon[token.number] == ")":
                 # on ajoute token à l'arbre
                 self.next_token()
-        if token.type == TokenType.LSQUARE:
+        if TokenType.lexicon[token.number] == "[":
             # on ajoute token à l'arbre
             self.next_token()
             self.parse_e()
             token = self.get_token()
-            if token.type == TokenType.RSQUARE:
+            if TokenType.lexicon[token.number] == "]":
                 # on ajoute token à l'arbre
                 self.next_token()
-        if token.type == TokenType.MINUS:
+        if TokenType.lexicon[token.number] == "-":
             # on ajoute token à l'arbre
             self.next_token()
             self.parse_e_un()
 
-        if token.type in [
-            TokenType.IDENTIFIER,
+        if TokenType.lexicon[token.number] in [
+            "IDENTIFIER",
             TokenType.CONST,
-            TokenType.TRUE,
-            TokenType.FALSE,
-            TokenType.NONE,
+            "True",
+            "False",
+            "None",
         ]:
             self.parse_o_un()
         return False
@@ -770,25 +718,26 @@ class Parser:
     def parse_e_1(self):
         token = self.get_token()
 
-        if token.type in [
-            TokenType.LPAREN,
-            TokenType.IDENTIFIER,
-            TokenType.LSQUARE,
-            TokenType.NOT,
-            TokenType.MINUS,
+        if TokenType.lexicon[token.number] in [
+            "(",
+            "IDENTIFIER",
+            "[",
+            "not",
+            "-",
             TokenType.CONST,
-            TokenType.TRUE,
-            TokenType.FALSE,
-            TokenType.NONE,
+            "True",
+            "False",
+            "None",
         ]:
             self.parse_e()
             self.parse_e_2()
         return False
 
     def parse_e_2(self):
+        # on ajoute e_2 à l'arbre
         token = self.get_token()
 
-        if token.type == TokenType.COMMA:
+        if TokenType.lexicon[token.number] == ",":
             # on ajoute token à l'arbre
             self.next_token()
             self.parse_e()
@@ -797,44 +746,52 @@ class Parser:
         return False
 
     def parse_o_r(self):
+        # on ajoute o_r à l'arbre
         token = self.get_token()
 
-        if token.type == [
-            TokenType.LESS_EQUAL,
-            TokenType.GREATER_EQUAL,
-            TokenType.LESS,
-            TokenType.GREATER,
-            TokenType.NOT_EQUAL,
-            TokenType.EQUALS,
+        if TokenType.lexicon[token.number] in [
+            "<=",
+            ">=",
+            "<",
+            ">",
+            "!=",
+            "==",
         ]:
             # on ajoute token à l'arbre
             self.next_token()
         return False
 
     def parse_o_plus(self):
+        # on ajoute o_plus à l'arbre
         token = self.get_token()
 
-        if token.type == TokenType.PLUS:
+        if TokenType.lexicon[token.number] == "+":
             # on ajoute token à l'arbre
             self.next_token()
         return False
 
     def parse_o_star(self):
+        # on ajoute o_star à l'arbre
         token = self.get_token()
 
-        if token.type == [TokenType.MULTIPLY, TokenType.FLOOR_DIVIDE, TokenType.MODULO]:
+        if TokenType.lexicon[token.number] == [
+            "*",
+            "//",
+            "%",
+        ]:
             # on ajoute token à l'arbre
             self.next_token()
         return False
 
     def parse_o_un(self):
+        # on ajoute o_un à l'arbre
         token = self.get_token()
 
-        if token.type == [
-            TokenType.IDENTIFIER,
+        if TokenType.lexicon[token.number] == [
+            "IDENTIFIER",
             TokenType.CONST,
-            TokenType.FALSE,
-            TokenType.NONE,
+            "False",
+            "None",
         ]:
             # on ajoute token à l'arbre
             self.next_token()
