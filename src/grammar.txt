@@ -1,82 +1,105 @@
-S ::= Newline S' 
-S ::= S'
-S' ::= A S'
-S' ::= D S''
-S'' ::= D S''
-S'' ::= EOF
-A ::= def ident ( I ) : B
-I ::= ident I'
-I' ::= ,ident I'
-I' ::= ''
-B ::= C Newline
-B ::= Newline Begin D B' End
-B' ::= Newline D B'
-B' ::= ''
-C ::= return E
-C ::= ident C''
-C ::= E C'
-C ::= print( E )
-C' ::= [ E ] = E 
-C' ::= ''
-C'' ::= = E 
-C'' ::= ( E''' )
-C'' ::= ''
-D ::= C Newline
-D ::= if E : B D'
-D ::= for indent in E : B
-D' ::= else : B 
-D' ::= ''
-E ::= G E*
-E ::= H E*
-E ::= True E*
-E ::= False E*
-E ::= None E*
+S ::= Newline S1
+S ::= S1
 
-E ::= - E E*
-E ::= not E E*
-E ::= [ E'' ] E*
-E ::= ( E ) E*
-E* ::= E' E*
-E* ::= ''
-F ::= + 
-F ::= -
-F ::= //
-F ::= %
-F ::= <=
-F ::= >=
-F ::= <
-F ::= >
-F ::= !=
-F ::= ==
-F ::= and
-F ::= or
-G ::= 0 G'
-G ::= 1 G'
-G ::= 2 G'
-G ::= 3 G'
-G ::= 4 G'
-G ::= 5 G'
-G ::= 6 G'
-G ::= 7 G'
-G ::= 8 G'
-G ::= 9 G'
-G' ::= 0 G'
-G' ::= 1 G'
-G' ::= 2 G'
-G' ::= 3 G'
-G' ::= 4 G'
-G' ::= 5 G'
-G' ::= 6 G'
-G' ::= 7 G'
-G' ::= 8 G'
-G' ::= 9 G'
-G' ::= ''
-H ::= " H' "
-H' ::= b H'
-E' ::= F E
-E' ::= [ E ]
-E'' ::= E E'''
-E'' ::= ''
-E''' ::= , E E'''
-E''' ::= ''
+S1 ::= A S1
+S1 ::= D S2
+
+S2 ::= D S2
+S2 ::= EOF
+
+A ::= def ident ( I )  :  B
+
+I ::= ident I1
+
+I1 ::= ,  ident I1
+I1 ::=  ''
+
+B ::= C Newline
+B ::= Newline Begin D B1 End
+
+B1 ::= Newline D B1
+B1 ::=  ''
+
+C ::= return E
+C ::= ident C2
+C ::= E C1
+C ::= print ( E )
+
+C1 ::= [ E ] = E 
+C1 ::=  ''
+
+C2 ::= = E 
+C2 ::= ( E1 )
+C2 ::=  ''
+
+D ::= C Newline
+D ::= if E : B D1
+D ::= for ident in E : B
+
+D1 ::= else : B 
+D1 ::= ''
+
+
+
+E            ::= E_or
+
+E_or         ::= E_and E_or_tail
+
+E_or_tail    ::= or E_and E_or_tail 
+E_or_tail    ::= ''
+
+E_and        ::= E_not E_and_tail
+
+E_and_tail   ::= and E_not E_and_tail 
+E_and_tail  ::= ''
+
+E_not        ::= not E_rel 
+E_not       ::= E_rel
+
+E_rel        ::= E_add E_rel_tail
+
+E_rel_tail   ::= O_r E_add E_rel_tail 
+E_rel_tail   ::= ''
+
+E_add        ::= E_mult E_add_tail
+
+E_add_tail   ::= O_+ E_mult E_add_tail 
+E_add_tail ::= ''
+
+E_mult       ::= E_un E_mult_tail
+
+E_mult_tail  ::= O_* E_un E_mult_tail 
+E_mult_tail ::= ''
+
+E_un         ::= -E_un 
+E_un        ::= [ E ]
+E_un        ::= ( E )
+E_un ::= O_un
+
+E_1          ::= E E_2 
+E_1             ::= ''
+
+E_2          ::= , E E_2 
+E_2         ::= ''
+
+O_r          ::= <= 
+O_r         ::= >=
+O_r         ::= >
+O_r         ::= <
+O_r         ::= !=
+O_r         ::= ==
+
+O_+          ::= + 
+O_+ := -
+
+O_*          ::= * 
+O_*          ::= // 
+O_*          ::= % 
+
+O_un         ::= ident 
+O_un         ::= const 
+O_un         ::= True 
+O_un         ::= False 
+O_un         ::= None 
+
 
