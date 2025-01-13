@@ -1260,6 +1260,6 @@ print(parser.parse_s())
 print(parser.root)
 # print(parser.tree.print_node())
 # print(parser.tree.children)
-print(parser.root.print_tree())
+# print(parser.root.print_tree())
 
 # parser.tree.plot()
