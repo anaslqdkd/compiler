@@ -19,7 +19,7 @@ class Parser:
         self.lexer = lexer
         self.current_token = self.lexer.get_next_token()
         self.tree = Tree(
-            data="axiome", line_index=self.lexer.current_line, is_terminal=False
+            data="axiome", line_index=self.current_token.line, is_terminal=False
         )
 
     def next_token(self):
@@ -39,14 +39,13 @@ class Parser:
         "S"
         # ajouter S à l'arbre
         self.tree.add_tree_child(
-            Tree(data="S", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="S", line_index=-1, is_terminal=False))
         token = self.get_token()
         if TokenType.lexicon[token.number] == "NEWLINE":
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -67,7 +66,9 @@ class Parser:
             "None",
             "-",
             "not",
-            TokenType.CONST,
+            # TokenType.CONST,
+            "STRING",
+            "INTEGER",
         ]:
 
             return self.parse_s_1()
@@ -77,22 +78,14 @@ class Parser:
         "S'"
         # ajouter S' à l'arbre
         self.tree.add_tree_child(
-            Tree(data="S1", line_index=self.lexer.current_line, is_terminal=False)
-        )
-        self.tree.add_tree_child(
-            Tree(
-                data="S1",
-                line_index=self.lexer.current_line,
-                is_terminal=False,
-            )
-        )
+            Tree(data="S1", line_index=-1, is_terminal=False))
         token = self.get_token()
 
         if TokenType.lexicon[token.number] == "def":
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -111,12 +104,14 @@ class Parser:
             "None",
             "-",
             "not",
-            TokenType.CONST,
+            # TokenType.CONST,
+            "STRING",
+            "INTEGER",
         ]:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -129,8 +124,7 @@ class Parser:
         "S''"
         # ajout S'' à l'arbre
         self.tree.add_tree_child(
-            Tree(data="S2", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="S2", line_index=-1, is_terminal=False))
         token = self.get_token()
 
         if TokenType.lexicon[token.number] == "EOF":
@@ -138,7 +132,7 @@ class Parser:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -158,7 +152,9 @@ class Parser:
             "None",
             "-",
             "not",
-            TokenType.CONST,
+            # TokenType.CONST,
+            "STRING",
+            "INTEGER",
         ]:
             self.parse_d()
             self.parse_s_2()
@@ -168,8 +164,7 @@ class Parser:
         "A"
         # on ajoute A à l'arbre
         self.tree.add_tree_child(
-            Tree(data="A", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="A", line_index=-1, is_terminal=False))
         token = self.get_token()
 
         if TokenType.lexicon[token.number] == "def":
@@ -177,7 +172,7 @@ class Parser:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -188,7 +183,7 @@ class Parser:
                 self.tree.add_tree_child(
                     Tree(
                         data=token.number,
-                        line_index=self.lexer.current_line,
+                        line_index=token.line,
                         is_terminal=True,
                     )
                 )
@@ -199,7 +194,7 @@ class Parser:
                 self.tree.add_tree_child(
                     Tree(
                         data=token.number,
-                        line_index=self.lexer.current_line,
+                        line_index=token.line,
                         is_terminal=True,
                     )
                 )
@@ -210,7 +205,7 @@ class Parser:
                 self.tree.add_tree_child(
                     Tree(
                         data=token.number,
-                        line_index=self.lexer.current_line,
+                        line_index=token.line,
                         is_terminal=True,
                     )
                 )
@@ -221,7 +216,7 @@ class Parser:
                 self.tree.add_tree_child(
                     Tree(
                         data=token.number,
-                        line_index=self.lexer.current_line,
+                        line_index=token.line,
                         is_terminal=True,
                     )
                 )
@@ -233,8 +228,7 @@ class Parser:
     def parse_i(self):
         # on ajoute I à l'arbre
         self.tree.add_tree_child(
-            Tree(data="I", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="I", line_index=-1, is_terminal=False))
         "I"
         token = self.get_token()
         if TokenType.lexicon[token.number] == "IDENTIFIER":
@@ -242,7 +236,7 @@ class Parser:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -254,15 +248,14 @@ class Parser:
         "I'"
         # on ajoute I' à l'arbre
         self.tree.add_tree_child(
-            Tree(data="I1", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="I1", line_index=-1, is_terminal=False))
         token = self.get_token()
         if TokenType.lexicon[token.number] == ",":
             # on ajoute token à l'arbre
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -273,7 +266,7 @@ class Parser:
                 self.tree.add_tree_child(
                     Tree(
                         data=token.number,
-                        line_index=self.lexer.current_line,
+                        line_index=token.line,
                         is_terminal=True,
                     )
                 )
@@ -287,15 +280,14 @@ class Parser:
         "B"
         # on ajoute B à l'arbre
         self.tree.add_tree_child(
-            Tree(data="B", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="B", line_index=-1, is_terminal=False))
         token = self.get_token()
         if TokenType.lexicon[token.number] == "NEWLINE":
             # on ajoute token à l'arbre
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -306,7 +298,7 @@ class Parser:
                 self.tree.add_tree_child(
                     Tree(
                         data=token.number,
-                        line_index=self.lexer.current_line,
+                        line_index=token.line,
                         is_terminal=True,
                     )
                 )
@@ -319,7 +311,7 @@ class Parser:
                     self.tree.add_tree_child(
                         Tree(
                             data=token.number,
-                            line_index=self.lexer.current_line,
+                            line_index=token.line,
                             is_terminal=True,
                         )
                     )
@@ -336,7 +328,9 @@ class Parser:
             "None",
             "-",
             "not",
-            TokenType.CONST,
+            # TokenType.CONST,
+            "STRING",
+            "INTEGER",
         ]:
             self.parse_c()
             token = self.get_token()
@@ -345,7 +339,7 @@ class Parser:
                 self.tree.add_tree_child(
                     Tree(
                         data=token.number,
-                        line_index=self.lexer.current_line,
+                        line_index=token.line,
                         is_terminal=True,
                     )
                 )
@@ -358,15 +352,14 @@ class Parser:
         "B1"
         # on ajoute B' à l'arbre
         self.tree.add_tree_child(
-            Tree(data="B1", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="B1", line_index=-1, is_terminal=False))
         token = self.get_token()
         if TokenType.lexicon[token.number] == "NEWLINE":
             # on ajoute token à l'arbre
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -381,15 +374,14 @@ class Parser:
         "C"
         # on ajoute C à l'arbre
         self.tree.add_tree_child(
-            Tree(data="C", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="C", line_index=-1, is_terminal=False))
         token = self.get_token()
         if TokenType.lexicon[token.number] == "return":
             # on ajoute token à l'arbre
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -400,7 +392,7 @@ class Parser:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -414,7 +406,7 @@ class Parser:
                 self.tree.add_tree_child(
                     Tree(
                         data=token.number,
-                        line_index=self.lexer.current_line,
+                        line_index=token.line,
                         is_terminal=True,
                     )
                 )
@@ -427,7 +419,7 @@ class Parser:
                     self.tree.add_tree_child(
                         Tree(
                             data=token.number,
-                            line_index=self.lexer.current_line,
+                            line_index=token.line,
                             is_terminal=True,
                         )
                     )
@@ -441,7 +433,9 @@ class Parser:
             "None",
             "-",
             "not",
-            TokenType.CONST,
+            # TokenType.CONST,
+            "STRING",
+            "INTEGER",
         ]:
             self.parse_e()
             self.parse_c_1()
@@ -460,7 +454,9 @@ class Parser:
                 "[",
                 "not",
                 "-",
-                TokenType.CONST,
+                # TokenType.CONST,
+                "STRING",
+                "INTEGER",
                 "True",
                 "False",
                 "None",
@@ -473,8 +469,7 @@ class Parser:
     def parse_c_1(self):
         "C'"
         self.tree.add_tree_child(
-            Tree(data="C1", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="C1", line_index=-1, is_terminal=False))
         # ajouter C' à l'arbre
         token = self.get_token()
 
@@ -483,7 +478,7 @@ class Parser:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -495,7 +490,7 @@ class Parser:
                 self.tree.add_tree_child(
                     Tree(
                         data=token.number,
-                        line_index=self.lexer.current_line,
+                        line_index=token.line,
                         is_terminal=True,
                     )
                 )
@@ -506,7 +501,7 @@ class Parser:
                     self.tree.add_tree_child(
                         Tree(
                             data=token.number,
-                            line_index=self.lexer.current_line,
+                            line_index=token.line,
                             is_terminal=True,
                         )
                     )
@@ -519,8 +514,7 @@ class Parser:
     def parse_c_2(self):
         "C''"
         self.tree.add_tree_child(
-            Tree(data="C2", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="C2", line_index=-1, is_terminal=False))
         # on ajoute C'' à l'arbre
         token = self.get_token()
 
@@ -529,7 +523,7 @@ class Parser:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -540,7 +534,7 @@ class Parser:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -552,7 +546,7 @@ class Parser:
                 self.tree.add_tree_child(
                     Tree(
                         data=token.number,
-                        line_index=self.lexer.current_line,
+                        line_index=token.line,
                         is_terminal=True,
                     )
                 )
@@ -565,8 +559,7 @@ class Parser:
     def parse_d(self):
         "D"
         self.tree.add_tree_child(
-            Tree(data="D", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="D", line_index=-1, is_terminal=False))
         # on ajoute D à l'arbre
         token = self.get_token()
 
@@ -575,7 +568,7 @@ class Parser:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -587,7 +580,7 @@ class Parser:
                 self.tree.add_tree_child(
                     Tree(
                         data=token.number,
-                        line_index=self.lexer.current_line,
+                        line_index=token.line,
                         is_terminal=True,
                     )
                 )
@@ -603,7 +596,7 @@ class Parser:
                 self.tree.add_tree_child(
                     Tree(
                         data=token.number,
-                        line_index=self.lexer.current_line,
+                        line_index=token.line,
                         is_terminal=True,
                     )
                 )
@@ -614,7 +607,7 @@ class Parser:
                     self.tree.add_tree_child(
                         Tree(
                             data=token.number,
-                            line_index=self.lexer.current_line,
+                            line_index=token.line,
                             is_terminal=True,
                         )
                     )
@@ -625,7 +618,7 @@ class Parser:
                         self.tree.add_tree_child(
                             Tree(
                                 data=token.number,
-                                line_index=self.lexer.current_line,
+                                line_index=token.line,
                                 is_terminal=True,
                             )
                         )
@@ -645,7 +638,9 @@ class Parser:
             "-",
             "not",
             "INTEGER",
-            TokenType.CONST,
+            # TokenType.CONST,
+            "STRING",
+            "INTEGER",
         ]:
             self.parse_c()
             token = self.get_token()
@@ -654,7 +649,7 @@ class Parser:
                 self.tree.add_tree_child(
                     Tree(
                         data=token.number,
-                        line_index=self.lexer.current_line,
+                        line_index=token.line,
                         is_terminal=True,
                     )
                 )
@@ -665,8 +660,7 @@ class Parser:
         "D1"
         # on ajoute D' à l'arbre
         self.tree.add_tree_child(
-            Tree(data="D1", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="D1", line_index=-1, is_terminal=False))
 
         token = self.get_token()
         if TokenType.lexicon[token.number] == "else":
@@ -674,7 +668,7 @@ class Parser:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -684,7 +678,7 @@ class Parser:
                 self.tree.add_tree_child(
                     Tree(
                         data=token.number,
-                        line_index=self.lexer.current_line,
+                        line_index=token.line,
                         is_terminal=True,
                     )
                 )
@@ -708,7 +702,9 @@ class Parser:
             "-",
             "not",
             "INTEGER",
-            TokenType.CONST,
+            # TokenType.CONST,
+            "STRING",
+            "INTEGER",
         ]:
             pass
         return False
@@ -717,13 +713,14 @@ class Parser:
         "E"
         # on ajoute E à l'arbre
         self.tree.add_tree_child(
-            Tree(data="E", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="E", line_index=-1, is_terminal=False))
         token = self.get_token()
 
         if TokenType.lexicon[token.number] in [
             "IDENTIFIER",
-            TokenType.CONST,
+            # TokenType.CONST,
+            "STRING",
+            "INTEGER",
             "(",
             "[",
             "not",
@@ -738,8 +735,7 @@ class Parser:
         "E'"
         # on ajoute E à l'arbre
         self.tree.add_tree_child(
-            Tree(data="E_or", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="E_or", line_index=-1, is_terminal=False))
         token = self.get_token()
 
         if TokenType.lexicon[token.number] in [
@@ -748,7 +744,9 @@ class Parser:
             "[",
             "not",
             "-",
-            TokenType.CONST,
+            # TokenType.CONST,
+            "STRING",
+            "INTEGER",
             "True",
             "False",
             "None",
@@ -759,9 +757,7 @@ class Parser:
     def parse_e_or_tail(self):
         # on ajoute E_or_tail à l'arbre
         self.tree.add_tree_child(
-            Tree(
-                data="E_or_tail", line_index=self.lexer.current_line, is_terminal=False
-            )
+            Tree(data="E_or_tail", line_index=-1, is_terminal=False)
         )
 
         token = self.get_token()
@@ -786,8 +782,7 @@ class Parser:
         "E''"
         # on ajoute E_and à l'arbre
         self.tree.add_tree_child(
-            Tree(data="E_and", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="E_and", line_index=-1, is_terminal=False))
         token = self.get_token()
 
         if TokenType.lexicon[token.number] in [
@@ -796,7 +791,9 @@ class Parser:
             "[",
             "not",
             "-",
-            TokenType.CONST,
+            # TokenType.CONST,
+            "STRING",
+            "INTEGER",
             "True",
             "False",
             "None",
@@ -808,9 +805,7 @@ class Parser:
     def parse_e_and_tail(self):
         # on ajoute e_and_tail à l'arbre
         self.tree.add_tree_child(
-            Tree(
-                data="E_and_tail", line_index=self.lexer.current_line, is_terminal=False
-            )
+            Tree(data="E_and_tail", line_index=-1, is_terminal=False)
         )
         token = self.get_token()
 
@@ -828,7 +823,7 @@ class Parser:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -840,8 +835,7 @@ class Parser:
     def parse_e_not(self):
         # on ajoute e_not à l'arbre
         self.tree.add_tree_child(
-            Tree(data="E_not", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="E_not", line_index=-1, is_terminal=False))
 
         token = self.get_token()
 
@@ -850,7 +844,9 @@ class Parser:
             "(",
             "[",
             "-",
-            TokenType.CONST,
+            # TokenType.CONST,
+            "STRING",
+            "INTEGER",
             "True",
             "False",
             "None",
@@ -861,7 +857,7 @@ class Parser:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -872,8 +868,7 @@ class Parser:
     def parse_e_rel(self):
         # on ajoute e_rel à l'arbre
         self.tree.add_tree_child(
-            Tree(data="E_rel", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="E_rel", line_index=-1, is_terminal=False))
         token = self.get_token()
 
         if TokenType.lexicon[token.number] in [
@@ -881,7 +876,9 @@ class Parser:
             "(",
             "[",
             "-",
-            TokenType.CONST,
+            # TokenType.CONST,
+            "STRING",
+            "INTEGER",
             "True",
             "False",
             "None",
@@ -893,9 +890,7 @@ class Parser:
     def parse_e_rel_tail(self):
         # on ajoute le e_rel_tail à l'arbre
         self.tree.add_tree_child(
-            Tree(
-                data="E_rel_tail", line_index=self.lexer.current_line, is_terminal=False
-            )
+            Tree(data="E_rel_tail", line_index=-1, is_terminal=False)
         )
         token = self.get_token()
         if TokenType.lexicon[token.number] in [
@@ -925,8 +920,7 @@ class Parser:
     def parse_e_add(self):
         # on ajoute e_add à l'arbre
         self.tree.add_tree_child(
-            Tree(data="E_add", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="E_add", line_index=-1, is_terminal=False))
         token = self.get_token()
 
         if TokenType.lexicon[token.number] in [
@@ -934,7 +928,9 @@ class Parser:
             "(",
             "[",
             "-",
-            TokenType.CONST,
+            # TokenType.CONST,
+            "STRING",
+            "INTEGER",
             "True",
             "False",
             "None",
@@ -945,9 +941,7 @@ class Parser:
 
     def parse_e_add_tail(self):
         self.tree.add_tree_child(
-            Tree(
-                data="E_add_tail", line_index=self.lexer.current_line, is_terminal=False
-            )
+            Tree(data="E_add_tail", line_index=-1, is_terminal=False)
         )
         token = self.get_token()
 
@@ -977,8 +971,7 @@ class Parser:
     def parse_e_mult(self):
         # on ajoute e_mult à l'arbre
         self.tree.add_tree_child(
-            Tree(data="E_mult", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="E_mult", line_index=-1, is_terminal=False))
         token = self.get_token()
 
         if TokenType.lexicon[token.number] in [
@@ -986,7 +979,9 @@ class Parser:
             "(",
             "[",
             "-",
-            TokenType.CONST,
+            # TokenType.CONST,
+            "STRING",
+            "INTEGER",
             "True",
             "False",
             "None",
@@ -999,7 +994,7 @@ class Parser:
         self.tree.add_tree_child(
             Tree(
                 data="E_mult_tail",
-                line_index=self.lexer.current_line,
+                line_index=-1,
                 is_terminal=False,
             )
         )
@@ -1037,8 +1032,7 @@ class Parser:
     def parse_e_un(self):
         # on ajoute e_un à l'arbre
         self.tree.add_tree_child(
-            Tree(data="E_un", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="E_un", line_index=-1, is_terminal=False))
         token = self.get_token()
 
         if TokenType.lexicon[token.number] == "(":
@@ -1046,7 +1040,7 @@ class Parser:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -1058,7 +1052,7 @@ class Parser:
                 self.tree.add_tree_child(
                     Tree(
                         data=token.number,
-                        line_index=self.lexer.current_line,
+                        line_index=token.line,
                         is_terminal=True,
                     )
                 )
@@ -1068,7 +1062,7 @@ class Parser:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -1080,7 +1074,7 @@ class Parser:
                 self.tree.add_tree_child(
                     Tree(
                         data=token.number,
-                        line_index=self.lexer.current_line,
+                        line_index=token.line,
                         is_terminal=True,
                     )
                 )
@@ -1090,7 +1084,7 @@ class Parser:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -1099,7 +1093,9 @@ class Parser:
 
         if TokenType.lexicon[token.number] in [
             "IDENTIFIER",
-            TokenType.CONST,
+            # TokenType.CONST,
+            "STRING",
+            "INTEGER",
             "True",
             "False",
             "None",
@@ -1109,8 +1105,7 @@ class Parser:
 
     def parse_e_1(self):
         self.tree.add_tree_child(
-            Tree(data="E1", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="E1", line_index=-1, is_terminal=False))
         token = self.get_token()
 
         if TokenType.lexicon[token.number] in [
@@ -1119,7 +1114,9 @@ class Parser:
             "[",
             "not",
             "-",
-            TokenType.CONST,
+            # TokenType.CONST,
+            "STRING",
+            "INTEGER",
             "True",
             "False",
             "None",
@@ -1131,8 +1128,7 @@ class Parser:
     def parse_e_2(self):
         # on ajoute e_2 à l'arbre
         self.tree.add_tree_child(
-            Tree(data="E2", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="E2", line_index=-1, is_terminal=False))
         token = self.get_token()
 
         if TokenType.lexicon[token.number] == ",":
@@ -1146,8 +1142,7 @@ class Parser:
     def parse_o_r(self):
         # on ajoute o_r à l'arbre
         self.tree.add_tree_child(
-            Tree(data="O_r", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="O_r", line_index=-1, is_terminal=False))
         token = self.get_token()
 
         if TokenType.lexicon[token.number] in [
@@ -1162,7 +1157,7 @@ class Parser:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -1172,8 +1167,7 @@ class Parser:
     def parse_o_plus(self):
         # on ajoute o_plus à l'arbre
         self.tree.add_tree_child(
-            Tree(data="O_plus", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="O_plus", line_index=-1, is_terminal=False))
         token = self.get_token()
 
         if TokenType.lexicon[token.number] == "+":
@@ -1184,8 +1178,7 @@ class Parser:
     def parse_o_star(self):
         # on ajoute o_star à l'arbre
         self.tree.add_tree_child(
-            Tree(data="O_star", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="O_star", line_index=-1, is_terminal=False))
         token = self.get_token()
 
         if TokenType.lexicon[token.number] == [
@@ -1197,7 +1190,7 @@ class Parser:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
@@ -1207,13 +1200,14 @@ class Parser:
     def parse_o_un(self):
         # on ajoute o_un à l'arbre
         self.tree.add_tree_child(
-            Tree(data="O_un", line_index=self.lexer.current_line, is_terminal=False)
-        )
+            Tree(data="O_un", line_index=-1, is_terminal=False))
         token = self.get_token()
 
         if TokenType.lexicon[token.number] == [
             "IDENTIFIER",
-            TokenType.CONST,
+            # TokenType.CONST,
+            "STRING",
+            "INTEGER",
             "False",
             "None",
         ]:
@@ -1221,9 +1215,13 @@ class Parser:
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
-                    line_index=self.lexer.current_line,
+                    line_index=token.line,
                     is_terminal=True,
                 )
             )
             self.next_token()
         return False
+
+
+parser = Parser(lexer)
+print(parser.tree)
