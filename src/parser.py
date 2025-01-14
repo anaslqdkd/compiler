@@ -84,8 +84,13 @@ class Parser:
             Tree(data="S1", line_index=-1, is_terminal=False))
         token = self.get_token()
         print(TokenType.lexicon[token.number])
+        if TokenType.lexicon[token.number] == "NEWLINE":
+            peek_token = self.peek_next_token()
+            print(peek_token.number)
+            if TokenType.lexicon[peek_token.number] == "EOF":
+                return True
 
-        if TokenType.lexicon[token.number] == "def":
+        elif TokenType.lexicon[token.number] == "def":
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
@@ -94,8 +99,8 @@ class Parser:
                 )
             )
             self.parse_a()
-            self.parse_s_1()
-        if TokenType.lexicon[token.number] in [
+            return self.parse_s_1()
+        elif TokenType.lexicon[token.number] in [
             "[",
             "IDENTIFIER",
             "(",
@@ -111,6 +116,8 @@ class Parser:
             # TokenType.CONST,
             "STRING",
             "INTEGER",
+            # # NOTE:  ajout perso
+            # "NEWLINE",
         ]:
             self.tree.add_tree_child(
                 Tree(
@@ -121,7 +128,7 @@ class Parser:
             )
             self.parse_d()
             # NOTE: j'ai changé ici, parse_s_1 au lieu de parse_s_2
-            self.parse_s_1()
+            return self.parse_s_1()
 
         return False
 
@@ -133,6 +140,9 @@ class Parser:
             Tree(data="S2", line_index=-1, is_terminal=False))
         token = self.get_token()
         print(TokenType.lexicon[token.number])
+
+        # if TokenType.lexicon[token.number] == "NEWLINE":
+        #     print("%%%%%%%%%%%%%")
 
         if TokenType.lexicon[token.number] == "EOF":
             # NOTE: here
@@ -541,6 +551,8 @@ class Parser:
                 self.next_token()
                 self.parse_e()
         if TokenType.lexicon[token.number] == "NEWLINE":
+            print("**************")
+            # TODO: à voir ici pb comment arrêter la fonction, le pass ne fait rien donc à voir comment arrêter l'execution de la fonction
             pass
         return False
 
@@ -1307,7 +1319,7 @@ class Parser:
 
 parser = Parser(lexer)
 print(parser.parse_s())
-print(parser.root)
+# print(parser.root)
 # print(parser.tree.print_node())
 # print(parser.tree.children)
 # print(parser.root.print_tree())
