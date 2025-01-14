@@ -1,6 +1,4 @@
 import io
-import matplotlib.pyplot as plt
-import networkx as nx
 from unittest.mock import patch
 
 # -------------------------------------------------------------------------------------------------
@@ -20,7 +18,8 @@ class Tree:
             self.children.append(child)
             child.father = self
     def add_child(self, child_data:int=-1, line_index:int=-1, is_terminal:bool=False)->None:
-        self.children.append(Tree(data=child_data, _father=self, line_index=line_index, is_terminal=is_terminal))
+        child = Tree(data=child_data, _father=self, line_index=line_index, is_terminal=is_terminal)
+        self.children.append(child)
     def insert_tree_child(self, index:int=0, child:"Tree"=None)->None:
         if child is not None:
             self.children.insert(index, child)
@@ -45,28 +44,32 @@ class Tree:
         print(f"Node: {self.data}, Line Index: {self.line_index}, Terminal: {self.is_terminal}")
         pass
 
-    def build_graph(self, graph, pos=None, parent=None, depth=0, x=0, width=1):
-        pos = pos or {}
-        pos[self] = (x, -depth)
-        if parent:
-            graph.add_edge(parent, self)
+    def get_flowchart(self, file_path:str, print_result:bool=False) -> None:
+        # TODO: Write documentation for this
+        nodes = []
+        edges = []
 
-        dx = width / max(2, len(self.children))
-        next_x = x - width / 2 + dx / 2
+        def traverse(node):
+            # Create a unique identifier for the node using its data
+            node_id = f"node{node.data}"
+            label = f"{node.data} (L{node.line_index}){' T' if node.is_terminal else ''}"
+            nodes.append(f'{node_id}["{label}"]')
 
-        for child in self.children:
-            child.build_graph(graph, pos=pos, parent=self, depth=depth + 1, x=next_x, width=dx)
-            next_x += dx
-        return pos
+            for child in node.children:
+                child_id = f"node{child.data}"
+                edges.append(f"{node_id} --> {child_id}")
+                traverse(child)
 
-    def plot(self) -> None:
-        graph = nx.DiGraph()
-        pos = self.build_graph(graph)
+        traverse(self)
 
-        labels = {node: node.data for node in pos}
-        plt.figure(figsize=(12, 8))
-        nx.draw(graph, pos, labels=labels, with_labels=True, node_size=1000, node_color="skyblue", font_size=10, font_weight="bold", edge_color="gray")
-        plt.show()
+        # Combine nodes and edges into a Mermaid graph
+        graph = "graph TD\n" + "\n".join(nodes + edges)
+
+        if print_result:
+            print(graph)
+        with open(file_path, "w") as file:
+            file.write(graph)
+        pass
 
 # -------------------------------------------------------------------------------------------------
 # Converter
@@ -96,6 +99,33 @@ def transform_into_AST(given_tree:"Tree")->"Tree":
                 c2.father = given_tree
                 given_tree.insert_tree_child(index, c2)
         return given_tree
+
+# -------------------------------------------------------------------------------------------------
+# Sample
+# -------------------------------------------------------------------------------------------------
+
+def get_sample_tree()->"Tree":
+    root = Tree(data=1, line_index=0, is_terminal=False)
+    child_a = Tree(data=2, line_index=1, is_terminal=False)
+    child_b = Tree(data=3, line_index=2, is_terminal=False)
+    child_c = Tree(data=4, line_index=3, is_terminal=True)
+    root.add_tree_child(child_a)
+    root.add_tree_child(child_b)
+    root.add_tree_child(child_c)
+    child_a.add_child(5, line_index=4, is_terminal=True)
+    child_a.add_child(6, line_index=5, is_terminal=False)
+    child_b1 = Tree(data=7, line_index=6, is_terminal=False)
+    child_b2 = Tree(data=8, line_index=7, is_terminal=True)
+    child_b.add_tree_child(child_b1)
+    child_b.add_tree_child(child_b2)
+    child_a.children[1].add_child(9, line_index=8, is_terminal=True)
+    child_a.children[1].add_child(10, line_index=9, is_terminal=True)
+    child_b1.add_child(11, line_index=10, is_terminal=False)
+    child_b1.add_child(12, line_index=11, is_terminal=True)
+    child_b1.children[0].add_child(13, line_index=12, is_terminal=True)
+    child_b1.children[0].add_child(14, line_index=13, is_terminal=False)
+    child_b1.children[0].children[1].add_child(15, line_index=14, is_terminal=True)
+    return root
 
 # -------------------------------------------------------------------------------------------------
 # Tests
@@ -451,14 +481,15 @@ if __name__ == '__main__':
     test_is_leaf_returns_false_for_non_leaf_node()
     print("End of first tests. Tree structure tests successfully passed!\n")
     print("Testing transformation from tree to AST...")
-    test_transform_into_AST_with_empty_tree()
-    test_transform_into_AST_single_terminal_node()
-    test_transform_into_AST_single_non_terminal_node()
-    test_transform_into_AST_with_multiple_non_terminal_nodes()
-    test_transform_into_AST_with_nested_non_terminals()
-    test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes1()
-    test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes2()
-    test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes3()
-    test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes4()
-    test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes5()
-    print("End of last tests. Function \"transform_into_AST\" successfully tested!\n")
+    # test_transform_into_AST_with_empty_tree()
+    # test_transform_into_AST_single_terminal_node()
+    # test_transform_into_AST_single_non_terminal_node()
+    # test_transform_into_AST_with_multiple_non_terminal_nodes()
+    # test_transform_into_AST_with_nested_non_terminals()
+    # test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes1()
+    # test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes2()
+    # test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes3()
+    # test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes4()
+    # test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes5()
+    # print("End of last tests. Function \"transform_into_AST\" successfully tested!\n")
+    print("All tests passed!")

@@ -1,5 +1,11 @@
 # compile-project
 
+## PCL 1 - Exécution & exploitation
+
+### Afficher un arbre (abstrait ou non)
+
+Lors de la construction d'un arbre, il peut être utile de l'afficher pour voir concrètement ce que l'on fait. Pour cela, il existe une méthode de la classe **_Tree_**, `get_flowchart`. Cette méthode prend en argument un chemin vers un fichier `.txt` pour y écrire un équivalent de l'arbre en Mermaid (un outil en JS qui permet d'afficher des diagrammes en utilisant une syntaxe particulière). Après génération, il suffit de copier l'intégralité du fichier `.txt` construit et de le coller dans l'éditeur en ligne de Mermaid (disponible [ici](mermaid.live)).
+
 ## [PROJET DE COMPILATION - Mini Python]
 
 ### Objectif du Projet
