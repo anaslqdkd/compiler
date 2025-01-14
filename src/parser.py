@@ -83,6 +83,7 @@ class Parser:
         self.tree.add_tree_child(
             Tree(data="S1", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] == "def":
             self.tree.add_tree_child(
@@ -119,7 +120,8 @@ class Parser:
                 )
             )
             self.parse_d()
-            self.parse_s_2()
+            # NOTE: j'ai changé ici, parse_s_1 au lieu de parse_s_2
+            self.parse_s_1()
 
         return False
 
@@ -130,8 +132,10 @@ class Parser:
         self.tree.add_tree_child(
             Tree(data="S2", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] == "EOF":
+            # NOTE: here
             # ajout token à l'arbre
             self.tree.add_tree_child(
                 Tree(
@@ -171,9 +175,11 @@ class Parser:
         self.tree.add_tree_child(
             Tree(data="A", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] == "def":
             # on ajoute token à l'arbre
+            print("$$$$$$$$$$$")
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
@@ -184,6 +190,7 @@ class Parser:
             self.next_token()
             token = self.get_token()
             if TokenType.lexicon[token.number] == "IDENTIFIER":
+                print("00000000000")
                 # on ajoute token à l'arbre
                 self.tree.add_tree_child(
                     Tree(
@@ -192,41 +199,51 @@ class Parser:
                         is_terminal=True,
                     )
                 )
-            self.next_token()
-            token = self.get_token()
-            if TokenType.lexicon[token.number] == "(":
-                # on ajoute token à l'arbre
-                self.tree.add_tree_child(
-                    Tree(
-                        data=token.number,
-                        line_index=token.line,
-                        is_terminal=True,
+                self.next_token()
+                token = self.get_token()
+                if TokenType.lexicon[token.number] == "(":
+                    # on ajoute token à l'arbre
+                    print("44444444")
+                    self.tree.add_tree_child(
+                        Tree(
+                            data=token.number,
+                            line_index=token.line,
+                            is_terminal=True,
+                        )
                     )
-                )
-            self.parse_i()
-            token = self.get_token()
-            if TokenType.lexicon[token.number] == ")":
-                # on ajoute token à l'arbre
-                self.tree.add_tree_child(
-                    Tree(
-                        data=token.number,
-                        line_index=token.line,
-                        is_terminal=True,
+                    self.next_token()
+                    self.parse_i()
+                    token = self.get_token()
+                    print(
+                        "in parse a before the token, and the token is"
+                        + TokenType.lexicon[token.number]
+                        + "end"
                     )
-                )
-            self.next_token()
-            token = self.get_token()
-            if TokenType.lexicon[token.number] == ":":
-                # on ajoute token à l'arbre
-                self.tree.add_tree_child(
-                    Tree(
-                        data=token.number,
-                        line_index=token.line,
-                        is_terminal=True,
-                    )
-                )
-            self.next_token()
-            self.parse_b()
+                    # //NOTE: j'étais ici avatn d'éteindre
+                    if TokenType.lexicon[token.number] == ")":
+                        # NOTE: pb ici
+                        print("555555")
+                        # on ajoute token à l'arbre
+                        self.tree.add_tree_child(
+                            Tree(
+                                data=token.number,
+                                line_index=token.line,
+                                is_terminal=True,
+                            )
+                        )
+                        self.next_token()
+                        token = self.get_token()
+                        if TokenType.lexicon[token.number] == ":":
+                            # on ajoute token à l'arbre
+                            self.tree.add_tree_child(
+                                Tree(
+                                    data=token.number,
+                                    line_index=token.line,
+                                    is_terminal=True,
+                                )
+                            )
+                            self.next_token()
+                            self.parse_b()
 
         return False
 
@@ -234,10 +251,12 @@ class Parser:
         # on ajoute I à l'arbre
         self.tree.add_tree_child(
             Tree(data="I", line_index=-1, is_terminal=False))
-        "I"
         token = self.get_token()
+        print("in parse i")
+        print(TokenType.lexicon[token.number])
         if TokenType.lexicon[token.number] == "IDENTIFIER":
             # on ajoute le token à l'arbre
+            print("++++++++++++++")
             self.tree.add_tree_child(
                 Tree(
                     data=token.number,
@@ -252,9 +271,11 @@ class Parser:
     def parse_i_1(self):
         "I'"
         # on ajoute I' à l'arbre
+        print("in parse i1")
         self.tree.add_tree_child(
             Tree(data="I1", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
         if TokenType.lexicon[token.number] == ",":
             # on ajoute token à l'arbre
             self.tree.add_tree_child(
@@ -284,9 +305,11 @@ class Parser:
     def parse_b(self):
         "B"
         # on ajoute B à l'arbre
+        print("in parse b")
         self.tree.add_tree_child(
             Tree(data="B", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
         if TokenType.lexicon[token.number] == "NEWLINE":
             # on ajoute token à l'arbre
             self.tree.add_tree_child(
@@ -356,6 +379,7 @@ class Parser:
     def parse_b_1(self):
         "B1"
         # on ajoute B' à l'arbre
+        print("in parse b 1")
         self.tree.add_tree_child(
             Tree(data="B1", line_index=-1, is_terminal=False))
         token = self.get_token()
@@ -382,6 +406,7 @@ class Parser:
         self.tree.add_tree_child(
             Tree(data="C", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
         if TokenType.lexicon[token.number] == "return":
             # on ajoute token à l'arbre
             self.tree.add_tree_child(
@@ -479,6 +504,7 @@ class Parser:
             Tree(data="C1", line_index=-1, is_terminal=False))
         # ajouter C' à l'arbre
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] == "[":
             # on ajouter token à l'arbre
@@ -525,6 +551,7 @@ class Parser:
             Tree(data="C2", line_index=-1, is_terminal=False))
         # on ajoute C'' à l'arbre
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] == "=":
             # on ajoute token à l'arbre
@@ -559,6 +586,7 @@ class Parser:
                     )
                 )
                 self.next_token()
+                # NOTE: MOdif ici ajout règle c2 -> [E1] pas faite finalement
 
         if TokenType.lexicon[token.number] == "NEWLINE":
             pass
@@ -571,6 +599,7 @@ class Parser:
             Tree(data="D", line_index=-1, is_terminal=False))
         # on ajoute D à l'arbre
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] == "if":
             # on ajoute token à l'arbre
@@ -673,6 +702,7 @@ class Parser:
             Tree(data="D1", line_index=-1, is_terminal=False))
 
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
         if TokenType.lexicon[token.number] == "else":
             # on ajoute token à l'arbre
             self.tree.add_tree_child(
@@ -727,6 +757,7 @@ class Parser:
             Tree(data="E", line_index=-1, is_terminal=False))
         token = self.get_token()
         print(token.number)
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] in [
             "IDENTIFIER",
@@ -750,6 +781,7 @@ class Parser:
         self.tree.add_tree_child(
             Tree(data="E_or", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] in [
             "IDENTIFIER",
@@ -775,6 +807,7 @@ class Parser:
         )
 
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] in [
             "NEWLINE",
@@ -799,6 +832,7 @@ class Parser:
         self.tree.add_tree_child(
             Tree(data="E_and", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] in [
             "IDENTIFIER",
@@ -824,6 +858,7 @@ class Parser:
             Tree(data="E_and_tail", line_index=-1, is_terminal=False)
         )
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] in [
             "NEWLINE",
@@ -855,6 +890,7 @@ class Parser:
             Tree(data="E_not", line_index=-1, is_terminal=False))
 
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] in [
             "IDENTIFIER",
@@ -888,6 +924,7 @@ class Parser:
         self.tree.add_tree_child(
             Tree(data="E_rel", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] in [
             "IDENTIFIER",
@@ -912,6 +949,7 @@ class Parser:
             Tree(data="E_rel_tail", line_index=-1, is_terminal=False)
         )
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
         if TokenType.lexicon[token.number] in [
             "NEWLINE",
             ")",
@@ -942,6 +980,7 @@ class Parser:
         self.tree.add_tree_child(
             Tree(data="E_add", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] in [
             "IDENTIFIER",
@@ -965,6 +1004,7 @@ class Parser:
             Tree(data="E_add_tail", line_index=-1, is_terminal=False)
         )
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] in [
             "NEWLINE",
@@ -995,6 +1035,7 @@ class Parser:
         self.tree.add_tree_child(
             Tree(data="E_mult", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] in [
             "IDENTIFIER",
@@ -1058,6 +1099,7 @@ class Parser:
         self.tree.add_tree_child(
             Tree(data="E_un", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] == "(":
             # on ajoute token à l'arbre
@@ -1091,7 +1133,8 @@ class Parser:
                 )
             )
             self.next_token()
-            self.parse_e()
+            # NOTE: modif ici au lieu de parse_e je fais parse_e_1
+            self.parse_e_1()
             token = self.get_token()
             if TokenType.lexicon[token.number] == "]":
                 # on ajoute token à l'arbre
@@ -1132,6 +1175,7 @@ class Parser:
         self.tree.add_tree_child(
             Tree(data="E1", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] in [
             "(",
@@ -1156,6 +1200,7 @@ class Parser:
         self.tree.add_tree_child(
             Tree(data="E2", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] == ",":
             # on ajoute token à l'arbre
@@ -1171,6 +1216,7 @@ class Parser:
         self.tree.add_tree_child(
             Tree(data="O_r", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] in [
             "<=",
@@ -1197,6 +1243,7 @@ class Parser:
         self.tree.add_tree_child(
             Tree(data="O_plus", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
         if TokenType.lexicon[token.number] == "+":
             # on ajoute token à l'arbre
@@ -1209,8 +1256,9 @@ class Parser:
         self.tree.add_tree_child(
             Tree(data="O_star", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
 
-        if TokenType.lexicon[token.number] == [
+        if TokenType.lexicon[token.number] in [
             "*",
             "//",
             "%",
@@ -1232,8 +1280,10 @@ class Parser:
         self.tree.add_tree_child(
             Tree(data="O_un", line_index=-1, is_terminal=False))
         token = self.get_token()
+        print(TokenType.lexicon[token.number])
+        print(token.value)
 
-        if TokenType.lexicon[token.number] == [
+        if TokenType.lexicon[token.number] in [
             "IDENTIFIER",
             # TokenType.CONST,
             "STRING",
@@ -1242,6 +1292,7 @@ class Parser:
             "None",
             "True",
         ]:
+            print("here")
             # on ajoute token à l'arbre
             self.tree.add_tree_child(
                 Tree(
@@ -1250,8 +1301,7 @@ class Parser:
                     is_terminal=True,
                 )
             )
-            # self.next_token()
-            pass
+            self.next_token()
         return False
 
 
