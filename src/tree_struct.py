@@ -89,20 +89,89 @@ class Tree:
 # Converter
 # -------------------------------------------------------------------------------------------------
 
-def remove_newlines(given_tree:"Tree")->None:
+def add_pruning_tokens()->None:
+    TokenType.lexicon[-2] = "list"
+    TokenType.lexicon[-3] = "tuple"
+    return
+
+def remove_banned_characters(given_tree:"Tree", banned_characters:list[str])->None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
-        if TokenType.lexicon[child.data] == "NEWLINE":
+        if TokenType.lexicon[child.data] in banned_characters:
             given_tree.children.pop(i)
             for c in reversed(child.children):
                 given_tree.children.insert(i, c)
         else:
-            remove_newlines(child)
+            remove_banned_characters(child)
             i += 1
 
+def list_pruning(given_tree: "Tree") -> None:
+    if not given_tree.children:
+        return
+    for child in given_tree.children:
+        list_pruning(child)
+    children = given_tree.children
+    i = 0
+    while i < len(children) - 1:
+        if (TokenType.lexicon[children[i].data] == "["):
+            for j in range(i + 1, len(children)):
+                if TokenType.lexicon[children[j].data] == "]":
+                    nodes_in_the_list = children[i + 1:j]
+                    list_node = Tree(
+                        data=TokenType.get_key_by_value("list"),
+                        _father=given_tree,
+                        line_index=children[i].line_index,
+                        is_terminal=False
+                    )
+                    for node in nodes_in_the_list:
+                        list_node.add_tree_child(node)
+                    given_tree.children = children[:i] + [list_node] + children[j + 1:]
+                    break
+            else:
+                i += 1
+                continue
+            children = given_tree.children
+            i = 0
+        else:
+            i += 1
+    pass
+
+def tuple_pruning(given_tree:"Tree")->None:
+    if not given_tree.children:
+        return
+    for child in given_tree.children:
+        tuple_pruning(child)
+    children = given_tree.children
+    i = 0
+    while i < len(children) - 1:
+        if (TokenType.lexicon[children[i].data] == "("):
+            for j in range(i + 1, len(children)):
+                if TokenType.lexicon[children[j].data] == ")":
+                    nodes_in_the_tuple = children[i + 1:j]
+                    tuple_node = Tree(
+                        data=TokenType.get_key_by_value("tuple"),
+                        _father=given_tree,
+                        line_index=children[i].line_index,
+                        is_terminal=False
+                    )
+                    for node in nodes_in_the_tuple:
+                        tuple_node.add_tree_child(node)
+                    given_tree.children = children[:i] + [tuple_node] + children[j + 1:]
+                    break
+            else:
+                i += 1
+                continue
+            children = given_tree.children
+            i = 0
+        else:
+            i += 1
+    pass
+
 def transform_to_ast(given_tree:"Tree")->None:
-    remove_newlines(given_tree)
+    add_pruning_tokens()
+    remove_banned_characters(given_tree, [":", ",", "NEWLINE", "EOF"])
+    # TODO: liste, tuples, functions
 
 # -------------------------------------------------------------------------------------------------
 # Sample
