@@ -267,6 +267,14 @@ On propose la grammaire suivante, obtenue à partir de celle-ci dessus, dont les
 
 \subsection{Suppression des éléments lexicaux non-essentiels}
 
-De nombreux \textit{tokens} dans l'arbre à sa sortie du parseur sont purement syntaxiques et n'affectent pas réellement la logique sous-jacente. Il s'agit des \textit{tokens} du types "\textbf{Newline}". On va donc les éliminer en premier.
+De nombreux \textit{tokens} dans l'arbre à sa sortie du parseur sont purement syntaxiques et n'affectent pas réellement la logique sous-jacente. Il s'agit des \textit{tokens} du types "\textbf{Newline}", "\textbf{def}" et "\textbf{EOF}", ainsi que les virgules et les deux-points. On va donc les éliminer en premier.\\
+
+\subsection{Modification des tuples et des listes}
+
+La prochaine étape que l'on propose est de s'occuper de reformatter les tuples et les listes du Mini-Python. Pour se simplifier la vie, on propose d'appliquer un algorithme récursif qui applique un formatage à chaque fois qu'il voit des n{\oe}uds de l'arbre entourés de \textit{Tokens} de parenthèses / crochets ouvrant(e) et fermant(e).\\
+
+Le formatage adopté est le suivant (on l'explique ici pour un tuple, mais le formatage est le même pour les listes) : dans la liste des enfants, à la place de l'ensemble "n{\oe}ud parenthèse ouvrante + contenu du tuple + n{\oe}ud parenthèse fermante, on place un nouveau n{\oe}ud "tuple", dont les enfants sont le contenu du tuple.\\
+
+Le problème avec un tel algorithme est le recopiage du contenu du tuple. En effet, même si les virgules séparant les différents éléments ont été supprimées à l'étape précédente de l'élagage, il reste tous les non-terminaux qui ont servi à la construction du tuple, or on aimerait que les enfants du n{\oe}ud "tuple" soient directement le contenu du tuple (dans l'ordre). Il faut donc retirer ces non-terminaux (et seulement ceux-là, les autres peuvent encore servir à l'élagage). Dans notre grammaire, il s'agit des non-terminaux $I$, $I_1$, $E_1$ et $E_2$ (on peut noter que $I$ et $I_1$ ne peuvent apparaître que dans les tuples).\\
 
 \end{document}

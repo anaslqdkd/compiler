@@ -66,7 +66,12 @@ class Tree:
         def traverse(node):
             # Create a unique identifier for the node using its data
             node_id = f"node{node.data}"
-            label = f"{node.data} (L{node.line_index}){' T' if node.is_terminal else ''}"
+            if node.data in TokenType.lexicon.keys():
+                data = TokenType.lexicon[node.data]
+            else:
+                data = str(node.data)
+
+            label = f"{data} (L{node.line_index}){' T' if node.is_terminal else ''}"
             nodes.append(f'{node_id}["{label}"]')
 
             for child in node.children:
@@ -98,7 +103,20 @@ def remove_banned_characters(given_tree:"Tree", banned_characters:list[str])->No
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
-        if TokenType.lexicon[child.data] in banned_characters:
+        if child.data in TokenType.lexicon.keys():
+            if TokenType.lexicon[child.data] in banned_characters:
+                given_tree.children.pop(i)
+                for c in reversed(child.children):
+                    given_tree.children.insert(i, c)
+        else:
+            remove_banned_characters(child)
+            i += 1
+
+def remove_banned_data(given_tree:"Tree", banned_data:list[str])->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if child.data in banned_data:
             given_tree.children.pop(i)
             for c in reversed(child.children):
                 given_tree.children.insert(i, c)
@@ -125,6 +143,7 @@ def list_pruning(given_tree: "Tree") -> None:
                         is_terminal=False
                     )
                     for node in nodes_in_the_list:
+                        remove_banned_data(node, ["E1", "E2"])
                         list_node.add_tree_child(node)
                     given_tree.children = children[:i] + [list_node] + children[j + 1:]
                     break
@@ -156,6 +175,8 @@ def tuple_pruning(given_tree:"Tree")->None:
                         is_terminal=False
                     )
                     for node in nodes_in_the_tuple:
+                        remove_banned_data(node, ["I", "I1"])
+                        remove_banned_data(node, ["E1", "E2"])
                         tuple_node.add_tree_child(node)
                     given_tree.children = children[:i] + [tuple_node] + children[j + 1:]
                     break
@@ -168,10 +189,39 @@ def tuple_pruning(given_tree:"Tree")->None:
             i += 1
     pass
 
+def function_pruning(given_tree:"Tree")->None:
+    if not given_tree.children:
+        return
+    for child in given_tree.children:
+        function_pruning(child)
+    if (given_tree.data == "A" and 
+        len(given_tree.children) == 4 and 
+        TokenType.lexicon[given_tree.children[0].data] == "def" and
+        TokenType.lexicon[given_tree.children[1].data] == "ident" and
+        given_tree.children[2].data == "tuple" and
+        given_tree.children[3].data == "B"):
+        function_tree = Tree(
+            data="function",
+            _father=given_tree._father,
+            line_index=given_tree.line_index,
+            is_terminal=False
+        )
+        function_tree.add_tree_child(given_tree.children[1])  # "ident"
+        function_tree.add_tree_child(given_tree.children[2])  # "tuple"
+        function_tree.add_tree_child(given_tree.children[3])  # "B"
+        if given_tree._father:
+            parent = given_tree._father
+            parent.children = [
+                function_tree if child is given_tree else child
+                for child in parent.children
+            ]
+    pass
+
 def transform_to_ast(given_tree:"Tree")->None:
     add_pruning_tokens()
-    remove_banned_characters(given_tree, [":", ",", "NEWLINE", "EOF"])
-    # TODO: liste, tuples, functions
+    remove_banned_characters(given_tree, [":", ",", "NEWLINE", "def", "EOF"])
+    list_pruning(given_tree)
+    tuple_pruning(given_tree)
 
 # -------------------------------------------------------------------------------------------------
 # Sample
