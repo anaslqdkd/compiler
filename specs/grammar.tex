@@ -1,0 +1,54 @@
+\documentclass[a4paper, 12pt]{report}
+
+\usepackage{lmodern} % Police standard sous LaTeX : Latin Modern
+% (alternative à la police d'origine développée par Donald
+	%Knuth : Computer Modern)
+\usepackage[french]{babel} % Pour la langue fran¸caise
+\usepackage[utf8]{inputenc} % Pour l'UTF-8
+\usepackage[T1]{fontenc} % Pour les césures des caractères accentués
+\renewcommand{\thesection}{\Roman{section}}
+\usepackage{amsmath,amsfonts, amssymb}
+
+\begin{document}
+\thispagestyle{empty}  % Removes page number for this page
+
+\begin{figure}[!h]\begin{center}
+\fbox{
+\begin{tabular}{lcl}
+$S$ & $\to$ & \textbf{Newline} $S \ | \ S_1$\\
+$S_1$ & $\to$ & $AS_1 \ | \ DS_1$ | \textbf{EOF}\\
+$A$ & $\to$ & \textbf{def} \textbf{ident} $(I):B$\\
+$I$ & $\to$ & \textbf{ident} $I_1$\\
+$I_1$ & $\to$ & , \textbf{ident} $I_1 \ | \ \varepsilon$\\
+$B$ & $\to$ & $CN$ | \textbf{Newline} \textbf{Begin} $DB_1$ \textbf{End}\\
+$B_1$ & $\to$ & \textbf{Newline} $DB_1 \ | \ \varepsilon$\\
+$C$ & $\to$ & \textbf{return} $E$ | \textbf{ident} $C_2$ | $EC_1$ | \textbf{print}$(E)$\\
+$C_1$ & $\to$ & $[E]=E \ | \ \varepsilon$\\
+$C_2$ & $\to$ & $= E \ | \ (E_1) \ | \ \varepsilon$\\
+$D$ & $\to$ & $CN$ | \textbf{if} $E$ : $BD_1$ | \textbf{for} \textbf{indent} \textbf{in} $E$ : $B$\\
+$D_1$ & $\to$ & \textbf{else :} $B$ | $\varepsilon$\\
+$E$ & $\to$ & $E_\text{or}$\\
+$E_\text{or}$ & $\to$ & $E_\text{and} E_\text{or\_tail}$\\
+$E_\text{or\_tail}$ & $\to$ & \textbf{or} $E_\text{and} E_\text{or\_tail} \ | \ \varepsilon$\\
+$E_\text{and}$ & $\to$ & $E_\text{not} E_\text{and\_tail}$\\
+$E_\text{and\_tail}$ & $\to$ & \textbf{and} $E_\text{not} E_\text{and\_tail} \ | \ \varepsilon$\\
+$E_\text{not}$ & $\to$ & \textbf{not} $E_\text{rel} \ | \ E_\text{rel}$\\
+$E_\text{rel}$ & $\to$ & $E_\text{add} E_\text{rel\_tail}$\\
+$E_\text{rel\_tail}$ & $\to$ & $O_r E_\text{add} E_\text{rel\_tail} \ | \ \varepsilon$\\
+$E_\text{add}$ & $\to$ & $E_\text{mult} E_\text{add\_tail}$\\
+$E_\text{add\_tail}$ & $\to$ & $O_+ E_\text{mult} E_\text{add\_tail} \ | \ \varepsilon$\\
+$E_\text{mult}$ & $\to$ & $E_\text{un}E_\text{mult\_tail}$\\
+$E_\text{mult\_tail}$ & $\to$ & $O_* E_\text{un} E_\text{mult\_tail} \ | \ \varepsilon$\\
+$E_\text{un}$ & $\to$ & $- E_\text{un} \ | \  [E_1] \ | \ (E) \ | \ O_\text{un}$\\
+$E_1$ & $\to$ & $E E_2 \ | \ \varepsilon$\\
+$E_2$ & $\to$ & $, E E_2 \ | \ \varepsilon$\\
+$O_r$ & $\to$ & <= | >= | < | > | != | ==\\
+$O_+$ & $\to$ & + | -\\
+$O_*$ & $\to$ & $\times$ | // | \%\\
+$O_\text{un}$ & $\to$ &  \textbf{ident} | \textbf{const} | \textbf{True} | \textbf{False} | \textbf{None}\\
+$N$ & $\to$ & \textbf{Newline} $N \ | \ \varepsilon$\\
+\end{tabular}
+}
+\end{center}\end{figure}
+
+\end{document}

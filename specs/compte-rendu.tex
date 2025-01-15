@@ -11,6 +11,7 @@
 \usepackage{enumitem}
 \renewcommand{\arraystretch}{1.3}
 \usepackage{pifont}
+\usepackage{hyperref}
 \usepackage{xcolor}
 \usepackage{stmaryrd}
 \usepackage{amsmath,amsfonts, amssymb}
@@ -255,90 +256,17 @@ Dans cette section, on va détailler l'automate fini déterministe correspondant
 
 \chapter{Conception du parseur}
 
-\section{Grammaire considérée}
+\section{Grammaire LL(2)}
 
-On considère la grammaire (donnée dans le sujet) à la \figurename \space \ref{grammar_with_regex}, sous forme d'expressions régulières. Le premier travail est donc de la mettre sous une forme plus "conventionnelle".\\
-
-\begin{figure}[!h]\begin{center}
-\fbox{
-\begin{tabular}{rcl}
-$\langle$ \textit{file} $\rangle$ & ::= & \textbf{NEWLINE}? $\langle$ \textit{def} $\rangle^*$ $\langle$ \textit{stmt} $\rangle^+$ \textbf{EOF}\\
-$\langle$ \textit{def} $\rangle$ & ::= & \textbf{def} $\langle$ \textit{ident} $\rangle$ ($\langle$ \textit{ident} $\rangle^*$) : $\langle$ \textit{suite} $\rangle$\\
-$\langle$ \textit{suite} $\rangle$ & ::= & $\langle$ \textit{simple\_stmt} $\rangle$ \textbf{NEWLINE}\\
-& | & \textbf{NEWLINE} \textbf{BEGIN} $\langle$ \textit{stmt} $\rangle^+$ \textbf{END}\\
-$\langle$ \textit{simple\_stmt} $\rangle$ & ::= & \textbf{return} $\langle$ \textit{expr} $\rangle$\\
-& | & $\langle$ \textit{ident} $\rangle$ = $\langle$ \textit{expr} $\rangle$\\
-& | & $\langle$ \textit{expr} $\rangle$ [ $\langle$ \textit{expr} $\rangle$ ] = $\langle$ \textit{expr} $\rangle$\\
-& | & \textbf{print}($\langle$ \textit{expr} $\rangle$)\\
-& | & $\langle$ \textit{expr} $\rangle$\\
-$\langle$ \textit{stmt} $\rangle$ & ::= & $\langle$ \textit{simple\_stmt} $\rangle$ \textbf{NEWLINE}\\
-& | & \textbf{if} $\langle$ \textit{expr} $\rangle$ : $\langle$ \textit{suite} $\rangle$\\
-& | & \textbf{if} $\langle$ \textit{expr} $\rangle$ : $\langle$ \textit{suite} $\rangle$ \textbf{else} : $\langle$ \textit{suite} $\rangle$\\
-& | & \textbf{for} $\langle$ \textit{ident} $\rangle$ \textbf{in} $\langle$ \textit{expr} $\rangle$ : $\langle$ \textit{suite} $\rangle$\\
-$\langle$ \textit{expr} $\rangle$ & ::= & $\langle$ \textit{const} $\rangle$\\
-& | & $\langle$ \textit{ident} $\rangle$\\
-& | & $\langle$ \textit{expr} $\rangle$ [ $\langle$ \textit{expr} $\rangle$ ]\\
-& | & - $\langle$ \textit{expr} $\rangle$\\
-& | & \textbf{not} $\langle$ \textit{expr} $\rangle$\\
-& | & $\langle$ \textit{expr} $\rangle$ $\langle$ \textit{binop} $\rangle$ $\langle$ \textit{expr} $\rangle$\\
-& | & $\langle$ \textit{ident} $\rangle$ ($\langle$ \textit{expr} $\rangle^*$)\\
-& | & [ $\langle$ \textit{expr} $\rangle^*$ ]\\
-& | & ( $\langle$ \textit{expr} $\rangle$ )\\
-$\langle$ \textit{binop} $\rangle$ & ::= &+ | - | * | // | \% | <= | >= \\
-&&| < | > | != | == | \textbf{and} | \textbf{or} \\
-$\langle$ \textit{const} $\rangle$ & ::= & $\langle$ \textit{integer} $\rangle$ | $\langle$ \textit{string} $\rangle$ | \textbf{True}\\
-&& | \textbf{False} | \textbf{None}
-\end{tabular}
-}
-\caption{\textcolor{blue}{Grammaire proposée, sous forme de \textit{regex}}}
-\label{grammar_with_regex}
-\end{center}\end{figure}
-
-\section{Construction de la grammaire LL(2)}
-
-On propose la grammaire suivante, obtenue à partir de celle-ci dessus, dont les règles figurent à la \figurename \space \ref{grammar_ll2} :
+On propose la grammaire suivante, obtenue à partir de celle-ci dessus, dont les règles figurent en annexe (document "grammar.pdf") :
 \[ G = ( \mathcal{N}, \mathcal{T}, \to, S), \quad \text{où}\]
 \[  \mathcal{N} = \lbrace S,S',S'',A,B,B',C,C',D,D',E,E',E'',E''',F,G,G',H,H',I,I' \rbrace \]
 \[ \text{et } \mathcal{T} = \alpha \cup \mathcal{D} \cup \lbrace +;-;*;/;\%;(;[;);];\backslash, ",:,!,=\rbrace.\]
 
-\begin{figure}[!h]\begin{center}
-\fbox{
-\begin{tabular}{lcl}
-$S$ & $\to$ & \textbf{Newline} $S' \ | \ S'$\\
-$S_1$ & $\to$ & $AS' \ | \ DS''$\\
-$S_2$ & $\to$ & $DS''$ | \textbf{EOF}\\
-$A$ & $\to$ & \textbf{def} \textbf{ident} $(I):B$\\
-$I$ & $\to$ & \textbf{ident} $I'$\\
-$I_1$ & $\to$ & , \textbf{ident} $I' \ | \ \varepsilon$\\
-$B$ & $\to$ & $C$ \textbf{Newline} | \textbf{Newline} \textbf{Begin} $DB'$ \textbf{End}\\
-$B_1$ & $\to$ & \textbf{Newline} $DB' \ | \ \varepsilon$\\
-$C$ & $\to$ & \textbf{return} $E$ | \textbf{ident} $C''$ | $EC'$ | \textbf{print}$(E)$\\
-$C_1$ & $\to$ & $[E]=E \ | \ \varepsilon$\\
-$C_2$ & $\to$ & $= E \ | \ (E_1) \ | \ \varepsilon$\\
-$D$ & $\to$ & $C$ \textbf{Newline} | \textbf{if} $E$ : $BD'$ | \textbf{for} \textbf{indent} \textbf{in} $E$ : $B$\\
-$D_1$ & $\to$ & \textbf{else :} $B$ | $\varepsilon$\\
-$E$ & $\to$ & $E_\text{or}$\\
-$E_\text{or}$ & $\to$ & $E_\text{and} E_\text{or\_tail}$\\
-$E_\text{or\_tail}$ & $\to$ & \textbf{or} $E_\text{and} E_\text{or\_tail} \ | \ \varepsilon$\\
-$E_\text{and}$ & $\to$ & $E_\text{not} E_\text{and\_tail}$\\
-$E_\text{and\_tail}$ & $\to$ & \textbf{and} $E_\text{not} E_\text{and\_tail} \ | \ \varepsilon$\\
-$E_\text{not}$ & $\to$ & \textbf{not} $E_\text{rel} \ | \ E_\text{rel}$\\
-$E_\text{rel}$ & $\to$ & $E_\text{add} E_\text{rel\_tail}$\\
-$E_\text{rel\_tail}$ & $\to$ & $O_r E_\text{add} E_\text{rel\_tail} \ | \ \varepsilon$\\
-$E_\text{add}$ & $\to$ & $E_\text{mult} E_\text{add\_tail}$\\
-$E_\text{add\_tail}$ & $\to$ & $O_+ E_\text{mult} E_\text{add\_tail} \ | \ \varepsilon$\\
-$E_\text{mult}$ & $\to$ & $E_\text{un}E_\text{mult\_tail}$\\
-$E_\text{mult\_tail}$ & $\to$ & $O_* E_\text{un} E_\text{mult\_tail} \ | \ \varepsilon$\\
-$E_\text{un}$ & $\to$ & $- E_\text{un} \ | \  [E] \ | \ (E) \ | \ O_\text{un}$\\
-$E_1$ & $\to$ & $E E_2 \ | \ \varepsilon$\\
-$E_2$ & $\to$ & $, E E_2 \ | \ \varepsilon$\\
-$O_r$ & $\to$ & <= | >= | < | > | != | ==\\
-$O_+$ & $\to$ & + | -\\
-$O_*$ & $\to$ & $\times$ | // | \%\\
-$O_\text{un}$ & $\to$ &  \textbf{ident} | \textbf{const} | \textbf{True} | \textbf{False} | \textbf{None}
-\end{tabular}
-}
-\label{grammar_ll2}
-\end{center}\end{figure}
+\section{Élagage de l'arbre}
+
+\subsection{Suppression des éléments lexicaux non-essentiels}
+
+De nombreux \textit{tokens} dans l'arbre à sa sortie du parseur sont purement syntaxiques et n'affectent pas réellement la logique sous-jacente. Il s'agit des \textit{tokens} du types "\textbf{Newline}". On va donc les éliminer en premier.
 
 \end{document}

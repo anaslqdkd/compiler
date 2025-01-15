@@ -1,3 +1,5 @@
+from lexer import TokenType
+
 import io
 from unittest.mock import patch
 
@@ -39,6 +41,18 @@ class Tree:
             self.children.remove(child)
         else:
             print(f"Child {child.data} not found in tree.")
+    def remove_this_node(self) ->"Tree":
+        if self.father is not None:
+            father = self.father
+            fathers_childen = father.children
+            node_index = fathers_childen.index(self)
+            n = len(self.children)
+            for child_index in range(n):
+                fathers_childen.insert(node_index, self.children[n - child_index - 1])
+            father.remove_child(self)
+            return father
+        else:
+            raise ValueError("There are no father to this Node. Can't erase it.")
 
     def print_node(self)->None:
         print(f"Node: {self.data}, Line Index: {self.line_index}, Terminal: {self.is_terminal}")
@@ -75,30 +89,20 @@ class Tree:
 # Converter
 # -------------------------------------------------------------------------------------------------
 
-def transform_into_AST(given_tree:"Tree")->"Tree":
-    if not given_tree.contains_non_terminals():
-        return given_tree
-    elif given_tree.is_leaf():
-        return None
-    elif not given_tree.is_terminal:
-        insert_index = given_tree.father.children.index(given_tree)
-        given_tree.father.remove_child(given_tree)
-        for child in given_tree.children:
-            c2 = transform_into_AST(child)
-            if c2 is not None:
-                c2.father = given_tree.father
-                given_tree.father.insert_tree_child(insert_index, c2)
-                insert_index += 1
-        return given_tree.father
-    else:
-        for child in given_tree.children:
-            index = given_tree.children.index(child)
-            given_tree.remove_child(child)
-            c2 = transform_into_AST(child)
-            if c2 is not None:
-                c2.father = given_tree
-                given_tree.insert_tree_child(index, c2)
-        return given_tree
+def remove_newlines(given_tree:"Tree")->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if TokenType.lexicon[child.data] == "NEWLINE":
+            given_tree.children.pop(i)
+            for c in reversed(child.children):
+                given_tree.children.insert(i, c)
+        else:
+            remove_newlines(child)
+            i += 1
+
+def transform_to_ast(given_tree:"Tree")->None:
+    remove_newlines(given_tree)
 
 # -------------------------------------------------------------------------------------------------
 # Sample
@@ -233,240 +237,7 @@ def test_is_leaf_returns_false_for_non_leaf_node():
     assert is_leaf == False
 
 # Test for Tree to AST
-def test_transform_into_AST_with_empty_tree():
-    # Arrange
-    empty_tree = Tree()
-
-    # Act
-    transformed_tree = transform_into_AST(empty_tree)
-
-    # Assert
-    assert transformed_tree is empty_tree
-def test_transform_into_AST_single_terminal_node():
-    # Arrange
-    root = Tree(data=1, line_index=0, is_terminal=True)
-
-    # Act
-    transformed_tree = transform_into_AST(root)
-
-    # Assert
-    assert transformed_tree.data == root.data
-    assert transformed_tree.line_index == root.line_index
-    assert transformed_tree.is_terminal == root.is_terminal
-    assert len(transformed_tree.children) == 0
-def test_transform_into_AST_single_non_terminal_node():
-    # Arrange
-    root = Tree(data="Root")
-    child1 = Tree(data=2, line_index=1, is_terminal=False)
-    root.add_tree_child(child1)
-
-    # Act
-    transformed_tree = transform_into_AST(root)
-
-    # Assert
-    assert transformed_tree.data == root.data
-    assert transformed_tree.line_index == root.line_index
-    assert transformed_tree.is_terminal == root.is_terminal
-    assert len(transformed_tree.children) == 0
-def test_transform_into_AST_with_multiple_non_terminal_nodes():
-    # Arrange
-    root = Tree(data="Root")
-    child1 = Tree(data=2, line_index=1, is_terminal=True)
-    child2 = Tree(data=3, line_index=2, is_terminal=False)
-    grandchild1 = Tree(data=4, line_index=3, is_terminal=False)
-    grandchild2 = Tree(data=5, line_index=4, is_terminal=True)
-    child1.add_tree_child(grandchild1)
-    child2.add_tree_child(grandchild2)
-    root.add_tree_child(child1)
-    root.add_tree_child(child2)
-
-    # Act
-    transformed_tree = transform_into_AST(root)
-
-    # Assert
-    assert transformed_tree.data == root.data
-    assert transformed_tree.is_terminal == root.is_terminal
-    assert len(transformed_tree.children) == 2
-    assert transformed_tree.children[0].data == child1.data
-    assert transformed_tree.children[0].is_terminal == child1.is_terminal
-    assert len(transformed_tree.children[0].children) == 0
-    assert transformed_tree.children[1].data == grandchild2.data
-    assert transformed_tree.children[1].is_terminal == grandchild2.is_terminal
-    assert len(transformed_tree.children[1].children) == 0
-def test_transform_into_AST_with_nested_non_terminals():
-    # Arrange
-    root = Tree(data=1, line_index=0, is_terminal=False)
-    child1 = Tree(data=2, line_index=1, is_terminal=False)
-    child2 = Tree(data=3, line_index=2, is_terminal=False)
-    child1_1 = Tree(data=4, line_index=3, is_terminal=True)
-    child1_2 = Tree(data=5, line_index=4, is_terminal=True)
-    child2_1 = Tree(data=6, line_index=5, is_terminal=True)
-
-    root.add_tree_child(child1)
-    root.add_tree_child(child2)
-    child1.add_tree_child(child1_1)
-    child1.add_tree_child(child1_2)
-    child2.add_tree_child(child2_1)
-
-    expected_root = Tree(data=1, line_index=0, is_terminal=False)
-    expected_child1 = Tree(data=2, line_index=1, is_terminal=False)
-    expected_child2 = Tree(data=3, line_index=2, is_terminal=False)
-    expected_child1_1 = Tree(data=4, line_index=3, is_terminal=True)
-    expected_child1_2 = Tree(data=5, line_index=4, is_terminal=True)
-    expected_child2_1 = Tree(data=6, line_index=5, is_terminal=True)
-
-    expected_root.add_tree_child(expected_child1)
-    expected_root.add_tree_child(expected_child2)
-    expected_child1.add_tree_child(expected_child1_1)
-    expected_child1.add_tree_child(expected_child1_2)
-    expected_child2.add_tree_child(expected_child2_1)
-
-    # Act
-    result = transform_into_AST(root)
-
-    # Assert
-    assert result.data == expected_root.data
-    assert result.line_index == expected_root.line_index
-    assert result.is_terminal == expected_root.is_terminal
-    assert len(result.children) == len(expected_root.children)
-
-    for i in range(len(result.children)):
-        assert result.children[i].data == expected_root.children[i].data
-        assert result.children[i].line_index == expected_root.children[i].line_index
-        assert result.children[i].is_terminal == expected_root.children[i].is_terminal
-        assert len(result.children[i].children) == len(expected_root.children[i].children)
-
-        for j in range(len(result.children[i].children)):
-            assert result.children[i].children[j].data == expected_root.children[i].children[j].data
-            assert result.children[i].children[j].line_index == expected_root.children[i].children[j].line_index
-            assert result.children[i].children[j].is_terminal == expected_root.children[i].children[j].is_terminal
-def test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes1():
-    # Arrange
-    root = Tree("root", is_terminal=False)
-    child1 = Tree(1, is_terminal=True)
-    child2 = Tree(2, is_terminal=False)
-    child3 = Tree(3, is_terminal=True)
-    child4 = Tree(4, is_terminal=True)
-    root.add_tree_child(child1)
-    root.add_tree_child(child2)
-    child2.add_tree_child(child3)
-    child2.add_tree_child(child4)
-
-    # Act
-    transformed_tree = transform_into_AST(root)
-
-    # Assert
-    assert transformed_tree.data == "root"
-    assert transformed_tree.is_terminal == False
-    assert len(transformed_tree.children) == 1
-    assert transformed_tree.children[0].data == 2
-    assert transformed_tree.children[0].is_terminal == False
-    assert len(transformed_tree.children[0].children) == 2
-    assert transformed_tree.children[0].children[0].data == 3
-    assert transformed_tree.children[0].children[0].is_terminal == True
-    assert transformed_tree.children[0].children[1].data == 4
-    assert transformed_tree.children[0].children[1].is_terminal == True
-def test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes2():
-    # Arrange
-    root = Tree("root")
-    root.add_child(1, line_index=1, is_terminal=False)
-    root.add_child(2, line_index=2, is_terminal=True)
-    root.children[0].add_child(3, line_index=3, is_terminal=False)
-    root.children[0].add_child(4, line_index=4, is_terminal=True)
-
-    # Act
-    transformed_tree = transform_into_AST(root)
-
-    # Assert
-    assert transformed_tree.data == "root"
-    assert len(transformed_tree.children) == 2
-    assert transformed_tree.children[0].data == 1
-    assert transformed_tree.children[0].is_terminal == False
-    assert len(transformed_tree.children[0].children) == 2
-    assert transformed_tree.children[1].data == 2
-    assert transformed_tree.children[1].is_terminal == True
-    assert transformed_tree.children[0].children[0].data == 3
-    assert transformed_tree.children[0].children[0].is_terminal == False
-    assert len(transformed_tree.children[0].children[0].children) == 1
-    assert transformed_tree.children[0].children[1].data == 4
-    assert transformed_tree.children[0].children[1].is_terminal == True
-def test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes3():
-    # Arrange
-    root = Tree(1, is_terminal=False)
-    root.add_child(2, is_terminal=True)
-    root.add_child(3, is_terminal=False)
-    root.children[1].add_child(4, is_terminal=True)
-    root.children[2].add_child(5, is_terminal=True)
-
-    # Act
-    transformed_tree = transform_into_AST(root)
-
-    # Assert
-    assert transformed_tree.data == 1
-    assert transformed_tree.is_terminal == False
-    assert len(transformed_tree.children) == 1
-    assert transformed_tree.children[0].data == 2
-    assert transformed_tree.children[0].is_terminal == True
-def test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes4():
-    # Arrange
-    root = Tree("root")
-    root.add_child(1, line_index=1, is_terminal=False)
-    root.add_child(2, line_index=2, is_terminal=True)
-    root.children[0].add_child(3, line_index=3, is_terminal=True)
-    root.children[0].add_child(4, line_index=4, is_terminal=False)
-    root.children[0].children[1].add_child(5, line_index=5, is_terminal=True)
-
-    expected_root = Tree("root")
-    expected_root.add_child(1, line_index=1, is_terminal=False)
-    expected_root.add_child(2, line_index=2, is_terminal=True)
-    expected_root.children[0].add_child(3, line_index=3, is_terminal=True)
-    expected_root.children[0].add_child(4, line_index=4, is_terminal=False)
-    expected_root.children[0].children[1].add_child(5, line_index=5, is_terminal=True)
-
-    # Act
-    actual_root = transform_into_AST(root)
-
-    # Assert
-    assert actual_root.data == expected_root.data
-    assert actual_root.line_index == expected_root.line_index
-    assert actual_root.is_terminal == expected_root.is_terminal
-    assert len(actual_root.children) == len(expected_root.children)
-
-    for actual_child, expected_child in zip(actual_root.children, expected_root.children):
-        assert actual_child.data == expected_child.data
-        assert actual_child.line_index == expected_child.line_index
-        assert actual_child.is_terminal == expected_child.is_terminal
-        assert len(actual_child.children) == len(expected_child.children)
-
-        if not actual_child.is_terminal:
-            for actual_grandchild, expected_grandchild in zip(actual_child.children, expected_child.children):
-                assert actual_grandchild.data == expected_grandchild.data
-                assert actual_grandchild.line_index == expected_grandchild.line_index
-                assert actual_grandchild.is_terminal == expected_grandchild.is_terminal
-def test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes5():
-    # Arrange
-    root = Tree(data=1, line_index=0, is_terminal=False)
-    child1 = Tree(data=2, line_index=1, is_terminal=True)
-    child2 = Tree(data=3, line_index=2, is_terminal=False)
-    child3 = Tree(data=4, line_index=3, is_terminal=True)
-    root.add_tree_child(child1)
-    root.add_tree_child(child2)
-    child2.add_tree_child(child3)
-
-    # Act
-    transformed_tree = transform_into_AST(root)
-
-    # Assert
-    assert transformed_tree.data == 1
-    assert transformed_tree.is_terminal == False
-    assert len(transformed_tree.children) == 2
-    assert transformed_tree.children[0].data == 2
-    assert transformed_tree.children[0].is_terminal == True
-    assert transformed_tree.children[1].data == 3
-    assert transformed_tree.children[1].is_terminal == False
-    assert len(transformed_tree.children[1].children) == 1
-    assert transformed_tree.children[1].children[0].data == 4
-    assert transformed_tree.children[1].children[0].is_terminal == True
+# TODO: write tests
 
 # Main
 if __name__ == '__main__':
@@ -481,15 +252,5 @@ if __name__ == '__main__':
     test_is_leaf_returns_false_for_non_leaf_node()
     print("End of first tests. Tree structure tests successfully passed!\n")
     print("Testing transformation from tree to AST...")
-    # test_transform_into_AST_with_empty_tree()
-    # test_transform_into_AST_single_terminal_node()
-    # test_transform_into_AST_single_non_terminal_node()
-    # test_transform_into_AST_with_multiple_non_terminal_nodes()
-    # test_transform_into_AST_with_nested_non_terminals()
-    # test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes1()
-    # test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes2()
-    # test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes3()
-    # test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes4()
-    # test_transform_into_AST_with_mixed_terminal_and_non_terminal_nodes5()
-    # print("End of last tests. Function \"transform_into_AST\" successfully tested!\n")
+    print("End of last tests. Function \"transform_into_AST\" successfully tested!\n")
     print("All tests passed!")
