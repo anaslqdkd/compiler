@@ -84,11 +84,8 @@ class Parser:
             Tree(data="S1", line_index=-1, is_terminal=False))
         token = self.get_token()
         print(TokenType.lexicon[token.number])
-        if TokenType.lexicon[token.number] == "NEWLINE":
-            peek_token = self.peek_next_token()
-            print(peek_token.number)
-            if TokenType.lexicon[peek_token.number] == "EOF":
-                return True
+        if TokenType.lexicon[token.number] == "EOF":
+            return True
 
         elif TokenType.lexicon[token.number] == "def":
             self.tree.add_tree_child(
@@ -371,17 +368,7 @@ class Parser:
             "INTEGER",
         ]:
             self.parse_c()
-            token = self.get_token()
-            if TokenType.lexicon[token.number] == "NEWLINE":
-                # on ajoute token à l'arbre
-                self.tree.add_tree_child(
-                    Tree(
-                        data=token.number,
-                        line_index=token.line,
-                        is_terminal=True,
-                    )
-                )
-                self.next_token()
+            self.parse_n()
         return False
 
         #
@@ -518,28 +505,24 @@ class Parser:
 
         if TokenType.lexicon[token.number] == "[":
             # on ajouter token à l'arbre
-            self.tree.add_tree_child(
-                Tree(
-                    data=token.number,
-                    line_index=token.line,
-                    is_terminal=True,
-                )
-            )
-            self.next_token()
-            # self.parse_e()
-            token = self.get_token()
-            if TokenType.lexicon[token.number] == "]":
-                # on ajoute token à l'arbre
-                self.tree.add_tree_child(
-                    Tree(
-                        data=token.number,
-                        line_index=token.line,
-                        is_terminal=True,
-                    )
-                )
+
+            peek_token = self.peek_next_token()
+            if TokenType.lexicon[peek_token] in [
+                "IDENTIFIER",
+                "(",
+                "[",
+                "not",
+                "-",
+                "STRING",
+                "INTEGER",
+                "True",
+                "False",
+                "None",
+            ]:
                 self.next_token()
+                self.parse_e()
                 token = self.get_token()
-                if TokenType.lexicon[token.number] == "==":
+                if TokenType.lexicon[token.number] == "]":
                     # on ajoute token à l'arbre
                     self.tree.add_tree_child(
                         Tree(
@@ -548,11 +531,23 @@ class Parser:
                             is_terminal=True,
                         )
                     )
-                self.next_token()
-                self.parse_e()
+                    self.next_token()
+                    token = self.get_token()
+                    if TokenType.lexicon[token.number] == "==":
+                        # on ajoute token à l'arbre
+                        self.tree.add_tree_child(
+                            Tree(
+                                data=token.number,
+                                line_index=token.line,
+                                is_terminal=True,
+                            )
+                        )
+                        self.next_token()
+                        self.parse_e()
+            else:
+                pass
         if TokenType.lexicon[token.number] == "NEWLINE":
-            print("**************")
-            # TODO: à voir ici pb comment arrêter la fonction, le pass ne fait rien donc à voir comment arrêter l'execution de la fonction
+            # print("**************")
             pass
         return False
 
@@ -693,17 +688,7 @@ class Parser:
             "INTEGER",
         ]:
             self.parse_c()
-            token = self.get_token()
-            if TokenType.lexicon[token.number] == "NEWLINE":
-                # on ajoute token à l'arbre
-                self.tree.add_tree_child(
-                    Tree(
-                        data=token.number,
-                        line_index=token.line,
-                        is_terminal=True,
-                    )
-                )
-                self.next_token()
+            self.parse_n()
         return False
 
     def parse_d_1(self):
@@ -1315,6 +1300,16 @@ class Parser:
             )
             self.next_token()
         return False
+
+    def parse_n(self):
+        # on ajoute n à l'arbre
+        print("in parse n")
+        token = self.get_token()
+        if TokenType.lexicon[token.number] == "NEWLINE":
+            self.next_token()
+            self.parse_n()
+        else:
+            pass
 
 
 parser = Parser(lexer)
