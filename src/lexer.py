@@ -215,7 +215,7 @@ class Lexer:
         if char in TokenType.lexicon.values():
             token_number = TokenType.get_key_by_value(char)
             self.advance()
-            return Token(token_number, char, self.line_number)
+            return Token(token_number, self.line_number, char)
         
         raise SyntaxError(f"Unexpected symbol '{char}' at line {self.line_number}")
 

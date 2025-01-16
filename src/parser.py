@@ -199,6 +199,7 @@ class Parser:
                         data=token.number,
                         line_index=token.line,
                         is_terminal=True,
+                        value=token.value
                     )
                 )
                 self.next_token()
@@ -266,6 +267,7 @@ class Parser:
                     data=token.number,
                     line_index=token.line,
                     is_terminal=True,
+                        value=token.value
                 )
             )
             self.next_token()
@@ -300,6 +302,7 @@ class Parser:
                         data=token.number,
                         line_index=token.line,
                         is_terminal=True,
+                        value=token.value
                     )
                 )
                 self.next_token()
@@ -427,6 +430,7 @@ class Parser:
                     data=token.number,
                     line_index=token.line,
                     is_terminal=True,
+                        value=token.value
                 )
             )
             self.next_token()
@@ -654,6 +658,7 @@ class Parser:
                         data=token.number,
                         line_index=token.line,
                         is_terminal=True,
+                        value=token.value
                     )
                 )
                 self.next_token()

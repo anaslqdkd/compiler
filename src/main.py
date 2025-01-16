@@ -1,4 +1,5 @@
 from lexer import *
+from parser import *
 
 def main():
     with open("../tests/source_code.txt", "r") as file:
@@ -6,20 +7,27 @@ def main():
 
     lexer = Lexer(source_code)
 
-    while True:
-        token = lexer.get_next_token()
+    # while True:
+    #     token = lexer.get_next_token()
         
-        if token.value:
-            print((token.number, token.value), TokenType.lexicon[token.number])
-        else:
-            print((token.number))
+    #     if token.value:
+    #         print((token.number, token.value), TokenType.lexicon[token.number])
+    #     else:
+    #         print((token.number))
             
-        if token.number == 4:  # EOF token
-            break
+    #     if token.number == 4:  # EOF token
+    #         break
     
     print("\nToken lexicon", TokenType.lexicon)
     print("\nIdentifier Lexicon:\n", lexer.identifier_lexicon)
     print("\nConstant Lexicon:\n", lexer.constant_lexicon)
+
+    parser = Parser(lexer)
+    parser.parse_s()
+    transform_to_ast(parser.root)
+    parser.root.get_flowchart(
+        file_path="./test.txt", print_result=False
+    )
     
     print("\nTest Lookahead:")
     lexer = Lexer(source_code)
