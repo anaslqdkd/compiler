@@ -111,7 +111,6 @@ class Tree:
 
         def traverse(node):
             node_id = get_node_id(node)
-            print("node id %s" % node_id)
 
             if node_id not in seen_nodes:
                 if node.data in TokenType.lexicon.keys():
@@ -169,7 +168,7 @@ def remove_banned_characters(given_tree: "Tree", banned_characters: list[str]) -
                 for c in reversed(child.children):
                     given_tree.children.insert(i, c)
         else:
-            remove_banned_characters(child)
+            remove_banned_characters(child, banned_characters)
             i += 1
 
 
@@ -182,7 +181,7 @@ def remove_banned_data(given_tree: "Tree", banned_data: list[str]) -> None:
             for c in reversed(child.children):
                 given_tree.children.insert(i, c)
         else:
-            remove_banned_characters(child)
+            remove_banned_characters(child, banned_data)
             i += 1
 
 

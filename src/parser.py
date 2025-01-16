@@ -1406,6 +1406,7 @@ print(parser.tree.print_node())
 print(parser.root.print_node())
 # print(parser.tree.father.children)
 # print(parser.tree.father.print_node())
+# transform_to_ast(parser.root)
 parser.root.get_flowchart(
     file_path="/home/ash/poubelle_perso/test.txt", print_result=False
 )
