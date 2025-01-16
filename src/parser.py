@@ -199,6 +199,7 @@ class Parser:
                         data=token.number,
                         line_index=token.line,
                         is_terminal=True,
+                        value=token.value
                     )
                 )
                 self.next_token()
@@ -266,6 +267,7 @@ class Parser:
                     data=token.number,
                     line_index=token.line,
                     is_terminal=True,
+                        value=token.value
                 )
             )
             self.next_token()
@@ -300,6 +302,7 @@ class Parser:
                         data=token.number,
                         line_index=token.line,
                         is_terminal=True,
+                        value=token.value
                     )
                 )
                 self.next_token()
@@ -427,6 +430,7 @@ class Parser:
                     data=token.number,
                     line_index=token.line,
                     is_terminal=True,
+                        value=token.value
                 )
             )
             self.next_token()
@@ -654,6 +658,7 @@ class Parser:
                         data=token.number,
                         line_index=token.line,
                         is_terminal=True,
+                        value=token.value
                     )
                 )
                 self.next_token()
@@ -1216,7 +1221,7 @@ class Parser:
 
     def parse_e_1(self):
         print("in parse_e_1")
-        non_terminal_node = Tree(data="E_1", line_index=-1, is_terminal=False)
+        non_terminal_node = Tree(data="E1", line_index=-1, is_terminal=False)
         self.tree.add_tree_child(non_terminal_node)
         self.tree = non_terminal_node
         token = self.get_token()
@@ -1242,7 +1247,7 @@ class Parser:
 
     def parse_e_2(self):
         # on ajoute e_2 à l'arbre
-        non_terminal_node = Tree(data="E_2", line_index=-1, is_terminal=False)
+        non_terminal_node = Tree(data="E2", line_index=-1, is_terminal=False)
         self.tree.add_tree_child(non_terminal_node)
         self.tree = non_terminal_node
         print("in parse_e_2")
@@ -1418,9 +1423,9 @@ print(parser.parse_s())
 # print(parser.root.print_node())
 # print(parser.tree.father.children)
 # print(parser.tree.father.print_node())
-# transform_to_ast(parser.root)
+transform_to_ast(parser.root)
 parser.root.get_flowchart(
-    file_path="/home/ash/poubelle_perso/test.txt", print_result=False
+    file_path="./test.txt", print_result=False
 )
 # transform_to_ast(parser.root)
 # TODO: à rajouter la value dans identifier partout

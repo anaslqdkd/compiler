@@ -10,8 +10,8 @@ import random
 # Tree
 # -------------------------------------------------------------------------------------------------
 
-
 class Tree:
+    _node_id_in_mermaid = 0
 
     def __init__(
         self,
@@ -19,8 +19,7 @@ class Tree:
         _father: "Tree" = None,
         line_index: int = -1,
         is_terminal: bool = True,
-        value: int = None,
-        id_number: int = None,
+        value: int = None
     ) -> None:
         self.data = data
         self.is_terminal = is_terminal
@@ -28,8 +27,8 @@ class Tree:
         self.father = _father
         self.children = []
         self.value = value
-        # TODO: à changer le id attribué dans tree
-        self.id_number = random.randint(1, 1000)
+        self.id_number = Tree._node_id_in_mermaid
+        Tree._node_id_in_mermaid += 1
 
     def add_tree_child(self, child: "Tree" = None) -> None:
         if child is not None:
@@ -86,11 +85,11 @@ class Tree:
     def remove_this_node(self) -> "Tree":
         if self.father is not None:
             father = self.father
-            fathers_childen = father.children
-            node_index = fathers_childen.index(self)
+            fathers_children = father.children
+            node_index = fathers_children.index(self)
             n = len(self.children)
             for child_index in range(n):
-                fathers_childen.insert(
+                fathers_children.insert(
                     node_index, self.children[n - child_index - 1])
             father.remove_child(self)
             return father
@@ -110,7 +109,7 @@ class Tree:
         seen_nodes = {}
 
         def traverse(node):
-            node_id = get_node_id(node)
+            node_id = node.id_number
 
             if node_id not in seen_nodes:
                 if node.data in TokenType.lexicon.keys():
@@ -118,13 +117,19 @@ class Tree:
                 else:
                     data = str(node.data)
 
-                label = f"{data} (L{node.line_index}){' T' if node.is_terminal else ''}"
+                if node.value is not None:
+                    label = f"{data} => {node.value} (L{node.line_index}){' T' if node.is_terminal else ''}"
+                elif node.line_index == -1:
+                    label = f"{data}{' T' if node.is_terminal else ''}"
+                elif data == "*":
+                    label = f"\* (L{node.line_index}){' T' if node.is_terminal else ''}"
+                else:
+                    label = f"{data} (L{node.line_index}){' T' if node.is_terminal else ''}"
                 nodes.append(f'{node_id}["{label}"]')
                 seen_nodes[node_id] = True
 
             for child in node.children:
-                child_id = get_node_id(child)
-                edges.append(f"{node_id} --> {child_id}")
+                edges.append(f"{node_id} --> {child.id_number}")
                 traverse(child)
 
         traverse(self)
@@ -137,24 +142,9 @@ class Tree:
             file.write(graph)
 
 
-def get_node_id(node):
-    if node.is_terminal:
-        if isinstance(node.value, str):
-            return f"{node.data}_{hashlib.md5(node.value.encode()).hexdigest()}_{node.id_number}"
-        else:
-            return f"{node.data}_{node.value}_{node.id_number}"
-    else:
-        return f"{node.data}_{node.id_number}"
-
-
 # -------------------------------------------------------------------------------------------------
 # Converter
 # -------------------------------------------------------------------------------------------------
-
-def add_pruning_tokens() -> None:
-    TokenType.lexicon[-2] = "list"
-    TokenType.lexicon[-3] = "tuple"
-    return
 
 def remove_banned_characters(given_tree: "Tree", banned_characters: list[str]) -> None:
     i = 0
@@ -180,6 +170,18 @@ def remove_banned_data(given_tree: "Tree", banned_data: list[str]) -> None:
             remove_banned_characters(child, banned_data)
             i += 1
 
+def remove_n(given_tree:"Tree")->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if child.data == "N":
+            given_tree.children.pop(i)
+            for c in reversed(child.children):
+                given_tree.children.insert(i, c)
+        else:
+            remove_n(child)
+            i += 1
+
 def list_pruning(given_tree: "Tree") -> None:
     if not given_tree.children:
         return
@@ -190,17 +192,18 @@ def list_pruning(given_tree: "Tree") -> None:
     while i < len(children) - 1:
         if children[i].data in TokenType.lexicon.keys() and TokenType.lexicon[children[i].data] == "[":
             for j in range(i + 1, len(children)):
-                if children[i].data in TokenType.lexicon.keys() and TokenType.lexicon[children[j].data] == "]":
+                if children[j].data in TokenType.lexicon.keys() and TokenType.lexicon[children[j].data] == "]":
                     nodes_in_the_list = children[i + 1: j]
                     list_node = Tree(
-                        data=TokenType.get_key_by_value("list"),
+                        data="LIST",
                         _father=given_tree,
                         line_index=children[i].line_index,
                         is_terminal=False,
                     )
                     for node in nodes_in_the_list:
                         remove_banned_data(node, ["E1", "E2"])
-                        list_node.add_tree_child(node)
+                        for child in node.children:
+                            list_node.add_tree_child(child)
                     given_tree.children = children[:i] + \
                         [list_node] + children[j + 1:]
                     break
@@ -222,23 +225,20 @@ def tuple_pruning(given_tree: "Tree") -> None:
     i = 0
     while i < len(children) - 1:
         if children[i].data in TokenType.lexicon.keys() and TokenType.lexicon[children[i].data] == "(":
-            print("Parenthèse ouvrante trouvée")
             for j in range(i + 1, len(children)):
                 if children[j].data in TokenType.lexicon.keys() and TokenType.lexicon[children[j].data] == ")":
-                    print("Parenthèse fermante trouvée")
                     nodes_in_the_tuple = children[i + 1: j]
-                    for node in nodes_in_the_tuple:
-                        print("Child in the tuple: " + str(child.data))
                     tuple_node = Tree(
-                        data=TokenType.get_key_by_value("tuple"),
+                        data="TUPLE",
                         _father=given_tree,
                         line_index=children[i].line_index,
                         is_terminal=False,
                     )
                     for node in nodes_in_the_tuple:
                         remove_banned_data(node, ["I", "I1"])
-                        remove_banned_data(node, ["E1", "E2"])
-                        tuple_node.add_tree_child(node)
+                        remove_banned_data(node, ["E2"])
+                        for child in node.children:
+                            tuple_node.add_tree_child(child)
                     given_tree.children = (
                         children[:i] + [tuple_node] + children[j + 1:]
                     )
@@ -252,12 +252,84 @@ def tuple_pruning(given_tree: "Tree") -> None:
             i += 1
     pass
 
+def remove_childless_non_terminal_trees(given_tree:"Tree")->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if not child.is_terminal and len(child.children) == 0:
+            given_tree.children.pop(i)
+            for c in reversed(child.children):
+                given_tree.children.insert(i, c)
+        else:
+            remove_childless_non_terminal_trees(child)
+            i += 1
+
+def compact_non_terminals_chain(given_tree:"Tree")->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if not child.is_terminal and len(child.children) == 1:
+            replacing_child = child.children[0]
+
+            while len(replacing_child.children) == 1:
+                replacing_child = replacing_child.children[0]
+
+            given_tree.children.pop(i)
+            given_tree.children.insert(i, replacing_child)
+        else:
+            compact_non_terminals_chain(child)
+            i += 1
+
+def manage_relations(given_tree:"Tree", relation_symbols:list[str])->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if child.data in TokenType.lexicon.keys() and TokenType.lexicon[child.data] in relation_symbols:
+            grandfather = given_tree.father
+            grandfather.data = child.data
+            grandfather.line_index = child.line_index
+            grandfather.children.remove(given_tree)
+            given_tree.children.remove(child)
+            for c in given_tree.children:
+                manage_relations(c, relation_symbols)
+                grandfather.children.append(c)
+            i += 1
+        else:
+            manage_relations(child, relation_symbols)
+            i += 1
+
+def fuse_s1(given_tree:"Tree")->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if child.data == "S1":
+            j = 0
+            while j < len(child.children):
+                grandchild = child.children[j]
+                if grandchild.data == "S1":
+                    child.children.pop(j)
+                    grandchild.children.reverse()
+                    for c in grandchild.children:
+                        fuse_s1(c)
+                        child.children.insert(j, c)
+                else:
+                    j += 1
+            i += 1
+        else:
+            fuse_s1(child)
+            i += 1
+
 def transform_to_ast(given_tree: "Tree") -> None:
-    add_pruning_tokens()
     remove_banned_characters(given_tree, [":", ",", "NEWLINE", "def", "EOF"])
+    remove_n(given_tree)
     list_pruning(given_tree)
     tuple_pruning(given_tree)
-
+    remove_banned_data(given_tree, ["N"])
+    remove_childless_non_terminal_trees(given_tree)
+    remove_childless_non_terminal_trees(given_tree)
+    compact_non_terminals_chain(given_tree)
+    manage_relations(given_tree, ["+", "-", "*", "//", "%", "<=", ">=", "<", ">", "!=", "==", "=", "/"])
+    fuse_s1(given_tree)
 
 # -------------------------------------------------------------------------------------------------
 # Sample
@@ -413,10 +485,6 @@ def test_is_leaf_returns_false_for_non_leaf_node():
     # Assert
     assert is_leaf == False
 
-
-# Test for Tree to AST
-# TODO: write tests
-
 # Main
 if __name__ == "__main__":
     print("\nTesting tree structure...")
@@ -429,6 +497,3 @@ if __name__ == "__main__":
     test_is_leaf_method()
     test_is_leaf_returns_false_for_non_leaf_node()
     print("End of first tests. Tree structure tests successfully passed!\n")
-    print("Testing transformation from tree to AST...")
-    print('End of last tests. Function "transform_into_AST" successfully tested!\n')
-    print("All tests passed!")

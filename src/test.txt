@@ -1,84 +1,14 @@
 graph TD
-axiome_921["axiome (L2)"]
-S_71["S (L-1)"]
-3_None_874["NEWLINE (L2) T"]
-S1_627["S1 (L-1)"]
-D_733["D (L-1)"]
-C_752["C (L-1)"]
-10_None_29["IDENTIFIER (L2) T"]
-C2_317["C2 (L-1)"]
-51_None_603["= (L=) T"]
-E_784["E (L-1)"]
-E_or_292["E_or (L-1)"]
-E_and_89["E_and (L-1)"]
-E_not_248["E_not (L-1)"]
-E_rel_799["E_rel (L-1)"]
-E_add_213["E_add (L-1)"]
-E_mult_576["E_mult (L-1)"]
-E_un_911["E_un (L-1)"]
-60_None_578["( (L() T"]
-E_862["E (L-1)"]
-E_or_746["E_or (L-1)"]
-E_and_756["E_and (L-1)"]
-E_not_570["E_not (L-1)"]
-E_rel_788["E_rel (L-1)"]
-E_add_229["E_add (L-1)"]
-E_mult_769["E_mult (L-1)"]
-E_un_913["E_un (L-1)"]
-O_un_597["O_un (L-1)"]
-11_1_94["INTEGER (L2) T"]
-E_mult_tail_864["E_mult_tail (L-1)"]
-E_add_tail_104["E_add_tail (L-1)"]
-E_rel_tail_777["E_rel_tail (L-1)"]
-E_and_tail_633["E_and_tail (L-1)"]
-E_or_tail_454["E_or_tail (L-1)"]
-E_mult_tail_907["E_mult_tail (L-1)"]
-E_add_tail_163["E_add_tail (L-1)"]
-E_rel_tail_800["E_rel_tail (L-1)"]
-E_and_tail_223["E_and_tail (L-1)"]
-E_or_tail_20["E_or_tail (L-1)"]
-E_442["E (L-1)"]
-C1_244["C1 (L-1)"]
-N_219["N (L-1)"]
-S1_868["S1 (L-1)"]
-axiome_921 --> S_71
-S_71 --> 3_None_874
-S_71 --> S1_627
-S1_627 --> D_733
-D_733 --> C_752
-C_752 --> 10_None_29
-C_752 --> C2_317
-C2_317 --> 51_None_603
-C2_317 --> E_784
-E_784 --> E_or_292
-E_or_292 --> E_and_89
-E_and_89 --> E_not_248
-E_not_248 --> E_rel_799
-E_rel_799 --> E_add_213
-E_add_213 --> E_mult_576
-E_mult_576 --> E_un_911
-E_un_911 --> 60_None_578
-E_un_911 --> E_862
-E_862 --> E_or_746
-E_or_746 --> E_and_756
-E_and_756 --> E_not_570
-E_not_570 --> E_rel_788
-E_rel_788 --> E_add_229
-E_add_229 --> E_mult_769
-E_mult_769 --> E_un_913
-E_un_913 --> O_un_597
-O_un_597 --> 11_1_94
-E_mult_769 --> E_mult_tail_864
-E_add_229 --> E_add_tail_104
-E_rel_788 --> E_rel_tail_777
-E_and_756 --> E_and_tail_633
-E_or_746 --> E_or_tail_454
-E_mult_576 --> E_mult_tail_907
-E_add_213 --> E_add_tail_163
-E_rel_799 --> E_rel_tail_800
-E_and_89 --> E_and_tail_223
-E_or_292 --> E_or_tail_20
-C_752 --> E_442
-C_752 --> C1_244
-D_733 --> N_219
-S1_627 --> S1_868
+36["axiome (L2)"]
+41["A"]
+43["IDENTIFIER => 1 (L2) T"]
+46["IDENTIFIER => 2 (L2) T"]
+52["C"]
+53["return (Lreturn) T"]
+63["IDENTIFIER => 2 (L3) T"]
+36 --> 41
+41 --> 43
+41 --> 46
+41 --> 52
+52 --> 53
+52 --> 63

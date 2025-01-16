@@ -197,14 +197,14 @@ class Lexer:
         if two_char_op in TokenType.lexicon.values():
             token_number = TokenType.get_key_by_value(two_char_op)
             self.advance(2)
-            return Token(token_number, two_char_op, self.line_number)
+            return Token(token_number, self.line_number)
         
         # Single character operators
         single_char_op = self.source_code[start_pos]
         if single_char_op in TokenType.lexicon.values():
             token_number = TokenType.get_key_by_value(single_char_op)
             self.advance()
-            return Token(token_number, single_char_op, self.line_number)
+            return Token(token_number, self.line_number, single_char_op)
         
         raise SyntaxError(f"Unexpected operator '{self.source_code[start_pos]}' at line {self.line_number}")
 
@@ -215,7 +215,7 @@ class Lexer:
         if char in TokenType.lexicon.values():
             token_number = TokenType.get_key_by_value(char)
             self.advance()
-            return Token(token_number, char, self.line_number)
+            return Token(token_number, self.line_number, char)
         
         raise SyntaxError(f"Unexpected symbol '{char}' at line {self.line_number}")
 
