@@ -5,10 +5,14 @@ from unittest.mock import patch
 import hashlib
 import uuid
 import random
+import hashlib
+import uuid
+import random
 
 # -------------------------------------------------------------------------------------------------
 # Tree
 # -------------------------------------------------------------------------------------------------
+
 
 class Tree:
     _node_id_in_mermaid = 0
@@ -31,6 +35,7 @@ class Tree:
         Tree._node_id_in_mermaid += 1
 
     def add_tree_child(self, child: "Tree" = None) -> None:
+    def add_tree_child(self, child: "Tree" = None) -> None:
         if child is not None:
             self.children.append(child)
             child.father = self
@@ -44,7 +49,19 @@ class Tree:
             line_index=line_index,
             is_terminal=is_terminal,
         )
+
+    def add_child(
+        self, child_data: int = -1, line_index: int = -1, is_terminal: bool = False
+    ) -> None:
+        child = Tree(
+            data=child_data,
+            _father=self,
+            line_index=line_index,
+            is_terminal=is_terminal,
+        )
         self.children.append(child)
+
+    def insert_tree_child(self, index: int = 0, child: "Tree" = None) -> None:
 
     def insert_tree_child(self, index: int = 0, child: "Tree" = None) -> None:
         if child is not None:
@@ -68,8 +85,26 @@ class Tree:
             ),
         )
 
+    def insert_child(
+        self,
+        index: int = 0,
+        child_data: int = -1,
+        line_index: int = -1,
+        is_terminal: bool = False,
+    ) -> None:
+        self.children.insert(
+            index,
+            Tree(
+                data=child_data,
+                _father=self,
+                line_index=line_index,
+                is_terminal=is_terminal,
+            ),
+        )
+
     def is_leaf(self) -> bool:
         return len(self.children) == 0
+
 
     def contains_non_terminals(self) -> bool:
         if not self.is_terminal:
@@ -77,10 +112,13 @@ class Tree:
         return any(not child.is_terminal for child in self.children)
 
     def remove_child(self, child: "Tree" = None) -> None:
+    def remove_child(self, child: "Tree" = None) -> None:
         if child in self.children:
             self.children.remove(child)
         else:
             print(f"Child {child.data} not found in tree.")
+
+    def remove_this_node(self) -> "Tree":
 
     def remove_this_node(self) -> "Tree":
         if self.father is not None:
@@ -96,7 +134,13 @@ class Tree:
         else:
             raise ValueError(
                 "There are no father to this Node. Can't erase it.")
+            raise ValueError(
+                "There are no father to this Node. Can't erase it.")
 
+    def print_node(self) -> None:
+        print(
+            f"Node: {self.data}, Line Index: {self.line_index}, Terminal: {self.is_terminal}"
+        )
     def print_node(self) -> None:
         print(
             f"Node: {self.data}, Line Index: {self.line_index}, Terminal: {self.is_terminal}"
@@ -104,8 +148,10 @@ class Tree:
         pass
 
     def get_flowchart(self, file_path: str, print_result: bool = False) -> None:
+    def get_flowchart(self, file_path: str, print_result: bool = False) -> None:
         nodes = []
         edges = []
+        seen_nodes = {}
         seen_nodes = {}
 
         def traverse(node):
@@ -145,10 +191,12 @@ class Tree:
 # -------------------------------------------------------------------------------------------------
 
 def add_pruning_tokens() -> None:
+def add_pruning_tokens() -> None:
     TokenType.lexicon[-2] = "list"
     TokenType.lexicon[-3] = "tuple"
     return
 
+def remove_banned_characters(given_tree: "Tree", banned_characters: list[str]) -> None:
 def remove_banned_characters(given_tree: "Tree", banned_characters: list[str]) -> None:
     i = 0
     while i < len(given_tree.children):
@@ -157,10 +205,16 @@ def remove_banned_characters(given_tree: "Tree", banned_characters: list[str]) -
             given_tree.children.pop(i)
             for c in reversed(child.children):
                 given_tree.children.insert(i, c)
+        if child.data in TokenType.lexicon.keys() and TokenType.lexicon[child.data] in banned_characters:
+            given_tree.children.pop(i)
+            for c in reversed(child.children):
+                given_tree.children.insert(i, c)
         else:
+            remove_banned_characters(child, banned_characters)
             remove_banned_characters(child, banned_characters)
             i += 1
 
+def remove_banned_data(given_tree: "Tree", banned_data: list[str]) -> None:
 def remove_banned_data(given_tree: "Tree", banned_data: list[str]) -> None:
     i = 0
     while i < len(given_tree.children):
@@ -170,6 +224,7 @@ def remove_banned_data(given_tree: "Tree", banned_data: list[str]) -> None:
             for c in reversed(child.children):
                 given_tree.children.insert(i, c)
         else:
+            remove_banned_characters(child, banned_data)
             remove_banned_characters(child, banned_data)
             i += 1
 
@@ -182,6 +237,7 @@ def list_pruning(given_tree: "Tree") -> None:
     i = 0
     while i < len(children) - 1:
         if children[i].data in TokenType.lexicon.keys() and TokenType.lexicon[children[i].data] == "[":
+        if children[i].data in TokenType.lexicon.keys() and TokenType.lexicon[children[i].data] == "[":
             for j in range(i + 1, len(children)):
                 if children[j].data in TokenType.lexicon.keys() and TokenType.lexicon[children[j].data] == "]":
                     nodes_in_the_list = children[i + 1: j]
@@ -189,6 +245,7 @@ def list_pruning(given_tree: "Tree") -> None:
                         data=TokenType.get_key_by_value("list"),
                         _father=given_tree,
                         line_index=children[i].line_index,
+                        is_terminal=False,
                         is_terminal=False,
                     )
                     for node in nodes_in_the_list:
@@ -208,6 +265,7 @@ def list_pruning(given_tree: "Tree") -> None:
     pass
 
 def tuple_pruning(given_tree: "Tree") -> None:
+def tuple_pruning(given_tree: "Tree") -> None:
     if not given_tree.children:
         return
     for child in given_tree.children:
@@ -223,6 +281,7 @@ def tuple_pruning(given_tree: "Tree") -> None:
                         data=TokenType.get_key_by_value("tuple"),
                         _father=given_tree,
                         line_index=children[i].line_index,
+                        is_terminal=False,
                         is_terminal=False,
                     )
                     for node in nodes_in_the_tuple:
@@ -326,6 +385,8 @@ def transform_to_ast(given_tree: "Tree") -> None:
 
 
 def get_sample_tree() -> "Tree":
+
+def get_sample_tree() -> "Tree":
     root = Tree(data=1, line_index=0, is_terminal=False)
     child_a = Tree(data=2, line_index=1, is_terminal=False)
     child_b = Tree(data=3, line_index=2, is_terminal=False)
@@ -347,12 +408,16 @@ def get_sample_tree() -> "Tree":
     child_b1.children[0].add_child(14, line_index=13, is_terminal=False)
     child_b1.children[0].children[1].add_child(
         15, line_index=14, is_terminal=True)
+    child_b1.children[0].children[1].add_child(
+        15, line_index=14, is_terminal=True)
     return root
+
 
 
 # -------------------------------------------------------------------------------------------------
 # Tests
 # -------------------------------------------------------------------------------------------------
+
 
 
 # Test for tree struct
@@ -373,6 +438,8 @@ def test_tree_creation_with_default_values():
     assert tree.children == expected_children
 
 
+
+
 def test_tree_creation():
     # Arrange
     expected_data = 10
@@ -385,11 +452,18 @@ def test_tree_creation():
         line_index=expected_line_index,
         is_terminal=expected_is_terminal,
     )
+    tree = Tree(
+        data=expected_data,
+        line_index=expected_line_index,
+        is_terminal=expected_is_terminal,
+    )
 
     # Assert
     assert tree.data == expected_data
     assert tree.line_index == expected_line_index
     assert tree.is_terminal == expected_is_terminal
+
+
 
 
 def test_add_child_which_is_tree():
@@ -402,6 +476,8 @@ def test_add_child_which_is_tree():
 
     # Assert
     assert child_tree in root.children
+
+
 
 
 def test_add_child_method_with_data():
@@ -421,6 +497,8 @@ def test_add_child_method_with_data():
     assert tree.children[0].is_terminal == is_terminal
 
 
+
+
 def test_remove_child():
     root = Tree("root")
     child1 = Tree(1)
@@ -434,6 +512,8 @@ def test_remove_child():
     assert root.children[0].data == 2
 
 
+
+
 def test_remove_nonexistent_child():
     # Arrange
     root = Tree("root")
@@ -443,10 +523,13 @@ def test_remove_nonexistent_child():
 
     # Act
     with patch("sys.stdout", new=io.StringIO()) as err:
+    with patch("sys.stdout", new=io.StringIO()) as err:
         root.remove_child(child2)
 
     # Assert
     assert "Child 2 not found in tree." in err.getvalue()
+
+
 
 
 def test_is_leaf_method():
@@ -462,6 +545,8 @@ def test_is_leaf_method():
     assert root.children[1].children[0].is_leaf() == True
 
 
+
+
 def test_is_leaf_returns_false_for_non_leaf_node():
     # Arrange
     root = Tree("root")
@@ -475,6 +560,7 @@ def test_is_leaf_returns_false_for_non_leaf_node():
     assert is_leaf == False
 
 # Main
+if __name__ == "__main__":
 if __name__ == "__main__":
     print("\nTesting tree structure...")
     test_tree_creation_with_default_values()
