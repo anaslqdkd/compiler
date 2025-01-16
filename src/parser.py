@@ -1,5 +1,6 @@
 from lexer import *
 from tree_struct import *
+import uuid
 
 
 # TODO: à voir pour les constantes, conflit grammaire et impl,
@@ -53,7 +54,6 @@ class Parser:
             self.tree.add_tree_child(token_node)
             self.next_token()
             return self.parse_s_1()
-
         if TokenType.lexicon[token.number] in [
             "def",
             "[",
@@ -92,9 +92,7 @@ class Parser:
         elif TokenType.lexicon[token.number] == "def":
             self.tree.add_tree_child(
                 Tree(
-                    data=token.number,
-                    line_index=token.line,
-                    is_terminal=True,
+                    data=token.number, line_index=token.line, is_terminal=True, value=30
                 )
             )
             self.parse_a()
@@ -115,18 +113,8 @@ class Parser:
             # TokenType.CONST,
             "STRING",
             "INTEGER",
-            # # NOTE:  ajout perso
-            # "NEWLINE",
         ]:
-            self.tree.add_tree_child(
-                Tree(
-                    data=token.number,
-                    line_index=token.line,
-                    is_terminal=True,
-                )
-            )
             self.parse_d()
-            # NOTE: j'ai changé ici, parse_s_1 au lieu de parse_s_2
             return self.parse_s_1()
 
         self.tree = self.tree.father
@@ -1345,7 +1333,10 @@ class Parser:
         print("in parse_o_un")
         token = self.get_token()
         print(TokenType.lexicon[token.number])
-        print(token.value)
+        print(
+            "The token type is %s and the token number is %d and the token value is %s"
+            % (TokenType.lexicon[token.number], token.number, token.value)
+        )
 
         if TokenType.lexicon[token.number] in [
             "IDENTIFIER",
@@ -1358,22 +1349,31 @@ class Parser:
         ]:
             print("here")
             # on ajoute token à l'arbre
-            self.tree.add_tree_child(
-                Tree(
-                    data=token.number,
-                    line_index=token.line,
-                    is_terminal=True,
+            if token.value is not None:
+                self.tree.add_tree_child(
+                    Tree(
+                        data=token.number,
+                        line_index=token.line,
+                        is_terminal=True,
+                        value=token.value,
+                    )
                 )
-            )
+            else:
+                self.tree.add_tree_child(
+                    Tree(
+                        data=token.number,
+                        line_index=token.line,
+                        is_terminal=True,
+                    )
+                )
+
             self.next_token()
+        self.tree.print_node()
         self.tree = self.tree.father
         return False
 
     def parse_n(self):
         # on ajoute n à l'arbre
-        non_terminal_node = Tree(data="N", line_index=-1, is_terminal=False)
-        self.tree.add_tree_child(non_terminal_node)
-        self.tree = non_terminal_node
         print("in parse n")
         token = self.get_token()
 
@@ -1382,7 +1382,12 @@ class Parser:
         self.tree = non_terminal_node
         if TokenType.lexicon[token.number] == "NEWLINE":
             token_node = Tree(
-                data=token.number, line_index=token.line, is_terminal=True
+                data=token.number,
+                line_index=token.line,
+                is_terminal=True,
+                value=-1,
+                # NOTE: à enlever ici
+                id_number=50,
             )
             self.tree.add_tree_child(token_node)
             self.next_token()
@@ -1397,11 +1402,16 @@ parser = Parser(lexer)
 print(parser.parse_s())
 # print(parser.root.print_node())
 # print(parser.tree.print_node())
-print(parser.root.children[0].print_node())
-parser.root = parser.root.get_child(0)
-print(parser.tree.father.father.father.father.father.print_node())
-print(parser.tree.father.children)
-print(parser.tree.father.print_node())
+# print(parser.root.children[0].print_node())
+# parser.root = parser.root.get_child(0)
+# print(parser.tree.father.father.father.father.father.print_node())
+print(parser.tree.print_node())
+print(parser.root.print_node())
+# print(parser.tree.father.children)
+# print(parser.tree.father.print_node())
+parser.root.get_flowchart(
+    file_path="/home/ash/poubelle_perso/test.txt", print_result=False
+)
 # print(parser.root)
 # print(parser.root.children)
 # print(parser.root.print_tree())
