@@ -1,14 +1,14 @@
 graph TD
-36["axiome (L2)"]
-41["A"]
-43["IDENTIFIER => 1 (L2) T"]
-46["IDENTIFIER => 2 (L2) T"]
-52["C"]
-53["return (Lreturn) T"]
-63["IDENTIFIER => 2 (L3) T"]
-36 --> 41
-41 --> 43
-41 --> 46
-41 --> 52
-52 --> 53
-52 --> 63
+0["axiome (L2)"]
+5["A"]
+7["IDENTIFIER => 1 (L2) T"]
+10["IDENTIFIER => 2 (L2) T"]
+16["C"]
+17["return (Lreturn) T"]
+27["IDENTIFIER => 2 (L3) T"]
+0 --> 5
+5 --> 7
+5 --> 10
+5 --> 16
+16 --> 17
+16 --> 27
