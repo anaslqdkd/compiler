@@ -1103,6 +1103,7 @@ class Parser:
         if TokenType.lexicon[token.number] in [
             "NEWLINE",
             ")",
+            # "(",
             ":",
             ",",
             "[",
@@ -1149,8 +1150,12 @@ class Parser:
                 )
             )
             self.next_token()
-            self.parse_e()
+            self.parse_e_1()
+
             token = self.get_token()
+            print("%%%%%%%%%%%%%%%")
+            print(TokenType.lexicon[token.number])
+
             if TokenType.lexicon[token.number] == ")":
                 # on ajoute token à l'arbre
                 self.tree.add_tree_child(
@@ -1246,6 +1251,13 @@ class Parser:
 
         if TokenType.lexicon[token.number] == ",":
             # on ajoute token à l'arbre
+            self.tree.add_tree_child(
+                Tree(
+                    data=token.number,
+                    line_index=token.line,
+                    is_terminal=True,
+                )
+            )
             self.next_token()
             self.parse_e()
             self.parse_e_2()
@@ -1402,16 +1414,17 @@ print(parser.parse_s())
 # print(parser.root.children[0].print_node())
 # parser.root = parser.root.get_child(0)
 # print(parser.tree.father.father.father.father.father.print_node())
-print(parser.tree.print_node())
-print(parser.root.print_node())
+# print(parser.tree.print_node())
+# print(parser.root.print_node())
 # print(parser.tree.father.children)
 # print(parser.tree.father.print_node())
 # transform_to_ast(parser.root)
-# TODO: à rajouter la value dans identifier partout
 parser.root.get_flowchart(
-    file_path="./test.txt", print_result=False
+    file_path="/home/ash/poubelle_perso/test.txt", print_result=False
 )
-transform_to_ast(parser.root)
+# transform_to_ast(parser.root)
+# TODO: à rajouter la value dans identifier partout
+
 # print(parser.root)
 # print(parser.root.children)
 # print(parser.root.print_tree())
