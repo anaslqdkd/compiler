@@ -1385,9 +1385,6 @@ class Parser:
                 data=token.number,
                 line_index=token.line,
                 is_terminal=True,
-                value=-1,
-                # NOTE: à enlever ici
-                id_number=50,
             )
             self.tree.add_tree_child(token_node)
             self.next_token()
@@ -1412,6 +1409,8 @@ print(parser.root.print_node())
 parser.root.get_flowchart(
     file_path="/home/ash/poubelle_perso/test.txt", print_result=False
 )
+# TODO: à rajouter la value dans identifier partout
+
 # print(parser.root)
 # print(parser.root.children)
 # print(parser.root.print_tree())
