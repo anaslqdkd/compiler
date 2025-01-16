@@ -1407,11 +1407,11 @@ print(parser.root.print_node())
 # print(parser.tree.father.children)
 # print(parser.tree.father.print_node())
 # transform_to_ast(parser.root)
-parser.root.get_flowchart(
-    file_path="/home/ash/poubelle_perso/test.txt", print_result=False
-)
 # TODO: à rajouter la value dans identifier partout
-
+parser.root.get_flowchart(
+    file_path="./test.txt", print_result=False
+)
+transform_to_ast(parser.root)
 # print(parser.root)
 # print(parser.root.children)
 # print(parser.root.print_tree())

@@ -151,26 +151,22 @@ def get_node_id(node):
 # Converter
 # -------------------------------------------------------------------------------------------------
 
-
 def add_pruning_tokens() -> None:
     TokenType.lexicon[-2] = "list"
     TokenType.lexicon[-3] = "tuple"
     return
 
-
 def remove_banned_characters(given_tree: "Tree", banned_characters: list[str]) -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
-        if child.data in TokenType.lexicon.keys():
-            if TokenType.lexicon[child.data] in banned_characters:
-                given_tree.children.pop(i)
-                for c in reversed(child.children):
-                    given_tree.children.insert(i, c)
+        if child.data in TokenType.lexicon.keys() and TokenType.lexicon[child.data] in banned_characters:
+            given_tree.children.pop(i)
+            for c in reversed(child.children):
+                given_tree.children.insert(i, c)
         else:
             remove_banned_characters(child, banned_characters)
             i += 1
-
 
 def remove_banned_data(given_tree: "Tree", banned_data: list[str]) -> None:
     i = 0
@@ -184,7 +180,6 @@ def remove_banned_data(given_tree: "Tree", banned_data: list[str]) -> None:
             remove_banned_characters(child, banned_data)
             i += 1
 
-
 def list_pruning(given_tree: "Tree") -> None:
     if not given_tree.children:
         return
@@ -193,9 +188,9 @@ def list_pruning(given_tree: "Tree") -> None:
     children = given_tree.children
     i = 0
     while i < len(children) - 1:
-        if TokenType.lexicon[children[i].data] == "[":
+        if children[i].data in TokenType.lexicon.keys() and TokenType.lexicon[children[i].data] == "[":
             for j in range(i + 1, len(children)):
-                if TokenType.lexicon[children[j].data] == "]":
+                if children[i].data in TokenType.lexicon.keys() and TokenType.lexicon[children[j].data] == "]":
                     nodes_in_the_list = children[i + 1: j]
                     list_node = Tree(
                         data=TokenType.get_key_by_value("list"),
@@ -218,7 +213,6 @@ def list_pruning(given_tree: "Tree") -> None:
             i += 1
     pass
 
-
 def tuple_pruning(given_tree: "Tree") -> None:
     if not given_tree.children:
         return
@@ -227,10 +221,14 @@ def tuple_pruning(given_tree: "Tree") -> None:
     children = given_tree.children
     i = 0
     while i < len(children) - 1:
-        if TokenType.lexicon[children[i].data] == "(":
+        if children[i].data in TokenType.lexicon.keys() and TokenType.lexicon[children[i].data] == "(":
+            print("Parenthèse ouvrante trouvée")
             for j in range(i + 1, len(children)):
-                if TokenType.lexicon[children[j].data] == ")":
+                if children[j].data in TokenType.lexicon.keys() and TokenType.lexicon[children[j].data] == ")":
+                    print("Parenthèse fermante trouvée")
                     nodes_in_the_tuple = children[i + 1: j]
+                    for node in nodes_in_the_tuple:
+                        print("Child in the tuple: " + str(child.data))
                     tuple_node = Tree(
                         data=TokenType.get_key_by_value("tuple"),
                         _father=given_tree,
@@ -253,38 +251,6 @@ def tuple_pruning(given_tree: "Tree") -> None:
         else:
             i += 1
     pass
-
-
-def function_pruning(given_tree: "Tree") -> None:
-    if not given_tree.children:
-        return
-    for child in given_tree.children:
-        function_pruning(child)
-    if (
-        given_tree.data == "A"
-        and len(given_tree.children) == 4
-        and TokenType.lexicon[given_tree.children[0].data] == "def"
-        and TokenType.lexicon[given_tree.children[1].data] == "ident"
-        and given_tree.children[2].data == "tuple"
-        and given_tree.children[3].data == "B"
-    ):
-        function_tree = Tree(
-            data="function",
-            _father=given_tree._father,
-            line_index=given_tree.line_index,
-            is_terminal=False,
-        )
-        function_tree.add_tree_child(given_tree.children[1])  # "ident"
-        function_tree.add_tree_child(given_tree.children[2])  # "tuple"
-        function_tree.add_tree_child(given_tree.children[3])  # "B"
-        if given_tree._father:
-            parent = given_tree._father
-            parent.children = [
-                function_tree if child is given_tree else child
-                for child in parent.children
-            ]
-    pass
-
 
 def transform_to_ast(given_tree: "Tree") -> None:
     add_pruning_tokens()
