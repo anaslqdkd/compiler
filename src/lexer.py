@@ -1,5 +1,4 @@
 class TokenType:
-    # Flat dictionary for token numbers
     lexicon = {
         1: "BEGIN", 2: "END", 3: "NEWLINE", 4: "EOF",
         10: "IDENTIFIER", 11: "INTEGER", 12: "STRING",
@@ -9,8 +8,7 @@ class TokenType:
         40: "+", 41: "-", 42: "*", 43: "//", 44: "%", 
         45: "<=", 46: ">=", 47: ">", 48: "<", 
         49: "!=", 50: "==", 51: "=", 52: "/", 53: "!",
-        60: "(", 61: ")", 62: "{", 63: "}", 
-        64: "[", 65: "]", 66: ":", 67: ","
+        60: "(", 61: ")", 62: "[", 63: "]", 64: ":", 65: ","
     }
     
     @classmethod
@@ -199,14 +197,14 @@ class Lexer:
         if two_char_op in TokenType.lexicon.values():
             token_number = TokenType.get_key_by_value(two_char_op)
             self.advance(2)
-            return Token(token_number, two_char_op, self.line_number)
+            return Token(token_number, self.line_number)
         
         # Single character operators
         single_char_op = self.source_code[start_pos]
         if single_char_op in TokenType.lexicon.values():
             token_number = TokenType.get_key_by_value(single_char_op)
             self.advance()
-            return Token(token_number, single_char_op, self.line_number)
+            return Token(token_number, self.line_number, single_char_op)
         
         raise SyntaxError(f"Unexpected operator '{self.source_code[start_pos]}' at line {self.line_number}")
 

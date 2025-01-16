@@ -1,2 +1,4 @@
 # source_code.txt
-a = 123
+a = 5
+a = 5 < 5
+a = 5 <= 5

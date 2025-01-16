@@ -1,11 +1,9 @@
-S ::= Newline S1
+S ::= Newline S
 S ::= S1
 
 S1 ::= A S1
-S1 ::= D S2
-
-S2 ::= D S2
-S2 ::= EOF
+S1 ::= D S1
+S1 ::= EOF
 
 A ::= def ident ( I )  :  B
 
@@ -14,7 +12,7 @@ I ::= ident I1
 I1 ::= ,  ident I1
 I1 ::=  ''
 
-B ::= C Newline
+B ::= C N
 B ::= Newline Begin D B1 End
 
 B1 ::= Newline D B1
@@ -29,15 +27,18 @@ C1 ::= [ E ] = E
 C1 ::=  ''
 
 C2 ::= = E 
-C2 ::= ( E1 )
 C2 ::=  ''
 
-D ::= C Newline
+D ::= C N 
 D ::= if E : B D1
 D ::= for ident in E : B
 
 D1 ::= else : B 
 D1 ::= ''
+
+
+N ::= Newline N 
+N ::= ''
 
 
 
@@ -72,15 +73,15 @@ E_mult_tail  ::= O_* E_un E_mult_tail
 E_mult_tail ::= ''
 
 E_un         ::= - E_un 
-E_un        ::= [ E ]
-E_un        ::= ( E )
+E_un        ::= [ E1 ]
+E_un        ::= ( E1 )
 E_un ::= O_un
 
-E_1          ::= E E_2 
-E_1             ::= ''
+E1          ::= E E2 
+E1             ::= ''
 
-E_2          ::= , E E_2 
-E_2         ::= ''
+E2          ::= , E E2 
+E2         ::= ''
 
 O_r          ::= <= 
 O_r         ::= >=
