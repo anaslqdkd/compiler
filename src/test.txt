@@ -1,14 +1,46 @@
 graph TD
-0["axiome (L2)"]
-5["A"]
-7["IDENTIFIER => 1 (L2) T"]
-10["IDENTIFIER => 2 (L2) T"]
-16["C"]
-17["return (Lreturn) T"]
-27["IDENTIFIER => 2 (L3) T"]
-0 --> 5
-5 --> 7
-5 --> 10
-5 --> 16
+0["axiome (Ldef)"]
+2["S1"]
+3["A"]
+5["IDENTIFIER => 1 (L1) T"]
+8["IDENTIFIER => 2 (L1) T"]
+14["Error: Unexpected '20' (Lif) T"]
+16["D"]
+17["if (Lif) T"]
+22["== (L2)"]
+24["% (L2)"]
+27["IDENTIFIER => 2 (L2) T"]
+33["INTEGER => 1 (L2) T"]
+43["INTEGER => 2 (L2) T"]
+52["C"]
+53["return (Lreturn) T"]
+63["True => 3 (LTrue) T"]
+69["Error: Unexpected '29' (Lreturn) T"]
+73["D1"]
+74["else (Lelse) T"]
+78["C"]
+79["return (Lreturn) T"]
+89["False => 5 (LFalse) T"]
+95["Error: Unexpected '29' (Lreturn) T"]
+0 --> 2
+2 --> 3
+3 --> 5
+3 --> 8
+3 --> 14
+2 --> 16
 16 --> 17
-16 --> 27
+16 --> 22
+22 --> 24
+24 --> 27
+24 --> 33
+22 --> 43
+16 --> 52
+52 --> 53
+52 --> 63
+52 --> 69
+16 --> 73
+73 --> 74
+73 --> 78
+78 --> 79
+78 --> 89
+78 --> 95

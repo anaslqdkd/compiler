@@ -3,7 +3,7 @@ from parser import *
 
 
 def main():
-    with open("../tests/source_code.txt", "r") as file:
+    with open("../tests/syntax_error.txt", "r") as file:
         source_code = file.read()
 
     lexer = Lexer(source_code)
@@ -19,8 +19,9 @@ def main():
     #     if token.number == 4:  # EOF token
     #         break
 
-    parser = Parser(lexer, False)
-    parser.parse_s()
+    parser = Parser(lexer, True)
+    # parser.parse_s()
+    print(parser.parse_s())
     transform_to_ast(parser.root)
     parser.root.get_flowchart(file_path="./test.txt", print_result=False)
 
@@ -41,4 +42,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
