@@ -1,0 +1,6 @@
+x = 10
+y = 5
+z = 2
+
+result = x + y * z - (x // z)
+print(result)
