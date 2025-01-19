@@ -3,7 +3,7 @@ from parser import *
 
 
 def main():
-    with open("../tests/syntax_error.txt", "r") as file:
+    with open("../tests/works/op_prior.txt", "r") as file:
         source_code = file.read()
 
     lexer = Lexer(source_code)
@@ -14,7 +14,7 @@ def main():
     #     if token.value:
     #         print((token.number, token.value), TokenType.lexicon[token.number])
     #     else:
-    #         print((token.number))
+    #         print(TokenType.lexicon[token.number])
 
     #     if token.number == 4:  # EOF token
     #         break
