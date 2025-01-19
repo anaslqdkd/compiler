@@ -67,6 +67,8 @@ class Lexer:
         self.next_identifier_index = 1
         self.next_constant_index = 1
 
+        self.expect_indent = False
+
     def get_next_token(self, advance_cursor=True):
         original_position = self.position
         original_line_number = self.line_number
@@ -221,6 +223,9 @@ class Lexer:
         if char in TokenType.lexicon.values():
             token_number = TokenType.get_key_by_value(char)
             self.advance()
+            # Set expect_indent flag when we see a colon
+            if char == ':':
+                self.expect_indent = True
             return Token(token_number, self.line_number, char)
         
         raise SyntaxError(f"Unexpected symbol '{char}' at line {self.line_number}")
@@ -246,7 +251,7 @@ class Lexer:
             if self.source_code[self.position] == " ":
                 current_indent += 1
             elif self.source_code[self.position] == "\t":
-                current_indent += 4  # Treating tab as 4 spaces
+                current_indent += 4
             self.advance()
         
         # If this is just a blank line or comment, ignore indentation
@@ -254,7 +259,13 @@ class Lexer:
             (self.source_code[self.position] == "\n" or self.source_code[self.position] == "#")):
             return None
             
-        # Compare with previous indent level
+        # Check for required indentation after colon
+        if self.expect_indent and current_indent <= self.indent_stack[-1]:
+            raise IndentationError(f"Expected an indented block at line {self.line_number}")
+        
+        self.expect_indent = False  # Reset the flag
+        
+        # Rest of the existing handle_indentation code...
         prev_indent = self.indent_stack[-1]
         
         if current_indent > prev_indent:

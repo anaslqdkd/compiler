@@ -3,7 +3,7 @@ from parser import *
 
 
 def main():
-    with open("../tests/works/bool_cond.txt", "r") as file:
+    with open("../tests/fails/indent1.txt", "r") as file:
         source_code = file.read()
 
     lexer = Lexer(source_code)
