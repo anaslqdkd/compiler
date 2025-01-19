@@ -298,29 +298,46 @@ def manage_relations(given_tree:"Tree", relation_symbols:list[str])->None:
             manage_relations(child, relation_symbols)
             i += 1
 
-def fuse_s1(given_tree:"Tree")->None:
+def manage_functions(given_tree:"Tree")->None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
-        if child.data == "S1":
+        if child.data in TokenType.lexicon.keys() and TokenType.lexicon[child.data] == "def":
+            function_tree = Tree("function", given_tree, child.line_index, True)
+            for c in given_tree.children:
+                if not (c.data in TokenType.lexicon.keys() and TokenType.lexicon[c.data] == "def"):
+                    function_tree.add_tree_child(c)
+                    given_tree.children.remove(c)
+            # given_tree.children.remove(child)
+            given_tree.children.insert(0, function_tree)
+            i += 1
+        else:
+            manage_functions(child)
+            i += 1
+
+def fuse_chains(given_tree:"Tree", chaining_nodes:list[str])->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if child.data in chaining_nodes:
             j = 0
             while j < len(child.children):
                 grandchild = child.children[j]
-                if grandchild.data == "S1":
+                if grandchild.data in chaining_nodes:
                     child.children.pop(j)
                     grandchild.children.reverse()
                     for c in grandchild.children:
-                        fuse_s1(c)
+                        fuse_chains(c, chaining_nodes)
                         child.children.insert(j, c)
                 else:
                     j += 1
             i += 1
         else:
-            fuse_s1(child)
+            fuse_chains(child, chaining_nodes)
             i += 1
 
 def transform_to_ast(given_tree: "Tree") -> None:
-    remove_banned_characters(given_tree, [":", ",", "NEWLINE", "def", "EOF"])
+    remove_banned_characters(given_tree, [":", ",", "NEWLINE", "EOF"])
     remove_n(given_tree)
     list_pruning(given_tree)
     tuple_pruning(given_tree)
@@ -329,7 +346,8 @@ def transform_to_ast(given_tree: "Tree") -> None:
     remove_childless_non_terminal_trees(given_tree)
     compact_non_terminals_chain(given_tree)
     manage_relations(given_tree, ["+", "-", "*", "//", "%", "<=", ">=", "<", ">", "!=", "==", "=", "/"])
-    fuse_s1(given_tree)
+    # manage_functions(given_tree)
+    # fuse_chains(given_tree, ["A", "C", "D", "S1"])
 
 # -------------------------------------------------------------------------------------------------
 # Sample

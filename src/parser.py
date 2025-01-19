@@ -358,12 +358,21 @@ class Parser:
             "INTEGER",
         ]:
             self.parse_c()
-            self.parse_n()
-            return True
+            token = self.get_token()
+            if TokenType.lexicon[token.number] == "NEWLINE":
+                # on ajoute token à l'arbre
+                self.tree.add_tree_child(
+                    Tree(
+                        data=token.number,
+                        line_index=token.line,
+                        is_terminal=True,
+                    )
+                )
+                self.next_token()
+                return True
         self.tree = self.tree.father
         # return False
 
-        #
 
     def parse_b_1(self):
         "B1"
@@ -1089,7 +1098,7 @@ class Parser:
             "==",
         ]:
             pass
-        if TokenType.lexicon[token.number] == "+":
+        if TokenType.lexicon[token.number] in ["+", "-"]:
             self.parse_o_plus()
             self.parse_e_mult()
             self.parse_e_add_tail()
