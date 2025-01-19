@@ -73,6 +73,12 @@ class Lexer:
 
         try:
             while self.position < len(self.source_code):
+                # Handle indentation at the beginning of lines
+                if self.position == 0 or (self.position > 0 and self.source_code[self.position - 1] == "\n"):
+                    indent_token = self.handle_indentation()
+                    if indent_token:
+                        return indent_token
+                    
                 char = self.source_code[self.position]
                 
                 if char in " \t":
@@ -231,3 +237,33 @@ class Lexer:
         self.position += steps
         if self.position > 0 and self.source_code[self.position - steps] == "\n":
             self.line_number += 1
+
+    def handle_indentation(self):
+        current_indent = 0
+        
+        # Count spaces at the beginning of the line
+        while self.position < len(self.source_code) and self.source_code[self.position] in " \t":
+            if self.source_code[self.position] == " ":
+                current_indent += 1
+            elif self.source_code[self.position] == "\t":
+                current_indent += 4  # Treating tab as 4 spaces
+            self.advance()
+        
+        # If this is just a blank line or comment, ignore indentation
+        if (self.position < len(self.source_code) and 
+            (self.source_code[self.position] == "\n" or self.source_code[self.position] == "#")):
+            return None
+            
+        # Compare with previous indent level
+        prev_indent = self.indent_stack[-1]
+        
+        if current_indent > prev_indent:
+            self.indent_stack.append(current_indent)
+            return Token(1, self.line_number)  # BEGIN token
+        elif current_indent < prev_indent:
+            if current_indent not in self.indent_stack:
+                raise IndentationError(f"Invalid indentation at line {self.line_number}")
+            while self.indent_stack[-1] > current_indent:
+                self.indent_stack.pop()
+                return Token(2, self.line_number)  # END token
+        return None
