@@ -3,7 +3,7 @@ from parser import *
 
 
 def main():
-    with open("../tests/works/op_prior.txt", "r") as file:
+    with open("../tests/syntax_error.txt", "r") as file:
         source_code = file.read()
 
     lexer = Lexer(source_code)
