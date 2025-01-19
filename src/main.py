@@ -14,7 +14,7 @@ def main():
     #     if token.value:
     #         print((token.number, token.value), TokenType.lexicon[token.number])
     #     else:
-    #         print((token.number))
+    #         print(TokenType.lexicon[token.number])
 
     #     if token.number == 4:  # EOF token
     #         break

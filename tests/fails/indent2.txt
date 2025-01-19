@@ -1,3 +1,2 @@
 def invalid_syntax(a, b):
-    return a + b
-  print("Bad indentation")
+print("Bad indentation")
