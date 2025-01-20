@@ -150,7 +150,6 @@ class Tree:
 # Converter
 # -------------------------------------------------------------------------------------------------
 
-
 def remove_banned_characters(given_tree: "Tree", banned_characters: list[str]) -> None:
     i = 0
     while i < len(given_tree.children):
@@ -166,7 +165,6 @@ def remove_banned_characters(given_tree: "Tree", banned_characters: list[str]) -
             remove_banned_characters(child, banned_characters)
             i += 1
 
-
 def remove_banned_data(given_tree: "Tree", banned_data: list[str]) -> None:
     i = 0
     while i < len(given_tree.children):
@@ -179,7 +177,6 @@ def remove_banned_data(given_tree: "Tree", banned_data: list[str]) -> None:
             remove_banned_characters(child, banned_data)
             i += 1
 
-
 def remove_n(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
@@ -191,7 +188,6 @@ def remove_n(given_tree: "Tree") -> None:
         else:
             remove_n(child)
             i += 1
-
 
 def list_pruning(given_tree: "Tree") -> None:
     if not given_tree.children:
@@ -232,7 +228,6 @@ def list_pruning(given_tree: "Tree") -> None:
         else:
             i += 1
     pass
-
 
 def tuple_pruning(given_tree: "Tree") -> None:
     if not given_tree.children:
@@ -276,7 +271,6 @@ def tuple_pruning(given_tree: "Tree") -> None:
             i += 1
     pass
 
-
 def remove_childless_non_terminal_trees(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
@@ -288,7 +282,6 @@ def remove_childless_non_terminal_trees(given_tree: "Tree") -> None:
         else:
             remove_childless_non_terminal_trees(child)
             i += 1
-
 
 def compact_non_terminals_chain(given_tree: "Tree") -> None:
     i = 0
@@ -305,7 +298,6 @@ def compact_non_terminals_chain(given_tree: "Tree") -> None:
         else:
             compact_non_terminals_chain(child)
             i += 1
-
 
 def manage_relations(given_tree: "Tree", relation_symbols: list[str]) -> None:
     i = 0
@@ -332,14 +324,14 @@ def manage_functions(given_tree:"Tree")->None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
-        if child.data in TokenType.lexicon.keys() and TokenType.lexicon[child.data] == "def":
-            function_tree = Tree("function", given_tree, child.line_index, True)
-            for c in given_tree.children:
-                if not (c.data in TokenType.lexicon.keys() and TokenType.lexicon[c.data] == "def"):
-                    function_tree.add_tree_child(c)
-                    given_tree.children.remove(c)
-            # given_tree.children.remove(child)
-            given_tree.children.insert(0, function_tree)
+        if (
+            child.data in TokenType.lexicon.keys()
+            and TokenType.lexicon[child.data] == "def"
+        ):
+            given_tree.data = "function"
+            given_tree.line_index = child.line_index
+            given_tree.is_terminal = True
+            given_tree.children.remove(child)
             i += 1
         else:
             manage_functions(child)
@@ -366,9 +358,8 @@ def fuse_chains(given_tree:"Tree", chaining_nodes:list[str])->None:
             fuse_chains(child, chaining_nodes)
             i += 1
 
-
 def transform_to_ast(given_tree: "Tree") -> None:
-    remove_banned_characters(given_tree, [":", ",", "NEWLINE", "EOF"])
+    remove_banned_characters(given_tree, [":", ",", "NEWLINE", "BEGIN", "END", "EOF"])
     remove_n(given_tree)
     list_pruning(given_tree)
     tuple_pruning(given_tree)
@@ -376,15 +367,13 @@ def transform_to_ast(given_tree: "Tree") -> None:
     remove_childless_non_terminal_trees(given_tree)
     remove_childless_non_terminal_trees(given_tree)
     compact_non_terminals_chain(given_tree)
-    manage_relations(given_tree, ["+", "-", "*", "//", "%", "<=", ">=", "<", ">", "!=", "==", "=", "/"])
-    # manage_functions(given_tree)
-    # fuse_chains(given_tree, ["A", "C", "D", "S1"])
-
+    #manage_relations(given_tree, ["+", "-", "*", "//", "%", "<=", ">=", "<", ">", "!=", "==", "=", "/"])
+    manage_functions(given_tree)
+    #fuse_chains(given_tree, ["A", "C", "D", "S1"])
 
 # -------------------------------------------------------------------------------------------------
 # Sample
 # -------------------------------------------------------------------------------------------------
-
 
 def get_sample_tree() -> "Tree":
     root = Tree(data=1, line_index=0, is_terminal=False)
