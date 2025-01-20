@@ -76,6 +76,7 @@ E_un         ::= - E_un
 E_un        ::= [ E1 ]
 E_un        ::= ( E1 )
 E_un ::= O_un
+E_un ::= ident ( E1 )
 
 E1          ::= E E2 
 E1             ::= ''
