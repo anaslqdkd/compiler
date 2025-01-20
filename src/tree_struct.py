@@ -104,7 +104,6 @@ class Tree:
         )
         pass
 
-    # TODO: pour le symbole > il y a une erreur de syntaxe pour la construction de l'arbre dans mermaid donc il faudra gérér ça
     def get_flowchart(self, file_path: str, print_result: bool = False) -> None:
         nodes = []
         edges = []
@@ -123,8 +122,8 @@ class Tree:
                     label = f"{data} => {node.value} (L{node.line_index}){' T' if node.is_terminal else ''}"
                 elif node.line_index == -1:
                     label = f"{data}{' T' if node.is_terminal else ''}"
-                elif data == "*":
-                    label = f"\* (L{node.line_index}){' T' if node.is_terminal else ''}"
+                elif data in ["+", "-", "*", "<", ">"]:
+                    label = f"\{data} (L{node.line_index}){' T' if node.is_terminal else ''}"
                 else:
                     label = (
                         f"{data} (L{node.line_index}){' T' if node.is_terminal else ''}"
@@ -337,6 +336,29 @@ def manage_functions(given_tree:"Tree")->None:
             manage_functions(child)
             i += 1
 
+def manage_prints(given_tree:"Tree")->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if (
+            child.data in TokenType.lexicon.keys()
+            and TokenType.lexicon[child.data] == "print"
+        ):
+            for c in given_tree.children:
+                if c != child:
+                    child.children.append(c)
+                    given_tree.children.remove(c)
+            i += 1
+        else:
+            manage_prints(child)
+            i += 1
+
+def manage_fors(given_tree:"Tree")->None:
+    pass
+
+def manage_ifs(given_tree:"Tree")->None:
+    pass
+
 def fuse_chains(given_tree:"Tree", chaining_nodes:list[str])->None:
     i = 0
     while i < len(given_tree.children):
@@ -365,11 +387,13 @@ def transform_to_ast(given_tree: "Tree") -> None:
     tuple_pruning(given_tree)
     remove_banned_data(given_tree, ["N"])
     remove_childless_non_terminal_trees(given_tree)
-    remove_childless_non_terminal_trees(given_tree)
     compact_non_terminals_chain(given_tree)
-    #manage_relations(given_tree, ["+", "-", "*", "//", "%", "<=", ">=", "<", ">", "!=", "==", "=", "/"])
+    manage_relations(given_tree, ["+", "-", "*", "//", "%", "<=", ">=", "<", ">", "!=", "==", "=", "/"])
     manage_functions(given_tree)
-    #fuse_chains(given_tree, ["A", "C", "D", "S1"])
+    manage_prints(given_tree)
+    manage_fors(given_tree)
+    manage_ifs(given_tree)
+    fuse_chains(given_tree, ["A", "C", "D", "S1"])
 
 # -------------------------------------------------------------------------------------------------
 # Sample
