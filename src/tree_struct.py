@@ -353,6 +353,22 @@ def manage_prints(given_tree:"Tree")->None:
             manage_prints(child)
             i += 1
 
+def manage_returns(given_tree:"Tree")->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if (
+            child.data in TokenType.lexicon.keys()
+            and TokenType.lexicon[child.data] == "return"
+        ):
+            returned_value = given_tree.children[i+1]
+            child.children.append(returned_value)
+            given_tree.children.remove(returned_value)
+            i += 1
+        else:
+            manage_returns(child)
+            i += 1
+
 def manage_fors(given_tree:"Tree")->None:
     i = 0
     while i < len(given_tree.children):
@@ -372,7 +388,37 @@ def manage_fors(given_tree:"Tree")->None:
             i += 1
 
 def manage_ifs(given_tree:"Tree")->None:
-    pass
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if (
+            child.data in TokenType.lexicon.keys()
+            and TokenType.lexicon[child.data] == "if"
+        ):
+            cond_node = given_tree.children[i+1]
+            if_content = given_tree.children[i+2]
+            maybe_d1_node = given_tree.children[i+3]
+            manage_ifs(cond_node)
+            manage_ifs(if_content)
+            manage_ifs(maybe_d1_node)
+
+            child.children.append(cond_node)
+            given_tree.children.remove(cond_node)
+            child.children.append(if_content)
+            given_tree.children.remove(if_content)
+
+            if maybe_d1_node.data == "D1":
+                else_node = maybe_d1_node.children[0]
+                else_content_node = maybe_d1_node.children[1]
+
+                child.children.append(else_node)
+                else_node.children.append(else_content_node)
+                given_tree.children.remove(maybe_d1_node)
+
+            i += 1
+        else:
+            manage_ifs(child)
+            i += 1
 
 def fuse_chains(given_tree:"Tree", chaining_nodes:list[str])->None:
     i = 0
@@ -406,6 +452,7 @@ def transform_to_ast(given_tree: "Tree") -> None:
     manage_relations(given_tree, ["+", "-", "*", "//", "%", "<=", ">=", "<", ">", "!=", "==", "=", "/"])
     manage_functions(given_tree)
     manage_prints(given_tree)
+    manage_returns(given_tree)
     manage_fors(given_tree)
     manage_ifs(given_tree)
     fuse_chains(given_tree, ["A", "C", "D", "S1"])
