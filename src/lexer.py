@@ -134,7 +134,7 @@ class Lexer:
         # Check if it's a keyword
         for token_num, token_value in TokenType.lexicon.items():
             if value == token_value and 20 <= token_num <= 32:
-                return Token(token_num, value, self.line_number)
+                return Token(token_num, self.line_number, value)
         
         # Otherwise, it's an identifier
         if value not in self.identifier_lexicon.values():

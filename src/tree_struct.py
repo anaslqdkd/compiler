@@ -354,7 +354,22 @@ def manage_prints(given_tree:"Tree")->None:
             i += 1
 
 def manage_fors(given_tree:"Tree")->None:
-    pass
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if (
+            child.data in TokenType.lexicon.keys()
+            and TokenType.lexicon[child.data] == "for"
+        ):
+            for j in range(3):
+                c = given_tree.children[i+1]
+                manage_fors(c)
+                child.children.append(c)
+                given_tree.children.remove(c)
+            i += 1
+        else:
+            manage_fors(child)
+            i += 1
 
 def manage_ifs(given_tree:"Tree")->None:
     pass
@@ -381,7 +396,7 @@ def fuse_chains(given_tree:"Tree", chaining_nodes:list[str])->None:
             i += 1
 
 def transform_to_ast(given_tree: "Tree") -> None:
-    remove_banned_characters(given_tree, [":", ",", "NEWLINE", "BEGIN", "END", "EOF"])
+    remove_banned_characters(given_tree, [":", ",", "in", "NEWLINE", "BEGIN", "END", "EOF"])
     remove_n(given_tree)
     list_pruning(given_tree)
     tuple_pruning(given_tree)
