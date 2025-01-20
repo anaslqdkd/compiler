@@ -8,8 +8,19 @@ def main():
 
     lexer = Lexer(source_code)
 
+    # while True:
+    #     token = lexer.get_next_token()
+
+    #     if token.value:
+    #         print((token.number, token.value), TokenType.lexicon[token.number])
+    #     else:
+    #         print(TokenType.lexicon[token.number])
+
+    #     if token.number == 4:  # EOF token
+    #         break
+
     parser = Parser(lexer, True)
-    parser.parse_s()
+    # parser.parse_s()
     print(parser.parse_s())
     transform_to_ast(parser.root)
     parser.root.get_flowchart(file_path="./test.txt", print_result=False)

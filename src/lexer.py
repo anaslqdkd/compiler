@@ -79,9 +79,8 @@ class Lexer:
                 if self.position == 0 or (self.position > 0 and self.source_code[self.position - 1] == "\n"):
                     indent_token = self.handle_indentation()
                     if indent_token:
-                        token = indent_token
-                        break
-
+                        return indent_token
+                    
                 char = self.source_code[self.position]
                 
                 if char in " \t":
@@ -110,13 +109,8 @@ class Lexer:
                 else:
                     raise SyntaxError(f"Unexpected character '{char}' at line {self.line_number}")
 
-            else:  # When we reach EOF
-                if len(self.indent_stack) > 1:  # More than just the base level (0)
-                    self.indent_stack.pop()  # Remove one level
-                    token = Token(2, self.line_number)  # Return END token
-                else:
-                    # Only return EOF when all indentation is closed
-                    token = Token(4, self.line_number)  # EOF token
+            else:
+                token = Token(4, self.line_number)  # EOF token
 
             # If we don't want to advance, we reposition
             if not advance_cursor:
@@ -140,7 +134,7 @@ class Lexer:
         # Check if it's a keyword
         for token_num, token_value in TokenType.lexicon.items():
             if value == token_value and 20 <= token_num <= 32:
-                return Token(token_num, self.line_number, value)
+                return Token(token_num, value, self.line_number)
         
         # Otherwise, it's an identifier
         if value not in self.identifier_lexicon.values():
