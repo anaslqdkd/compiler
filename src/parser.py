@@ -543,7 +543,8 @@ class Parser:
                     )
                 )
                 self.next_token()
-                self.parse_e()
+                # NOTE: changé ici de e à e1
+                self.parse_e_1()
                 # self.parse_c_1()
                 token = self.get_token()
                 if TokenType.lexicon[token.number] == ")":
@@ -1439,7 +1440,6 @@ class Parser:
             "for",
             "else",
             "not",
-            "-",
             "INTEGER",
             "and",
             "or",
@@ -1455,7 +1455,7 @@ class Parser:
         ]:
             self.tree = self.tree.father
             return True
-        if TokenType.lexicon[token.number] == "+":
+        if TokenType.lexicon[token.number] in ["+", "-"]:
             self.parse_o_plus()
             self.parse_e_mult()
             self.parse_e_add_tail()
@@ -1809,8 +1809,15 @@ class Parser:
         token = self.get_token()
         print(TokenType.lexicon[token.number])
 
-        if TokenType.lexicon[token.number] == "+":
+        if TokenType.lexicon[token.number] in ["+", "-"]:
             # on ajoute token à l'arbre
+            self.tree.add_tree_child(
+                Tree(
+                    data=token.number,
+                    line_index=token.line,
+                    is_terminal=True,
+                )
+            )
             self.next_token()
             self.tree = self.tree.father
             return True
