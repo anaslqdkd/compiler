@@ -19,8 +19,8 @@ def main():
     #     if token.number == 4:  # EOF token
     #         break
 
-    parser = Parser(lexer, True)
-    parser.parse_s()
+    parser = Parser(lexer, False)
+    parser.parse()
     transform_to_ast(parser.root)
     parser.root.get_flowchart(file_path="./test.txt", print_result=False)
 
