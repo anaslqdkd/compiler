@@ -39,13 +39,13 @@ $E_\text{add}$ & $\to$ & $E_\text{mult} E_\text{add\_tail}$\\
 $E_\text{add\_tail}$ & $\to$ & $O_+ E_\text{mult} E_\text{add\_tail} \ | \ \varepsilon$\\
 $E_\text{mult}$ & $\to$ & $E_\text{un}E_\text{mult\_tail}$\\
 $E_\text{mult\_tail}$ & $\to$ & $O_* E_\text{un} E_\text{mult\_tail} \ | \ \varepsilon$\\
-$E_\text{un}$ & $\to$ & $- E_\text{un} \ | \  [E_1] \ | \ (E_1) \ | \ O_\text{un}$\\
+$E_\text{un}$ & $\to$ & $- E_\text{un} \ | \  [E_1] \ | \ (E_1) \ | \ O_\text{un}$ | \textbf{ident}$(E_1)$\\
 $E_1$ & $\to$ & $E E_2 \ | \ \varepsilon$\\
 $E_2$ & $\to$ & $, E E_2 \ | \ \varepsilon$\\
 $O_r$ & $\to$ & <= | >= | < | > | != | ==\\
 $O_+$ & $\to$ & + | -\\
 $O_*$ & $\to$ & $\times$ | // | \%\\
-$O_\text{un}$ & $\to$ &  \textbf{ident} | \textbf{const} | \textbf{True} | \textbf{False} | \textbf{None} | \textbf{ident}$(E_1)$\\
+$O_\text{un}$ & $\to$ &  \textbf{ident} | \textbf{const} | \textbf{True} | \textbf{False} | \textbf{None} \\
 $N$ & $\to$ & \textbf{Newline} $N \ | \ \varepsilon$\\
 \end{tabular}
 }
