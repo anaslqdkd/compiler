@@ -450,17 +450,21 @@ class Parser:
         if self.debug_mode:
             print("in parse b 1")
         token = self.get_token()
-        print(TokenType.lexicon[token.number])
-        if TokenType.lexicon[token.number] == "NEWLINE":
-            # on ajoute token à l'arbre
-            self.tree.add_tree_child(
-                Tree(
-                    data=token.number,
-                    line_index=token.line,
-                    is_terminal=True,
-                )
-            )
-            self.next_token()
+        if TokenType.lexicon[token.number] in [
+            "if", "for", "return",
+            "IDENTIFIER",
+            "(",
+            "[",
+            "return",
+            "print",
+            "True",
+            "False",
+            "None",
+            "-",
+            "not",
+            "STRING",
+            "INTEGER",
+        ]:
             self.parse_d()
             self.parse_b_1()
             self.tree = self.tree.father
