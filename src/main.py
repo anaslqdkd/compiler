@@ -20,8 +20,7 @@ def main():
     #         break
 
     parser = Parser(lexer, True)
-    # parser.parse_s()
-    print(parser.parse_s())
+    parser.parse_s()
     transform_to_ast(parser.root)
     parser.root.get_flowchart(file_path="./test.txt", print_result=False)
 
