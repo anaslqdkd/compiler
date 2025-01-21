@@ -21,7 +21,7 @@ $A$ & $\to$ & \textbf{def} \textbf{ident} $(I):B$\\
 $I$ & $\to$ & \textbf{ident} $I_1$\\
 $I_1$ & $\to$ & , \textbf{ident} $I_1 \ | \ \varepsilon$\\
 $B$ & $\to$ & $CN$ | \textbf{Newline} \textbf{Begin} $DB_1$ \textbf{End}\\
-$B_1$ & $\to$ & \textbf{Newline} $DB_1 \ | \ \varepsilon$\\
+$B_1$ & $\to$ & $DB_1 \ | \ \varepsilon$\\
 $C$ & $\to$ & \textbf{return} $E$ | \textbf{ident} $C_2$ | $EC_1$ | \textbf{print}$(E_1)$\\
 $C_1$ & $\to$ & $[E]=E \ | \ \varepsilon$\\
 $C_2$ & $\to$ & $= E \ | \ \varepsilon$\\
@@ -45,7 +45,7 @@ $E_2$ & $\to$ & $, E E_2 \ | \ \varepsilon$\\
 $O_r$ & $\to$ & <= | >= | < | > | != | ==\\
 $O_+$ & $\to$ & + | -\\
 $O_*$ & $\to$ & $\times$ | // | \%\\
-$O_\text{un}$ & $\to$ &  \textbf{ident} | \textbf{const} | \textbf{True} | \textbf{False} | \textbf{None}\\
+$O_\text{un}$ & $\to$ &  \textbf{ident} | \textbf{const} | \textbf{True} | \textbf{False} | \textbf{None} | \textbf{ident}$(E_1)$\\
 $N$ & $\to$ & \textbf{Newline} $N \ | \ \varepsilon$\\
 \end{tabular}
 }
