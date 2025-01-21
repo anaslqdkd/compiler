@@ -35,54 +35,82 @@
 
 Dans cette partie, on désignera par $i$ (avec $i \in \mathbb{N}^*$) le numéro de la ligne où le \textit{Token} a été lu.\\
 
+Les tokens sont représentés par un numéro, une valeur optionnelle, et une ligne. Ils appartiennent à l'une des catégories suivantes: STRUCTURE, VALUE, KEYWORDS, OPERATORS, ou SYMBOLS.\\
+
 \begin{enumerate}
 
-\item Retours chariot \& délimitations de blocs
+\item Tokens de structure (1-4)
 \begin{itemize}
-\item Token indiquant un saut de ligne : \textbf{Token(NEWLINE, $i$)} ;
-\item Token signalant le début d'une indentation : \textbf{Token(BEGIN, $i$)} ;
-\item Token marquant la fin d'une indentation : \textbf{Token(END, $i$)} ;
-\item Token indiquant la fin du fichier source : \textbf{Token(EOF, $i$)}.\\
+\item Token BEGIN (1) : signalant le début d'une indentation ;
+\item Token END (2) : marquant la fin d'une indentation ;
+\item Token NEWLINE (3) : indiquant un saut de ligne ;
+\item Token EOF (4) : indiquant la fin du fichier source.\\
 \end{itemize}
 
-\item Identificateur, représentant une variable, une fonction ou un paramètre : \textbf{Token(IDENTIFIER, <identificateur>, $i$)}.\\
-
-\item Mot-clé : \textbf{Token(KEYWORD, <mot clé>, $i$)}. On rappelle que les mots-clé, réservés par le langage et ne pouvant pas être utilisées comme identifiants, sont les suivants : \textit{and}, \textit{or}, \textit{if}, \textit{else}, \textit{for}, \textit{in}, \textit{not}, \textit{True}, \textit{False}, \textit{print}, \textit{def}, \textit{return} et \textit{None}.\\
-
-\item Opérateurs binaires (utilisés pour faire des opérations binaires) :
+\item Tokens de valeur (10-12)
 \begin{itemize}
-\item \textbf{Token(PLUS, $i$)} ;
-\item \textbf{Token(MINUS, $i$)} ;
-\item \textbf{Token(MULTIPLY, $i$)} ;
-\item \textbf{Token(FLOOR{\_}DIVIDE, $i$)} ;
-\item \textbf{Token(MODULO, $i$)}\footnote{On considère l'opérateur "\textit{modulo}" comme étant l'opérateur binaire qui associe à deux entiers naturels le reste de la division euclidienne du premier par le second.} ;
-\item \textbf{Token(LESS{\_}EQUAL, $i$)} ;
-\item \textbf{Token(GREATER{\_}EQUAL, $i$)} ;
-\item \textbf{Token(LESS, $i$)} ;
-\item \textbf{Token(GREATER, $i$)} ;
-\item \textbf{Token(NOT{\_}EQUAL, $i$)} ;
-\item \textbf{Token(EQUAL, $i$)} ;
-\item \textbf{Token(AND, $i$)} ;
-\item \textbf{Token(OR, $i$)}.\\
+\item Token IDENTIFIER (10) : représentant une variable, une fonction ou un paramètre ;
+\item Token INTEGER (11) : représentant une valeur entière ;
+\item Token STRING (12) : représentant une chaîne de caractères.\\
 \end{itemize}
 
-\item Opérateurs unaires (c'est-à-dire utilisés pour faire des opérations unaires) : \textbf{Token(UNARY{\_}MINUS, $i$)} et \textbf{Token(NOT, $i$)}.\\
-
-\item Opérateur d'assignation ("$:=$") : \textbf{Token(ASSIGNMENT, $i$)}.\\
-
-\item Types pris en charge par le langage : \textbf{Token(INTEGER, <int>, $i$)} et \textbf{Token(STRING, <str>, $i$)}.\\
-
-\item Délimiteurs :
+\item Tokens mots-clés (20-32)
 \begin{itemize}
-\item Crochet ouvrant ("[") : \textbf{Token(LBRACKET,$i$)} ;
-\item Crochet fermant ("]") : \textbf{Token(RBRACKET,$i$)} ;
-\item Parenthèse ouvrante ("(") : \textbf{Token(LPAREN,$i$)} ;
-\item Parenthèse fermante (")") : \textbf{Token(RPAREN,$i$)} ;
-\item Virgule : \textbf{Token(COMMA,$i$)} ;
-\item Point-virgule : \textbf{Token(COLON,$i$)}.\\
+\item if (20)
+\item else (21)
+\item and (22)
+\item or (23)
+\item not (24)
+\item True (25)
+\item False (26)
+\item None (27)
+\item def (28)
+\item return (29)
+\item print (30)
+\item for (31)
+\item in (32)\\
+\end{itemize}
+
+\item Tokens opérateurs (40-53)
+\begin{itemize}
+\item Addition "+" (40)
+\item Soustraction "-" (41)
+\item Multiplication "*" (42)
+\item Division entière "//" (43)
+\item Modulo "\%" (44)
+\item Inférieur ou égal "<=" (45)
+\item Supérieur ou égal ">=" (46)
+\item Supérieur ">" (47)
+\item Inférieur "<" (48)
+\item Différent "!=" (49)
+\item Égal "==" (50)
+\item Affectation "=" (51)
+\item Division "/" (52)
+\item Négation "!" (53)\\
+\end{itemize}
+
+\item Tokens symboles (60-65)
+\begin{itemize}
+\item Parenthèse ouvrante "(" (60)
+\item Parenthèse fermante ")" (61)
+\item Crochet ouvrant "[" (62)
+\item Crochet fermant "]" (63)
+\item Deux-points ":" (64)
+\item Virgule "," (65)\\
 \end{itemize}
 
 \end{enumerate}
+
+La catégorie d'un token peut être déterminée par sa plage de numéros :
+\begin{itemize}
+\item 1-4 : STRUCTURE
+\item 10-12 : VALUE  
+\item 20-32 : KEYWORDS
+\item 40-53 : OPERATORS
+\item 60-67 : SYMBOLS
+\end{itemize}
+
+\end{antArtifact>
 
 \subsection{Ensembles}
 
