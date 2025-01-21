@@ -277,4 +277,26 @@ Le formatage adopté est le suivant (on l'explique ici pour un tuple, mais le fo
 
 Le problème avec un tel algorithme est le recopiage du contenu du tuple. En effet, même si les virgules séparant les différents éléments ont été supprimées à l'étape précédente de l'élagage, il reste tous les non-terminaux qui ont servi à la construction du tuple, or on aimerait que les enfants du n{\oe}ud "tuple" soient directement le contenu du tuple (dans l'ordre). Il faut donc retirer ces non-terminaux (et seulement ceux-là, les autres peuvent encore servir à l'élagage). Dans notre grammaire, il s'agit des non-terminaux $I$, $I_1$, $E_1$ et $E_2$ (on peut noter que $I$ et $I_1$ ne peuvent apparaître que dans les tuples).\\
 
+\subsection{Modification des fonctions}
+
+Pour les fonctions, on détecte leur présence dans l'arbre tout naturellement avec la présence du mot-clé "\textbf{def}". Dès lors, on le retire (car il n'est plus vraiment utile à l'analyse sémantique après cette étape), et on range dans un nouveau n{\oe}ud "\textbf{function}" dans l'ordre l'identifiant contenant le nom de la fonction, un tuple (éventuellement vide) correspondant aux paramètres de la fonction, et un non-terminal contenant en enfants les lignes de code de la fonction.\\
+
+\subsection{Modification des opérateurs}
+
+Aussi, pour la plupart des opérateurs (somme, différences, opérateurs de comparaison, ...), leur arité est de 2. On propose donc de mettre leurs deux paramètres en enfant du n{\oe}ud opérateur (on adopte en quelques sortes une notation préfixée pour ces opérateurs, à l'échelle de l'arbre).\\
+
+\subsection{Modifications des \textbf{print} et des \textbf{return}}
+
+Pour ce qui est des \textbf{print} et des \textbf{return}, le formalisme est le même : on les considère comme des opérateurs unaires, dont la valeur utilisée (à afficher ou à renvoyer) est passée en enfant du n{\oe}ud \textbf{print} / \textbf{return}.\\
+
+\subsection{Modification des \textbf{for} et des \textbf{if}}
+
+À l'instar des fonctions, on a rassemblé les éléments caractéristiques des \textbf{for} en enfants du n{\oe}ud "\textbf{for}". Pour une boucle de la forme "for $i$ in $L$", on stockera dans les enfants du n{\oe}ud "\textbf{for}" dans l'ordre l'identifiant contenant $i$, l'identifiant contenant $L$, et enfin le bloc à exécuter dans la boucle.\\
+
+Pour ce qui est des \textbf{if}, on procède de même, en stockant dans les enfants du n{\oe}ud \textbf{if} dans l'ordre : la condition à vérifier pour rentrer dans le \textbf{if}, le code a exécuter si la condition est vérifiée, et éventuellement un n{\oe}ud "\textbf{else}" contenant le code a exécuter si cela n'est pas le cas.\\
+
+\subsection{Finalisations de l'AST}
+
+Enfin pour conclure l'élagage, on rassemble les chaînes "inutiles" de n{\oe}uds non-terminaux, de sorte que tous les n{\oe}uds représentant des lignes d'un même bloc de code soient tous les enfants du même n{\oe}ud (généralement un non-terminal, comme $S$, $A$ ou $D$).\\
+
 \end{document}
