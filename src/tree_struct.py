@@ -397,23 +397,25 @@ def manage_ifs(given_tree:"Tree")->None:
         ):
             cond_node = given_tree.children[i+1]
             if_content = given_tree.children[i+2]
-            maybe_d1_node = given_tree.children[i+3]
+            
             manage_ifs(cond_node)
             manage_ifs(if_content)
-            manage_ifs(maybe_d1_node)
 
             child.children.append(cond_node)
             given_tree.children.remove(cond_node)
             child.children.append(if_content)
             given_tree.children.remove(if_content)
 
-            if maybe_d1_node.data == "D1":
-                else_node = maybe_d1_node.children[0]
-                else_content_node = maybe_d1_node.children[1]
+            if i + 3 < len(given_tree.children):
+                maybe_d1_node = given_tree.children[i+3]
+                manage_ifs(maybe_d1_node)
+                if maybe_d1_node.data == "D1":
+                    else_node = maybe_d1_node.children[0]
+                    else_content_node = maybe_d1_node.children[1]
 
-                child.children.append(else_node)
-                else_node.children.append(else_content_node)
-                given_tree.children.remove(maybe_d1_node)
+                    child.children.append(else_node)
+                    else_node.children.append(else_content_node)
+                    given_tree.children.remove(maybe_d1_node)
 
             i += 1
         else:
