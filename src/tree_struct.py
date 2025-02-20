@@ -1,15 +1,8 @@
 from lexer import TokenType
 
-import io
-from unittest.mock import patch
-import hashlib
-import uuid
-import random
-
 # -------------------------------------------------------------------------------------------------
 # Tree
 # -------------------------------------------------------------------------------------------------
-
 
 class Tree:
     _node_id_in_mermaid = 0
@@ -143,7 +136,6 @@ class Tree:
             print(graph)
         with open(file_path, "w") as file:
             file.write(graph)
-
 
 # -------------------------------------------------------------------------------------------------
 # Converter
@@ -487,134 +479,120 @@ def get_sample_tree() -> "Tree":
         15, line_index=14, is_terminal=True)
     return root
 
-
 # -------------------------------------------------------------------------------------------------
 # Tests
 # -------------------------------------------------------------------------------------------------
 
-
-# Test for tree struct
-def test_tree_creation_with_default_values():
-    # Arrange
-    expected_data = -1
-    expected_line_index = -1
-    expected_is_terminal = True
-    expected_children = []
-
-    # Act
-    tree = Tree()
-
-    # Assert
-    assert tree.data == expected_data
-    assert tree.line_index == expected_line_index
-    assert tree.is_terminal == expected_is_terminal
-    assert tree.children == expected_children
-
-
-def test_tree_creation():
-    # Arrange
-    expected_data = 10
-    expected_line_index = 5
-    expected_is_terminal = True
-
-    # Act
-    tree = Tree(
-        data=expected_data,
-        line_index=expected_line_index,
-        is_terminal=expected_is_terminal,
-    )
-
-    # Assert
-    assert tree.data == expected_data
-    assert tree.line_index == expected_line_index
-    assert tree.is_terminal == expected_is_terminal
-
-
-def test_add_child_which_is_tree():
-    # Arrange
-    root = Tree(data=1, line_index=0, is_terminal=False)
-    child_tree = Tree(data=2, line_index=1, is_terminal=True)
-
-    # Act
-    root.add_tree_child(child_tree)
-
-    # Assert
-    assert child_tree in root.children
-
-
-def test_add_child_method_with_data():
-    # Arrange
-    tree = Tree("root")
-    child_data = 10
-    line_index = 5
-    is_terminal = True
-
-    # Act
-    tree.add_child(child_data, line_index, is_terminal)
-
-    # Assert
-    assert len(tree.children) == 1
-    assert tree.children[0].data == child_data
-    assert tree.children[0].line_index == line_index
-    assert tree.children[0].is_terminal == is_terminal
-
-
-def test_remove_child():
-    root = Tree("root")
-    child1 = Tree(1)
-    child2 = Tree(2)
-    root.add_tree_child(child1)
-    root.add_tree_child(child2)
-
-    assert len(root.children) == 2
-    root.remove_child(child1)
-    assert len(root.children) == 1
-    assert root.children[0].data == 2
-
-
-def test_remove_nonexistent_child():
-    # Arrange
-    root = Tree("root")
-    child1 = Tree(1)
-    child2 = Tree(2)
-    root.add_tree_child(child1)
-
-    # Act
-    with patch("sys.stdout", new=io.StringIO()) as err:
-        root.remove_child(child2)
-
-    # Assert
-    assert "Child 2 not found in tree." in err.getvalue()
-
-
-def test_is_leaf_method():
-    root = Tree("root")
-    root.add_child(2, line_index=1, is_terminal=False)
-    root.add_child(3, line_index=2, is_terminal=False)
-    root.children[0].add_child(4, line_index=3, is_terminal=True)
-    root.children[1].add_child(5, line_index=4, is_terminal=True)
-
-    assert root.is_leaf() == False
-    assert root.children[0].is_leaf() == False
-    assert root.children[1].is_leaf() == False
-    assert root.children[1].children[0].is_leaf() == True
-
-
-def test_is_leaf_returns_false_for_non_leaf_node():
-    # Arrange
-    root = Tree("root")
-    root.add_child(2, line_index=1, is_terminal=False)
-    root.add_child(3, line_index=2, is_terminal=False)
-
-    # Act
-    is_leaf = root.is_leaf()
-
-    # Assert
-    assert is_leaf == False
-
-
 # Main
 if __name__ == "__main__":
+    import io
+    from unittest.mock import patch
+
+    # Test for tree struct
+    def test_tree_creation_with_default_values():
+        # Arrange
+        expected_data = -1
+        expected_line_index = -1
+        expected_is_terminal = True
+        expected_children = []
+
+        # Act
+        tree = Tree()
+
+        # Assert
+        assert tree.data == expected_data
+        assert tree.line_index == expected_line_index
+        assert tree.is_terminal == expected_is_terminal
+        assert tree.children == expected_children
+    def test_tree_creation():
+        # Arrange
+        expected_data = 10
+        expected_line_index = 5
+        expected_is_terminal = True
+
+        # Act
+        tree = Tree(
+            data=expected_data,
+            line_index=expected_line_index,
+            is_terminal=expected_is_terminal,
+        )
+
+        # Assert
+        assert tree.data == expected_data
+        assert tree.line_index == expected_line_index
+        assert tree.is_terminal == expected_is_terminal
+    def test_add_child_which_is_tree():
+        # Arrange
+        root = Tree(data=1, line_index=0, is_terminal=False)
+        child_tree = Tree(data=2, line_index=1, is_terminal=True)
+
+        # Act
+        root.add_tree_child(child_tree)
+
+        # Assert
+        assert child_tree in root.children
+    def test_add_child_method_with_data():
+        # Arrange
+        tree = Tree("root")
+        child_data = 10
+        line_index = 5
+        is_terminal = True
+
+        # Act
+        tree.add_child(child_data, line_index, is_terminal)
+
+        # Assert
+        assert len(tree.children) == 1
+        assert tree.children[0].data == child_data
+        assert tree.children[0].line_index == line_index
+        assert tree.children[0].is_terminal == is_terminal
+    def test_remove_child():
+        root = Tree("root")
+        child1 = Tree(1)
+        child2 = Tree(2)
+        root.add_tree_child(child1)
+        root.add_tree_child(child2)
+
+        assert len(root.children) == 2
+        root.remove_child(child1)
+        assert len(root.children) == 1
+        assert root.children[0].data == 2
+    def test_remove_nonexistent_child():
+        # Arrange
+        root = Tree("root")
+        child1 = Tree(1)
+        child2 = Tree(2)
+        root.add_tree_child(child1)
+
+        # Act
+        with patch("sys.stdout", new=io.StringIO()) as err:
+            root.remove_child(child2)
+
+        # Assert
+        assert "Child 2 not found in tree." in err.getvalue()
+    def test_is_leaf_method():
+        root = Tree("root")
+        root.add_child(2, line_index=1, is_terminal=False)
+        root.add_child(3, line_index=2, is_terminal=False)
+        root.children[0].add_child(4, line_index=3, is_terminal=True)
+        root.children[1].add_child(5, line_index=4, is_terminal=True)
+
+        assert root.is_leaf() == False
+        assert root.children[0].is_leaf() == False
+        assert root.children[1].is_leaf() == False
+        assert root.children[1].children[0].is_leaf() == True
+    def test_is_leaf_returns_false_for_non_leaf_node():
+        # Arrange
+        root = Tree("root")
+        root.add_child(2, line_index=1, is_terminal=False)
+        root.add_child(3, line_index=2, is_terminal=False)
+
+        # Act
+        is_leaf = root.is_leaf()
+
+        # Assert
+        assert is_leaf == False
+
     print("\nTesting tree structure...")
     test_tree_creation_with_default_values()
     test_tree_creation()
@@ -624,5 +602,4 @@ if __name__ == "__main__":
     test_remove_nonexistent_child()
     test_is_leaf_method()
     test_is_leaf_returns_false_for_non_leaf_node()
-    print("End of first tests. Tree structure tests successfully passed!\n")
-
+    print("End of tests. Tree structure tests successfully passed!\n")
