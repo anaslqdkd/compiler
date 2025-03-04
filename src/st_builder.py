@@ -4,11 +4,11 @@ class SymbolTable:
     _ST_id = 0
     element_size_for_depl_calculation = 4 # On suppose que tout sera codé sur 4 octets
 
-    def __init__(self, name:str, imbrication_level:int, englobing_region:"SymbolTable"):
+    def __init__(self, name:str, imbrication_level:int, englobing_table:"SymbolTable"):
         self.name = name
         self.symbols = {}
         self.imbrication_level = imbrication_level
-        self.englobing_region = englobing_region
+        self.englobing_table = englobing_table
 
         self.region_id = SymbolTable._ST_id
         SymbolTable._ST_id += 1
@@ -76,8 +76,8 @@ class SymbolTable:
         while not is_found:
             if name in st.symbols.keys():
                 is_found = True
-            elif st.englobing_region is not None:
-                is_found = st.contains_symbol(name, st.englobing_region)
+            elif st.englobing_table is not None:
+                is_found = st.contains_symbol(name, st.englobing_table)
             else:
                 break
         return if_found
