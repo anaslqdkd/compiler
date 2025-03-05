@@ -21,14 +21,14 @@ class SymbolTable:
     def get_variables_amount(self):
         counter = 0
         for value in self.symbols.values():
-            if value["type"] != "function" and value["depl"] < 0:
+            if value["type"] not in ["function", "if_block"] and value["depl"] < 0:
                 counter += 1
         return counter
 
     def get_parameters_amount(self):
         counter = 0
         for value in self.symbols.values():
-            if value["type"] != "function" and value["depl"] > 0:
+            if value["type"] not in ["function", "if_block"] and value["depl"] > 0:
                 counter += 1
         return counter
 

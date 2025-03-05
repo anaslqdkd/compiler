@@ -4,7 +4,6 @@ from lexer import TokenType
 # Tree
 # -------------------------------------------------------------------------------------------------
 
-
 class Tree:
     _node_id_in_mermaid = 0
 
@@ -112,17 +111,18 @@ class Tree:
                 else:
                     data = str(node.data)
 
+                color = "#caf9fb"
                 if node.value is not None:
-                    label = f"{data} => {node.value} (L{node.line_index}){' T' if node.is_terminal else ''}"
+                    label = f"[\"{data} => {node.value} (L{node.line_index})\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
                 elif node.line_index == -1:
-                    label = f"{data}{' T' if node.is_terminal else ''}"
-                elif data in ["+", "-", "*", "<", ">"]:
-                    label = f"{data} (L{node.line_index}){' T' if node.is_terminal else ''}"
+                    label = f"[\"{data}\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
+                elif data in ["+", "-", "*", "/", "<", ">"]:
+                    label = f"[\"\\{data} (L{node.line_index})\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
                 else:
                     label = (
-                        f"{data} (L{node.line_index}){' T' if node.is_terminal else ''}"
+                        f"[\"{data} (L{node.line_index})\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
                     )
-                nodes.append(f'{node_id}["{label}"]')
+                nodes.append(f'{node_id}{label}')
                 seen_nodes[node_id] = True
 
             for child in node.children:
@@ -142,7 +142,6 @@ class Tree:
 # Converter
 # -------------------------------------------------------------------------------------------------
 
-
 def remove_banned_characters(given_tree: "Tree", banned_characters: list[str]) -> None:
     i = 0
     while i < len(given_tree.children):
@@ -158,7 +157,6 @@ def remove_banned_characters(given_tree: "Tree", banned_characters: list[str]) -
             remove_banned_characters(child, banned_characters)
             i += 1
 
-
 def remove_banned_data(given_tree: "Tree", banned_data: list[str]) -> None:
     i = 0
     while i < len(given_tree.children):
@@ -171,7 +169,6 @@ def remove_banned_data(given_tree: "Tree", banned_data: list[str]) -> None:
             remove_banned_characters(child, banned_data)
             i += 1
 
-
 def remove_n(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
@@ -183,7 +180,6 @@ def remove_n(given_tree: "Tree") -> None:
         else:
             remove_n(child)
             i += 1
-
 
 def list_pruning(given_tree: "Tree") -> None:
     if not given_tree.children:
@@ -224,7 +220,6 @@ def list_pruning(given_tree: "Tree") -> None:
         else:
             i += 1
     pass
-
 
 def tuple_pruning(given_tree: "Tree") -> None:
     if not given_tree.children:
@@ -268,7 +263,6 @@ def tuple_pruning(given_tree: "Tree") -> None:
             i += 1
     pass
 
-
 def remove_childless_non_terminal_trees(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
@@ -280,7 +274,6 @@ def remove_childless_non_terminal_trees(given_tree: "Tree") -> None:
         else:
             remove_childless_non_terminal_trees(child)
             i += 1
-
 
 def compact_non_terminals_chain(given_tree: "Tree") -> None:
     i = 0
@@ -297,7 +290,6 @@ def compact_non_terminals_chain(given_tree: "Tree") -> None:
         else:
             compact_non_terminals_chain(child)
             i += 1
-
 
 def manage_relations(given_tree: "Tree", relation_symbols: list[str]) -> None:
     i = 0
@@ -321,7 +313,6 @@ def manage_relations(given_tree: "Tree", relation_symbols: list[str]) -> None:
             manage_relations(child, relation_symbols)
             i += 1
 
-
 def manage_functions(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
@@ -338,7 +329,6 @@ def manage_functions(given_tree: "Tree") -> None:
         else:
             manage_functions(child)
             i += 1
-
 
 def manage_prints(given_tree: "Tree") -> None:
     i = 0
@@ -357,7 +347,6 @@ def manage_prints(given_tree: "Tree") -> None:
             manage_prints(child)
             i += 1
 
-
 def manage_returns(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
@@ -373,7 +362,6 @@ def manage_returns(given_tree: "Tree") -> None:
         else:
             manage_returns(child)
             i += 1
-
 
 def manage_fors(given_tree: "Tree") -> None:
     i = 0
@@ -392,7 +380,6 @@ def manage_fors(given_tree: "Tree") -> None:
         else:
             manage_fors(child)
             i += 1
-
 
 def manage_ifs(given_tree: "Tree") -> None:
     i = 0
@@ -413,22 +400,19 @@ def manage_ifs(given_tree: "Tree") -> None:
             child.children.append(if_content)
             given_tree.children.remove(if_content)
 
-            if i + 3 < len(given_tree.children):
-                maybe_d1_node = given_tree.children[i+3]
-                manage_ifs(maybe_d1_node)
-                if maybe_d1_node.data == "D1":
-                    else_node = maybe_d1_node.children[0]
-                    else_content_node = maybe_d1_node.children[1]
-
-                    child.children.append(else_node)
-                    else_node.children.append(else_content_node)
-                    given_tree.children.remove(maybe_d1_node)
+            if (
+                child.father.children.index(child) + 1 <= len(child.father.children)
+                and child.father.children[child.father.children.index(child) + 1 ].data == "D1"
+            ):
+                new_else_node = child.father.children[child.father.children.index(child) + 1 ]
+                new_else_node.data = new_else_node.children[0].data
+                new_else_node.is_terminal = True
+                new_else_node.children.pop(0)
 
             i += 1
         else:
             manage_ifs(child)
             i += 1
-
 
 def fuse_chains(given_tree: "Tree", chaining_nodes: list[str]) -> None:
     i = 0
@@ -451,6 +435,18 @@ def fuse_chains(given_tree: "Tree", chaining_nodes: list[str]) -> None:
             fuse_chains(child, chaining_nodes)
             i += 1
 
+def manage_unitary_minus(given_tree:"Tree")->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if (child.data == "E_un"):
+            child.data = "-"
+            child.line_index = child.children[0].line_index
+            child.is_terminal = True
+            i += 1
+        else:
+            manage_unitary_minus(child)
+            i += 1
 
 def transform_to_ast(given_tree: "Tree") -> None:
     remove_banned_characters(
@@ -468,6 +464,7 @@ def transform_to_ast(given_tree: "Tree") -> None:
     manage_returns(given_tree)
     manage_fors(given_tree)
     manage_ifs(given_tree)
+    manage_unitary_minus(given_tree)
     fuse_chains(given_tree, ["A", "C", "D", "S1"])
 
 # -------------------------------------------------------------------------------------------------

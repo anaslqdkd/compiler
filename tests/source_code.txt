@@ -1,6 +1,10 @@
 # Définition d'une fonction pour calculer le carré d'un nombre
 def gaga(x):
 	b = 4
-if x > 0:
-	a = 5
+	if x > 0:
+		a = 5 + b
+	else:
+		a = 6 - b
 
+c = (8*8)//8
+d = - a
