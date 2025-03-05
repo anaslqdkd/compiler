@@ -1,5 +1,6 @@
 from lexer import *
 from parser import *
+from st_builder import init_st, print_all_symbol_tables
 
 
 def main():
@@ -22,6 +23,11 @@ def main():
     parser = Parser(lexer, False)
     parser.parse()
     transform_to_ast(parser.root)
+    # type_errors(parser.root)
+    # NOTE: mis ici pour tester, à enlever avant de mettre sur main
+    st = init_st(parser.root)
+    print_all_symbol_tables(st)
+
     parser.root.get_flowchart(file_path="./test.txt", print_result=False)
 
     print("\nToken lexicon", TokenType.lexicon)

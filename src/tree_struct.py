@@ -4,6 +4,7 @@ from lexer import TokenType
 # Tree
 # -------------------------------------------------------------------------------------------------
 
+
 class Tree:
     _node_id_in_mermaid = 0
 
@@ -116,7 +117,7 @@ class Tree:
                 elif node.line_index == -1:
                     label = f"{data}{' T' if node.is_terminal else ''}"
                 elif data in ["+", "-", "*", "<", ">"]:
-                    label = f"\{data} (L{node.line_index}){' T' if node.is_terminal else ''}"
+                    label = f"{data} (L{node.line_index}){' T' if node.is_terminal else ''}"
                 else:
                     label = (
                         f"{data} (L{node.line_index}){' T' if node.is_terminal else ''}"
@@ -141,6 +142,7 @@ class Tree:
 # Converter
 # -------------------------------------------------------------------------------------------------
 
+
 def remove_banned_characters(given_tree: "Tree", banned_characters: list[str]) -> None:
     i = 0
     while i < len(given_tree.children):
@@ -156,6 +158,7 @@ def remove_banned_characters(given_tree: "Tree", banned_characters: list[str]) -
             remove_banned_characters(child, banned_characters)
             i += 1
 
+
 def remove_banned_data(given_tree: "Tree", banned_data: list[str]) -> None:
     i = 0
     while i < len(given_tree.children):
@@ -168,6 +171,7 @@ def remove_banned_data(given_tree: "Tree", banned_data: list[str]) -> None:
             remove_banned_characters(child, banned_data)
             i += 1
 
+
 def remove_n(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
@@ -179,6 +183,7 @@ def remove_n(given_tree: "Tree") -> None:
         else:
             remove_n(child)
             i += 1
+
 
 def list_pruning(given_tree: "Tree") -> None:
     if not given_tree.children:
@@ -219,6 +224,7 @@ def list_pruning(given_tree: "Tree") -> None:
         else:
             i += 1
     pass
+
 
 def tuple_pruning(given_tree: "Tree") -> None:
     if not given_tree.children:
@@ -262,6 +268,7 @@ def tuple_pruning(given_tree: "Tree") -> None:
             i += 1
     pass
 
+
 def remove_childless_non_terminal_trees(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
@@ -273,6 +280,7 @@ def remove_childless_non_terminal_trees(given_tree: "Tree") -> None:
         else:
             remove_childless_non_terminal_trees(child)
             i += 1
+
 
 def compact_non_terminals_chain(given_tree: "Tree") -> None:
     i = 0
@@ -290,6 +298,7 @@ def compact_non_terminals_chain(given_tree: "Tree") -> None:
             compact_non_terminals_chain(child)
             i += 1
 
+
 def manage_relations(given_tree: "Tree", relation_symbols: list[str]) -> None:
     i = 0
     while i < len(given_tree.children):
@@ -302,6 +311,7 @@ def manage_relations(given_tree: "Tree", relation_symbols: list[str]) -> None:
             grandfather.data = child.data
             grandfather.line_index = child.line_index
             grandfather.children.remove(given_tree)
+            grandfather.is_terminal = True
             given_tree.children.remove(child)
             for c in given_tree.children:
                 manage_relations(c, relation_symbols)
@@ -311,7 +321,8 @@ def manage_relations(given_tree: "Tree", relation_symbols: list[str]) -> None:
             manage_relations(child, relation_symbols)
             i += 1
 
-def manage_functions(given_tree:"Tree")->None:
+
+def manage_functions(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
@@ -328,7 +339,8 @@ def manage_functions(given_tree:"Tree")->None:
             manage_functions(child)
             i += 1
 
-def manage_prints(given_tree:"Tree")->None:
+
+def manage_prints(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
@@ -345,7 +357,8 @@ def manage_prints(given_tree:"Tree")->None:
             manage_prints(child)
             i += 1
 
-def manage_returns(given_tree:"Tree")->None:
+
+def manage_returns(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
@@ -361,7 +374,8 @@ def manage_returns(given_tree:"Tree")->None:
             manage_returns(child)
             i += 1
 
-def manage_fors(given_tree:"Tree")->None:
+
+def manage_fors(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
@@ -379,7 +393,8 @@ def manage_fors(given_tree:"Tree")->None:
             manage_fors(child)
             i += 1
 
-def manage_ifs(given_tree:"Tree")->None:
+
+def manage_ifs(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
@@ -389,7 +404,7 @@ def manage_ifs(given_tree:"Tree")->None:
         ):
             cond_node = given_tree.children[i+1]
             if_content = given_tree.children[i+2]
-            
+
             manage_ifs(cond_node)
             manage_ifs(if_content)
 
@@ -414,7 +429,8 @@ def manage_ifs(given_tree:"Tree")->None:
             manage_ifs(child)
             i += 1
 
-def fuse_chains(given_tree:"Tree", chaining_nodes:list[str])->None:
+
+def fuse_chains(given_tree: "Tree", chaining_nodes: list[str]) -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
@@ -435,15 +451,18 @@ def fuse_chains(given_tree:"Tree", chaining_nodes:list[str])->None:
             fuse_chains(child, chaining_nodes)
             i += 1
 
+
 def transform_to_ast(given_tree: "Tree") -> None:
-    remove_banned_characters(given_tree, [":", ",", "in", "NEWLINE", "BEGIN", "END", "EOF"])
+    remove_banned_characters(
+        given_tree, [":", ",", "in", "NEWLINE", "BEGIN", "END", "EOF"])
     remove_n(given_tree)
     list_pruning(given_tree)
     tuple_pruning(given_tree)
     remove_banned_data(given_tree, ["N"])
     remove_childless_non_terminal_trees(given_tree)
     compact_non_terminals_chain(given_tree)
-    manage_relations(given_tree, ["+", "-", "*", "//", "%", "<=", ">=", "<", ">", "!=", "==", "=", "/"])
+    manage_relations(given_tree, ["+", "-", "*", "//",
+                     "%", "<=", ">=", "<", ">", "!=", "==", "=", "/"])
     manage_functions(given_tree)
     manage_prints(given_tree)
     manage_returns(given_tree)
@@ -454,6 +473,7 @@ def transform_to_ast(given_tree: "Tree") -> None:
 # -------------------------------------------------------------------------------------------------
 # Sample
 # -------------------------------------------------------------------------------------------------
+
 
 def get_sample_tree() -> "Tree":
     root = Tree(data=1, line_index=0, is_terminal=False)
@@ -483,6 +503,7 @@ def get_sample_tree() -> "Tree":
 # Tests
 # -------------------------------------------------------------------------------------------------
 
+
 # Main
 if __name__ == "__main__":
     import io
@@ -504,6 +525,7 @@ if __name__ == "__main__":
         assert tree.line_index == expected_line_index
         assert tree.is_terminal == expected_is_terminal
         assert tree.children == expected_children
+
     def test_tree_creation():
         # Arrange
         expected_data = 10
@@ -521,6 +543,7 @@ if __name__ == "__main__":
         assert tree.data == expected_data
         assert tree.line_index == expected_line_index
         assert tree.is_terminal == expected_is_terminal
+
     def test_add_child_which_is_tree():
         # Arrange
         root = Tree(data=1, line_index=0, is_terminal=False)
@@ -531,6 +554,7 @@ if __name__ == "__main__":
 
         # Assert
         assert child_tree in root.children
+
     def test_add_child_method_with_data():
         # Arrange
         tree = Tree("root")
@@ -546,6 +570,7 @@ if __name__ == "__main__":
         assert tree.children[0].data == child_data
         assert tree.children[0].line_index == line_index
         assert tree.children[0].is_terminal == is_terminal
+
     def test_remove_child():
         root = Tree("root")
         child1 = Tree(1)
@@ -557,6 +582,7 @@ if __name__ == "__main__":
         root.remove_child(child1)
         assert len(root.children) == 1
         assert root.children[0].data == 2
+
     def test_remove_nonexistent_child():
         # Arrange
         root = Tree("root")
@@ -570,6 +596,7 @@ if __name__ == "__main__":
 
         # Assert
         assert "Child 2 not found in tree." in err.getvalue()
+
     def test_is_leaf_method():
         root = Tree("root")
         root.add_child(2, line_index=1, is_terminal=False)
@@ -581,6 +608,7 @@ if __name__ == "__main__":
         assert root.children[0].is_leaf() == False
         assert root.children[1].is_leaf() == False
         assert root.children[1].children[0].is_leaf() == True
+
     def test_is_leaf_returns_false_for_non_leaf_node():
         # Arrange
         root = Tree("root")
