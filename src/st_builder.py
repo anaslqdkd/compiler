@@ -21,7 +21,7 @@ class SymbolTable:
     def get_variables_amount(self):
         counter = 0
         for value in self.symbols.values():
-            if value["type"] not in ["function", "if_block"] and value["depl"] < 0:
+            if value["type"] not in ["function", "if_block", "else_block"] and value["depl"] < 0:
                 counter += 1
         return counter
 
@@ -60,14 +60,6 @@ class SymbolTable:
                 # "return type" : "<undefined>",
                 "symbol table": newST
             }
-            parameter_node = node_children[1]
-            if len(parameter_node.children) > 1:
-                for node in parameter_node:
-                    newST.add_value(node, is_parameter=True)
-            else:
-                newST.add_value(parameter_node, is_parameter=True)
-            print("buuu", node_children[2].data)
-            build_st(node_children[2], newST)
 
             return newST
         raise Exception(
@@ -91,9 +83,13 @@ class SymbolTable:
             print("block node",
                   TokenType.lexicon[block_node.data])
             print("is terminal", block_node.is_terminal)
+            print("1212121212122", newST.englobing_table.name)
 
-            build_st(condition_node, newST)
-            build_st(block_node, newST)
+            # build_st(condition_node, newST)
+            print("%%%%%", newST.englobing_table.name)
+            # build_st(block_node, newST)
+            print("µµµµµµµµµµµµ*", newST.englobing_table.name)
+            # self = self.englobing_table
 
             return newST
         raise Exception(
@@ -101,23 +97,26 @@ class SymbolTable:
         )
 
     def add_else(self, else_node: Tree) -> "SymbolTable":
-        # TODO: à changer dans l'élagage pour que ça s'affiche bien
+        print("in add else")
         node_children = else_node.children
         if node_children[0].value not in self.symbols.keys():
             # Adding a function
             newST = SymbolTable(
-                "if", self.imbrication_level + 1, self)
+                "else", self.imbrication_level + 1, self)
             self.symbols[node_children[0].value] = {
                 "type": "else_block",
                 # "return type" : "<undefined>",
                 "symbol table": newST
             }
-            block_node = node_children[0]
+            # block_node = node_children[0]
+            # self = self.englobing_table
 
-            build_st(block_node, newST)
+            # build_st(block_node, newST)
 
             return newST
         raise Exception(
+            print(self.symbols.keys()),
+            print(node_children[0].data),
             "à écrire"
         )
 
@@ -155,25 +154,33 @@ def build_st(ast: "Tree", current_st: "SymbolTable"):
             print("at the begining of the for imbr",
                   TokenType.lexicon[child.data])
         if child.data == "function":
-            current_st.add_function(child)
-        elif (
-                child.data in TokenType.lexicon.keys()
-                and TokenType.lexicon[child.data] == 'IDENTIFIER'
-        ):
-            current_st.add_value(child, is_parameter=False)
+            current_st = current_st.add_function(child)
+            # build_st(ast, current_st)
+        # NOTE: faut plus mettre ça, que lorsqu'il a un =
+        # elif (
+        #         child.data in TokenType.lexicon.keys()
+        #         and TokenType.lexicon[child.data] == 'IDENTIFIER'
+        # ):
+        #     current_st.add_value(child, is_parameter=False)
         elif not child.is_terminal:
             build_st(child, current_st)
         elif (child.data in TokenType.lexicon.keys() and TokenType.lexicon[child.data] == '='):
             current_st.add_value(child.children[0], is_parameter=False)
-            print("in the = section", child.data)
         elif (child.data in TokenType.lexicon.keys() and TokenType.lexicon[child.data] == 'return'):
-            print("in return ")
             current_st = current_st.englobing_table
         elif (child.data in TokenType.lexicon.keys() and TokenType.lexicon[child.data] == 'if'):
-            current_st.add_if(child)
+            current_st = current_st.add_if(child)
+            # current_st.add_if(child)
+            # build_st(child, current_st)
+            current_st = current_st.englobing_table
         elif (child.data in TokenType.lexicon.keys() and TokenType.lexicon[child.data] == 'else'):
-            current_st.add_else(child)
+            # current_st.add_else(child)
+            current_st = current_st.add_else(child)
+            # build_st(child, current_st)
+            current_st = current_st.englobing_table
         else:
+            build_st(child, current_st)
+            # pass
             print("in the else section of build_st", child.data)
 
 
@@ -193,6 +200,8 @@ def print_all_symbol_tables(symbol_tables: list, indent: int = 0):
         print(f"{indentation}" + "-" * 40)
 
         # Iterate over the symbols in the symbol table
+
+        # print("000000", symbol_table.name)
         for name, attributes in symbol_table.symbols.items():
             print(f"{indentation}{name}:")
             for key, value in attributes.items():

@@ -25,8 +25,6 @@ def main():
     transform_to_ast(parser.root)
     # type_errors(parser.root)
     # NOTE: mis ici pour tester, à enlever avant de mettre sur main
-    # st = init_st(parser.root)
-    # print_all_symbol_tables(st)
 
     parser.root.get_flowchart(file_path="./test.txt", print_result=False)
 
@@ -39,6 +37,8 @@ def main():
     token1 = lexer.get_next_token()
     token2 = lexer.peek_next_token()
     token3 = lexer.get_next_token()
+    st = init_st(parser.root)
+    print_all_symbol_tables(st)
 
     print("Token 1:", token1)
     print("Token 2 (peek):", token2)
