@@ -5,7 +5,7 @@ from semantic_analyzer import process_ast
 
 
 def main():
-    with open("../tests/works/bool_cond.txt", "r") as file:
+    with open("../tests/source_code.txt", "r") as file:
         source_code = file.read()
 
     lexer = Lexer(source_code)
