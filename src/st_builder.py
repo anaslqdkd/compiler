@@ -1,11 +1,11 @@
 from lexer import TokenType
 from tree_struct import Tree
-
+from sys import maxsize as InfSize
 
 class SymbolTable:
     _ST_id = 0
     # On suppose que tout sera codé sur 4 octets
-    element_size_for_depl_calculation = 4
+    integer_size = 8
 
     def __init__(self, name: str, imbrication_level: int, englobing_table: "SymbolTable"):
         self.name = name
@@ -18,46 +18,43 @@ class SymbolTable:
 
     # ---------------------------------------------------------------------------------------------
 
-    def get_variables_amount(self):
-        counter = 0
-        for value in self.symbols.values():
-            if value["type"] not in ["function", "if_block", "else_block"] and value["depl"] < 0:
-                counter += 1
-        return counter
-
-    def get_parameters_amount(self):
-        counter = 0
-        for value in self.symbols.values():
-            if value["type"] not in ["function", "if_block"] and value["depl"] > 0:
-                counter += 1
-        return counter
+    def calculate_depl(self, is_parameter:bool) -> int:
+        coef = -1 if is_parameter else 1
+        depl = 0
+        for symbol in self.symbols:
+            if symbol["depl"] * coef >= 0:  # It would mean both symbols are either both parameters or both variables
+                if symbol["type"] == "INTEGER":
+                    depl += self.integer_size
+                if symbol["type"] == "<undefined>":
+                    return coef * InfSize
+        return coef * depl
 
     # ---------------------------------------------------------------------------------------------
 
+    # FIXME: get_type with Amine's function
     def add_value(self, node: Tree, is_parameter: bool = False) -> None:
         if node.value not in self.symbols.keys():
             if is_parameter:
                 # Adding a parameter
                 self.symbols[node.value] = {
-                    "type": "<undefined>",
-                    "depl": SymbolTable.element_size_for_depl_calculation * self.get_parameters_amount()
+                    "type": "type should be got", # get_type(node),
+                    "depl": - InfSize # if get_type donne un string, else calculate_depl(is_parameter)
                 }
             else:
                 # Adding a variable
                 self.symbols[node.value] = {
-                    "type": "<undefined>",
-                    "depl": - SymbolTable.element_size_for_depl_calculation * self.get_variables_amount()
+                    "type": "type should be got", # get_type(node),
+                    "depl": InfSize # if get_type donne un string, else calculate_depl(is_parameter)
                 }
 
-    def add_function(self, function_node: Tree) -> "SymbolTable":
+    def add_indented_block(self, function_node:Tree) -> "SymbolTable":
         node_children = function_node.children
         if node_children[0].value not in self.symbols.keys():
             # Adding a function
             newST = SymbolTable(
                 node_children[0].value, self.imbrication_level + 1, self)
             self.symbols[node_children[0].value] = {
-                "type": "function",
-                # "return type" : "<undefined>",
+                "type": function_node.data.lower(),
                 "symbol table": newST
             }
 
@@ -65,73 +62,24 @@ class SymbolTable:
         raise Exception(
             f"Could not add this function to the ST, another one with the same identifier ({node_children[0]}) exists.")
 
-    def add_if(self, if_node: Tree) -> "SymbolTable":
-        node_children = if_node.children
-        if node_children[0].value not in self.symbols.keys():
-            # Adding a function
-            newST = SymbolTable(
-                "if", self.imbrication_level + 1, self)
-            self.symbols[node_children[0].value] = {
-                "type": "if_block",
-                # "return type" : "<undefined>",
-                "symbol table": newST
-            }
-            condition_node = node_children[0]
-            print("conditions node",
-                  TokenType.lexicon[condition_node.data])
-            block_node = node_children[1]
-            print("block node",
-                  TokenType.lexicon[block_node.data])
-            print("is terminal", block_node.is_terminal)
-            print("1212121212122", newST.englobing_table.name)
-
-            # build_st(condition_node, newST)
-            print("%%%%%", newST.englobing_table.name)
-            # build_st(block_node, newST)
-            print("µµµµµµµµµµµµ*", newST.englobing_table.name)
-            # self = self.englobing_table
-
-            return newST
-        raise Exception(
-            "à écrire"
-        )
-
-    def add_else(self, else_node: Tree) -> "SymbolTable":
-        print("in add else")
-        node_children = else_node.children
-        if node_children[0].value not in self.symbols.keys():
-            # Adding a function
-            newST = SymbolTable(
-                "else", self.imbrication_level + 1, self)
-            self.symbols[node_children[0].value] = {
-                "type": "else_block",
-                # "return type" : "<undefined>",
-                "symbol table": newST
-            }
-            # block_node = node_children[0]
-            # self = self.englobing_table
-
-            # build_st(block_node, newST)
-
-            return newST
-        raise Exception(
-            print(self.symbols.keys()),
-            print(node_children[0].data),
-            "à écrire"
-        )
-
-    def define_type(self, node: Tree, symbol_identifier: str) -> None:
-        if symbol_identifier in self.symbols.keys():
-            # TODO: how to get the type from the node?
-            type = ""
-            self.symbols[symbol_identifier]["type"] = type
-        else:
-            raise Exception(
-                f"Could not define the type of this symbol, it does not exist in the ST ({symbol_identifier}).")
-        pass
+    def add_compound_values(self, node: Tree, is_parameter: bool = False) -> None:
+        if node.value not in self.symbols.keys():
+            if is_parameter:
+                # Adding a parameter
+                self.symbols[node.value] = {
+                    "type": node.data,
+                    "depl": SymbolTable.element_size_for_depl_calculation * self.get_parameters_amount()
+                }
+            else:
+                # Adding a variable
+                self.symbols[node.value] = {
+                    "type": node.data,
+                    "depl": - SymbolTable.element_size_for_depl_calculation * self.get_variables_amount()
+                }
 
     # ---------------------------------------------------------------------------------------------
 
+    #TODO: verify this function
     def contains_symbol(self, name: str, st: "SymbolTable" = None) -> bool:
         if st is None:
             st = self
@@ -145,50 +93,33 @@ class SymbolTable:
                 break
         return if_found
 
+def is_function_identifier(node: Tree)->bool:
+    return node.data in TokenType.lexicon.keys() and TokenType.lexicon[node.data] == 'IDENTIFIER' and node.father.data == "function" and node.father.children.index(node) == 0
+
 # -------------------------------------------------------------------------------------------------
 
-def build_st(ast: "Tree", current_st: "SymbolTable"):
-    for child in ast.children:
-        if child.data in TokenType.lexicon.keys():
-            print("at the begining of the for imbr",
-                  TokenType.lexicon[child.data])
-        if child.data == "function":
-            current_st = current_st.add_function(child)
-            # build_st(ast, current_st)
-        # NOTE: faut plus mettre ça, que lorsqu'il a un =
-        # elif (
-        #         child.data in TokenType.lexicon.keys()
-        #         and TokenType.lexicon[child.data] == 'IDENTIFIER'
-        # ):
-        #     current_st.add_value(child, is_parameter=False)
-        elif not child.is_terminal:
-            build_st(child, current_st)
-        elif (child.data in TokenType.lexicon.keys() and TokenType.lexicon[child.data] == '='):
-            current_st.add_value(child.children[0], is_parameter=False)
-        elif (child.data in TokenType.lexicon.keys() and TokenType.lexicon[child.data] == 'return'):
-            current_st = current_st.englobing_table
-        elif (child.data in TokenType.lexicon.keys() and TokenType.lexicon[child.data] == 'if'):
-            current_st = current_st.add_if(child)
-            # current_st.add_if(child)
-            # build_st(child, current_st)
-            current_st = current_st.englobing_table
-        elif (child.data in TokenType.lexicon.keys() and TokenType.lexicon[child.data] == 'else'):
-            # current_st.add_else(child)
-            current_st = current_st.add_else(child)
-            # build_st(child, current_st)
-            current_st = current_st.englobing_table
-        else:
-            build_st(child, current_st)
-            # pass
-            print("in the else section of build_st", child.data)
+def build_sts(ast: Tree) -> list["SymbolTable"]:
+    def build_st_rec(ast:Tree, symbol_table: "SymbolTable"):
+        current_st = symbol_table
+        # All ifs & elifs
+        if ast.data in ["if", "else", "function", "while", "for"]:
+            current_st = current_st.add_indented_block(ast)
+        elif (
+                ast.data in TokenType.lexicon.keys()
+                and TokenType.lexicon[ast.data] == 'IDENTIFIER'
+                and not is_function_identifier(ast)
+        ):
+            current_st.add_value(ast, is_parameter=False)
+        elif ast.data in ["List", "Tuple"]:
+            current_st = current_st.add_compound_values(ast)
 
-
-def init_st(ast: "Tree") -> list[SymbolTable]:
-    global_st = SymbolTable(
-        name="Global", imbrication_level=0, englobing_table=None)
-    build_st(ast, global_st)
-    return [global_st]
-
+        # For loop on all children
+        for child in ast.children:
+            build_st_rec(child, current_st)
+    global_st = SymbolTable(name="Global", imbrication_level=0, englobing_table=None)
+    all_sts = [global_st]
+    build_st_rec(ast, global_st)
+    return all_sts
 
 def print_all_symbol_tables(symbol_tables: list, indent: int = 0):
     # NOTE: idk ce que ça fait, ce n'est pas moi qui l'a écrit

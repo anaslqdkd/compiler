@@ -1,6 +1,6 @@
 from lexer import *
 from parser import *
-from st_builder import init_st, print_all_symbol_tables
+from st_builder import build_sts, print_all_symbol_tables
 
 
 def main():
@@ -37,7 +37,7 @@ def main():
     token1 = lexer.get_next_token()
     token2 = lexer.peek_next_token()
     token3 = lexer.get_next_token()
-    st = init_st(parser.root)
+    st = build_sts(parser.root)
     print_all_symbol_tables(st)
 
     print("Token 1:", token1)
