@@ -147,7 +147,6 @@ class SymbolTable:
 
 # -------------------------------------------------------------------------------------------------
 
-
 def build_st(ast: "Tree", current_st: "SymbolTable"):
     for child in ast.children:
         if child.data in TokenType.lexicon.keys():

@@ -401,7 +401,7 @@ def manage_ifs(given_tree: "Tree") -> None:
             given_tree.children.remove(if_content)
 
             if (
-                child.father.children.index(child) + 1 <= len(child.father.children)
+                child.father.children.index(child) + 1 < len(child.father.children)
                 and child.father.children[child.father.children.index(child) + 1 ].data == "D1"
             ):
                 new_else_node = child.father.children[child.father.children.index(child) + 1 ]
