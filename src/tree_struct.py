@@ -304,19 +304,32 @@ def manage_relations(given_tree: "Tree", relation_symbols: list[str]) -> None:
             child.data in TokenType.lexicon.keys()
             and TokenType.lexicon[child.data] in relation_symbols
         ):
+            print(child.line_index, TokenType.lexicon[child.data])
             grandfather = given_tree.father
             grandfather.data = child.data
             grandfather.line_index = child.line_index
-            grandfather.children.remove(given_tree)
             grandfather.is_terminal = True
             given_tree.children.remove(child)
-            for c in given_tree.children:
-                manage_relations(c, relation_symbols)
-                grandfather.children.append(c)
-                c.father = grandfather
-            i += 1
         else:
             manage_relations(child, relation_symbols)
+            i += 1
+
+def manage_equalities(given_tree: "Tree") -> None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if (
+            child.data in TokenType.lexicon.keys()
+            and TokenType.lexicon[child.data] == "="
+        ):
+            grandfather = given_tree.father
+            grandfather.data = child.data
+            grandfather.line_index = child.line_index
+            grandfather.is_terminal = True
+            given_tree.children.remove(child)
+            i += 1
+        else:
+            manage_equalities(child)
             i += 1
 
 def manage_functions(given_tree: "Tree") -> None:
@@ -470,7 +483,9 @@ def transform_to_ast(given_tree: "Tree") -> None:
     remove_childless_non_terminal_trees(given_tree)
     compact_non_terminals_chain(given_tree)
     manage_relations(given_tree, ["+", "-", "*", "//",
-                     "%", "<=", ">=", "<", ">", "!=", "==", "=", "/"])
+                     "%", "<=", ">=", "<", ">", "!=", "==", "/"])
+    manage_equalities(given_tree)
+    compact_non_terminals_chain(given_tree)
     manage_functions(given_tree)
     manage_prints(given_tree)
     manage_returns(given_tree)
