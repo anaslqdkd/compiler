@@ -1,31 +1,60 @@
 graph TD
-0["axiome (L2)"]
+0["axiome"]
 4["function (L2)"]
 style 4 stroke:#caf9fb,stroke-width:2px
 6["IDENTIFIER => 1 (L2)"]
 style 6 stroke:#caf9fb,stroke-width:2px
+186["TUPLE (L2)"]
 9["IDENTIFIER => 2 (L2)"]
 style 9 stroke:#caf9fb,stroke-width:2px
-13["B"]
-17["= (L3)"]
-style 17 stroke:#caf9fb,stroke-width:2px
-18["IDENTIFIER => 3 (L3)"]
-style 18 stroke:#caf9fb,stroke-width:2px
-30["INTEGER => 1 (L3)"]
-style 30 stroke:#caf9fb,stroke-width:2px
-41["= (L4)"]
-style 41 stroke:#caf9fb,stroke-width:2px
-42["IDENTIFIER => 4 (L4)"]
-style 42 stroke:#caf9fb,stroke-width:2px
-54["INTEGER => 2 (L4)"]
-style 54 stroke:#caf9fb,stroke-width:2px
+12["IDENTIFIER => 3 (L2)"]
+style 12 stroke:#caf9fb,stroke-width:2px
+16["B"]
+20["= (L3)"]
+style 20 stroke:#caf9fb,stroke-width:2px
+21["IDENTIFIER => 4 (L3)"]
+style 21 stroke:#caf9fb,stroke-width:2px
+33["INTEGER => 1 (L3)"]
+style 33 stroke:#caf9fb,stroke-width:2px
+42["B1"]
+44["= (L4)"]
+style 44 stroke:#caf9fb,stroke-width:2px
+45["IDENTIFIER => 5 (L4)"]
+style 45 stroke:#caf9fb,stroke-width:2px
+184["LIST (L4)"]
+67["INTEGER => 2 (L4)"]
+style 67 stroke:#caf9fb,stroke-width:2px
+84["INTEGER => 3 (L4)"]
+style 84 stroke:#caf9fb,stroke-width:2px
+101["INTEGER => 1 (L4)"]
+style 101 stroke:#caf9fb,stroke-width:2px
+119["= (L5)"]
+style 119 stroke:#caf9fb,stroke-width:2px
+120["IDENTIFIER => 6 (L5)"]
+style 120 stroke:#caf9fb,stroke-width:2px
+185["LIST (L5)"]
+142["INTEGER => 4 (L5)"]
+style 142 stroke:#caf9fb,stroke-width:2px
+159["INTEGER => 2 (L5)"]
+style 159 stroke:#caf9fb,stroke-width:2px
 0 --> 4
 4 --> 6
-4 --> 9
-4 --> 13
-13 --> 17
-17 --> 18
-17 --> 30
-13 --> 41
-41 --> 42
-41 --> 54
+4 --> 186
+186 --> 9
+186 --> 12
+4 --> 16
+16 --> 20
+20 --> 21
+20 --> 33
+16 --> 42
+42 --> 44
+44 --> 45
+44 --> 184
+184 --> 67
+184 --> 84
+184 --> 101
+42 --> 119
+119 --> 120
+119 --> 185
+185 --> 142
+185 --> 159

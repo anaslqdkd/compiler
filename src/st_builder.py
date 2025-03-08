@@ -31,6 +31,23 @@ class SymbolTable:
                     return coef * InfSize
         return coef * depl
 
+    def compound_size(self, node: Tree) -> int:
+        return len(node.children)
+        # depl = 0
+        # counter = 0
+        # if is_parameter:
+        #     for child in node.children:
+        #         if TokenType.lexicon[child.data] == 'INTEGER':
+        #             depl += self.integer_size
+        #             counter += 1
+        #         if TokenType.lexicon[child.data] == 'STRING':
+        #             depl += self.integer_size
+        #     print(counter)
+        #     print("fuuu", self.integer_size)
+        #     print(depl)
+        #     depl *= -1
+        #     return depl
+
     # ---------------------------------------------------------------------------------------------
 
     # FIXME: get_type with Amine's function
@@ -46,10 +63,15 @@ class SymbolTable:
                 # Adding a variable
                 print(TokenType.lexicon[node.data], node.line_index, node.father.data)
                 type = dfs_type_check(node.father)
+                print("gaga", node.value)
+                print("gaga", node.data)
+                print(self.compound_size(node))
                 self.symbols[node.value] = {
                     "type": type if type is not None else "<undefined>",
-                    "depl": InfSize if type is None or type == "STRING" else self.calculate_depl(is_parameter)
+                    "depl": self.compound_size(node.father.children[1]) if type in ["LIST", "TUPLE"] else self.calculate_depl(is_parameter=False)
+                    # "depl": InfSize if type is None or type == "STRING" else self.calculate_depl(is_parameter)
                 }
+
 
     def add_indented_block(self, function_node:Tree) -> "SymbolTable":
         node_children = function_node.children
@@ -67,21 +89,42 @@ class SymbolTable:
             f"Could not add this function to the ST, another one with the same identifier ({node_children[0]}) exists.")
 
     def add_compound_values(self, node: Tree, is_parameter: bool = False) -> None:
-        if node.value not in self.symbols.keys():
+        # NOTE: pour l'instant un  copié collé, il faut adapter ça pour qu'il y ait sa taille'
+        # NOTE: ou inférence de types
+        print("in add_compound_values",node.data)
+        print("in add_compound_values",node.value)
+        print(self.symbols.keys())
+        # if node.value == None:
+        #     pass
+        if node.data not in self.symbols.keys():
+            print("-----------if: in add_compound_values",node.data)
             if is_parameter:
+                print("22222222222222222222222222222222222222222222", node.data)
                 # Adding a parameter
+                if node.value == None:
+                    pass
                 self.symbols[node.value] = {
                     "type": node.data,
-                    "depl": SymbolTable.element_size_for_depl_calculation * self.get_parameters_amount()
+                    "depl": SymbolTable.integer_size * self.compound_size(node)
+                    # "depl": self.compound_size(node) 
                 }
             else:
                 # Adding a variable
+                depl = self.compound_size(node) * 8
+                if node.value == None:
+                    pass
+                print("33333333333333333333333333333333333333333", node.data)
+                print(self.compound_size(node))
                 self.symbols[node.value] = {
                     "type": node.data,
-                    "depl": - SymbolTable.element_size_for_depl_calculation * self.get_variables_amount()
+                    # "depl": self.compound_size(node) 
+                    "depl": SymbolTable.integer_size * self.compound_size(node)
+                    # "depl": - SymbolTable.element_size_for_depl_calculation * self.get_variables_amount()
+                    # "depl": 0
                 }
 
     # ---------------------------------------------------------------------------------------------
+
 
     #TODO: verify this function
     def contains_symbol(self, name: str, st: "SymbolTable" = None) -> bool:
@@ -100,11 +143,13 @@ class SymbolTable:
 def is_function_identifier(node: Tree)->bool:
     return node.data in TokenType.lexicon.keys() and TokenType.lexicon[node.data] == 'IDENTIFIER' and node.father.data == "function" and node.father.children.index(node) == 0
 
+
+
 def is_parameter(node: Tree)->bool:
     while node.father is not None:
         print(node.father.data)
         if node.father.data == "function":
-            return True
+            return node.father.children.index(node) == 1
         elif not node.father.is_terminal:
             return False
         node = node.father
@@ -116,6 +161,7 @@ def build_sts(ast: Tree) -> list["SymbolTable"]:
     def build_st_rec(ast:Tree, symbol_table: "SymbolTable"):
         current_st = symbol_table
         # All ifs & elifs
+        # print("$$$$$", ast.data)
         if ast.data in ["if", "else", "function", "while", "for"]:
             current_st = current_st.add_indented_block(ast)
         elif (
@@ -123,13 +169,17 @@ def build_sts(ast: Tree) -> list["SymbolTable"]:
                 and TokenType.lexicon[ast.data] == 'IDENTIFIER'
                 and not is_function_identifier(ast)
         ):
+            print("11111111", ast.data)
             current_st.add_value(ast, is_parameter=is_parameter(ast))
-        elif ast.data in ["List", "Tuple"]:
-            current_st = current_st.add_compound_values(ast)
+        elif ast.data in ["LIST", "TUPLE"]:
+            print("hereeeeeeeeeeeeeeee", ast.data)
+            # NOTE: à remettre après
+            current_st = current_st.add_compound_values(ast, is_parameter=is_parameter(ast))
 
         # For loop on all children
         for child in ast.children:
-            build_st_rec(child, current_st)
+            if current_st is not None:
+                build_st_rec(child, current_st)
     global_st = SymbolTable(name="Global", imbrication_level=0, englobing_table=None)
     all_sts = [global_st]
     build_st_rec(ast, global_st)
