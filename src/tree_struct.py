@@ -114,7 +114,7 @@ class Tree:
                 color = "#caf9fb"
                 if node.value is not None:
                     label = f"[\"{data} => {node.value} (L{node.line_index})\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
-                elif node.line_index == -1:
+                elif node.line_index == -1 or node.data == "axiome":
                     label = f"[\"{data}\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
                 elif data in ["+", "-", "*", "/", "<", ">"]:
                     label = f"[\"\\{data} (L{node.line_index})\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
@@ -153,6 +153,7 @@ def remove_banned_characters(given_tree: "Tree", banned_characters: list[str]) -
             given_tree.children.pop(i)
             for c in reversed(child.children):
                 given_tree.children.insert(i, c)
+                c.father = given_tree
         else:
             remove_banned_characters(child, banned_characters)
             i += 1
@@ -165,6 +166,7 @@ def remove_banned_data(given_tree: "Tree", banned_data: list[str]) -> None:
             given_tree.children.pop(i)
             for c in reversed(child.children):
                 given_tree.children.insert(i, c)
+                c.father = given_tree
         else:
             remove_banned_characters(child, banned_data)
             i += 1
@@ -177,6 +179,7 @@ def remove_n(given_tree: "Tree") -> None:
             given_tree.children.pop(i)
             for c in reversed(child.children):
                 given_tree.children.insert(i, c)
+                c.father = given_tree
         else:
             remove_n(child)
             i += 1
@@ -271,6 +274,7 @@ def remove_childless_non_terminal_trees(given_tree: "Tree") -> None:
             given_tree.children.pop(i)
             for c in reversed(child.children):
                 given_tree.children.insert(i, c)
+                c.father = given_tree
         else:
             remove_childless_non_terminal_trees(child)
             i += 1
@@ -287,6 +291,7 @@ def compact_non_terminals_chain(given_tree: "Tree") -> None:
 
             given_tree.children.pop(i)
             given_tree.children.insert(i, replacing_child)
+            replacing_child.father = given_tree
         else:
             compact_non_terminals_chain(child)
             i += 1
@@ -308,6 +313,7 @@ def manage_relations(given_tree: "Tree", relation_symbols: list[str]) -> None:
             for c in given_tree.children:
                 manage_relations(c, relation_symbols)
                 grandfather.children.append(c)
+                c.father = grandfather
             i += 1
         else:
             manage_relations(child, relation_symbols)
@@ -341,6 +347,7 @@ def manage_prints(given_tree: "Tree") -> None:
             for c in given_tree.children:
                 if c != child:
                     child.children.append(c)
+                    c.father = child
                     given_tree.children.remove(c)
             i += 1
         else:
@@ -357,6 +364,7 @@ def manage_returns(given_tree: "Tree") -> None:
         ):
             returned_value = given_tree.children[i+1]
             child.children.append(returned_value)
+            returned_value.father = child
             given_tree.children.remove(returned_value)
             i += 1
         else:
@@ -375,6 +383,7 @@ def manage_fors(given_tree: "Tree") -> None:
                 c = given_tree.children[i+1]
                 manage_fors(c)
                 child.children.append(c)
+                c.father = child
                 given_tree.children.remove(c)
             i += 1
         else:
@@ -396,8 +405,10 @@ def manage_ifs(given_tree: "Tree") -> None:
             manage_ifs(if_content)
 
             child.children.append(cond_node)
+            cond_node.father = child
             given_tree.children.remove(cond_node)
             child.children.append(if_content)
+            if_content.father = child
             given_tree.children.remove(if_content)
 
             if (
@@ -428,6 +439,7 @@ def fuse_chains(given_tree: "Tree", chaining_nodes: list[str]) -> None:
                     for c in grandchild.children:
                         fuse_chains(c, chaining_nodes)
                         child.children.insert(j, c)
+                        c.father = child
                 else:
                     j += 1
             i += 1

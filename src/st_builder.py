@@ -38,14 +38,14 @@ class SymbolTable:
         if node.value not in self.symbols.keys():
             if is_parameter:
                 # Adding a parameter
-                type = dfs_type_check(node)
                 self.symbols[node.value] = {
-                    "type": type if type is not None else "<undefined>",
-                    "depl": - InfSize if type is None or type == "STRING" else self.calculate_depl(is_parameter)
+                    "type": "<undefined>",
+                    "depl": - InfSize
                 }
             else:
                 # Adding a variable
-                type = dfs_type_check(node)
+                print(TokenType.lexicon[node.data], node.line_index, node.father.data)
+                type = dfs_type_check(node.father)
                 self.symbols[node.value] = {
                     "type": type if type is not None else "<undefined>",
                     "depl": InfSize if type is None or type == "STRING" else self.calculate_depl(is_parameter)
@@ -100,6 +100,16 @@ class SymbolTable:
 def is_function_identifier(node: Tree)->bool:
     return node.data in TokenType.lexicon.keys() and TokenType.lexicon[node.data] == 'IDENTIFIER' and node.father.data == "function" and node.father.children.index(node) == 0
 
+def is_parameter(node: Tree)->bool:
+    while node.father is not None:
+        print(node.father.data)
+        if node.father.data == "function":
+            return True
+        elif not node.father.is_terminal:
+            return False
+        node = node.father
+    raise ValueError("Could not find function or non-terminal node")
+
 # -------------------------------------------------------------------------------------------------
 
 def build_sts(ast: Tree) -> list["SymbolTable"]:
@@ -113,7 +123,7 @@ def build_sts(ast: Tree) -> list["SymbolTable"]:
                 and TokenType.lexicon[ast.data] == 'IDENTIFIER'
                 and not is_function_identifier(ast)
         ):
-            current_st.add_value(ast, is_parameter=False)
+            current_st.add_value(ast, is_parameter=is_parameter(ast))
         elif ast.data in ["List", "Tuple"]:
             current_st = current_st.add_compound_values(ast)
 
