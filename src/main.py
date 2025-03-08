@@ -1,6 +1,8 @@
 from lexer import *
 from parser import *
 from st_builder import build_sts, print_all_symbol_tables
+# from st_builder import init_st, print_all_symbol_tables
+from semantic_analyzer import process_ast
 
 
 def main():
@@ -8,18 +10,6 @@ def main():
         source_code = file.read()
 
     lexer = Lexer(source_code)
-
-    # while True:
-    #     token = lexer.get_next_token()
-
-    #     if token.value:
-    #         print((token.number, token.value), TokenType.lexicon[token.number])
-    #     else:
-    #         print(TokenType.lexicon[token.number])
-
-    #     if token.number == 4:  # EOF token
-    #         break
-
     parser = Parser(lexer, False)
     parser.parse()
     transform_to_ast(parser.root)
@@ -43,6 +33,8 @@ def main():
     print("Token 1:", token1)
     print("Token 2 (peek):", token2)
     print("Token 3:", token3)
+
+    print(process_ast(parser.root, lexer.identifier_lexicon))
 
 
 if __name__ == "__main__":
