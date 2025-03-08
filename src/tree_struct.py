@@ -492,7 +492,7 @@ def transform_to_ast(given_tree: "Tree") -> None:
     manage_fors(given_tree)
     manage_ifs(given_tree)
     manage_unitary_minus(given_tree)
-    fuse_chains(given_tree, ["A", "C", "D", "S1"])
+    fuse_chains(given_tree, ["A", "C", "D", "S1", "B1", "B"])
 
 # -------------------------------------------------------------------------------------------------
 # Sample
