@@ -1,5 +1,6 @@
 from lexer import TokenType
 from tree_struct import Tree
+from semantic_analyzer import dfs_type_check
 from sys import maxsize as InfSize
 
 class SymbolTable:
@@ -21,7 +22,8 @@ class SymbolTable:
     def calculate_depl(self, is_parameter:bool) -> int:
         coef = -1 if is_parameter else 1
         depl = 0
-        for symbol in self.symbols:
+        for symbol in self.symbols.values():
+            print(symbol, type(symbol))
             if symbol["depl"] * coef >= 0:  # It would mean both symbols are either both parameters or both variables
                 if symbol["type"] == "INTEGER":
                     depl += self.integer_size
@@ -36,15 +38,17 @@ class SymbolTable:
         if node.value not in self.symbols.keys():
             if is_parameter:
                 # Adding a parameter
+                type = dfs_type_check(node)
                 self.symbols[node.value] = {
-                    "type": "type should be got", # get_type(node),
-                    "depl": - InfSize # if get_type donne un string, else calculate_depl(is_parameter)
+                    "type": type if type is not None else "<undefined>",
+                    "depl": - InfSize if type is None or type == "STRING" else self.calculate_depl(is_parameter)
                 }
             else:
                 # Adding a variable
+                type = dfs_type_check(node)
                 self.symbols[node.value] = {
-                    "type": "type should be got", # get_type(node),
-                    "depl": InfSize # if get_type donne un string, else calculate_depl(is_parameter)
+                    "type": type if type is not None else "<undefined>",
+                    "depl": InfSize if type is None or type == "STRING" else self.calculate_depl(is_parameter)
                 }
 
     def add_indented_block(self, function_node:Tree) -> "SymbolTable":

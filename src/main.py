@@ -34,7 +34,7 @@ def main():
     print("Token 2 (peek):", token2)
     print("Token 3:", token3)
 
-    print(process_ast(parser.root, lexer.identifier_lexicon))
+    # print(process_ast(parser.root, lexer.identifier_lexicon))
 
 
 if __name__ == "__main__":
