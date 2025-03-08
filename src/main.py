@@ -2,7 +2,7 @@ from lexer import *
 from parser import *
 from st_builder import build_sts, print_all_symbol_tables
 # from st_builder import init_st, print_all_symbol_tables
-from semantic_analyzer import process_ast
+from semantic_analyzer import process_ast, dfs_type_check
 
 
 def main():
@@ -13,8 +13,8 @@ def main():
     parser = Parser(lexer, False)
     parser.parse()
     transform_to_ast(parser.root)
-    # type_errors(parser.root)
-    # NOTE: mis ici pour tester, à enlever avant de mettre sur main
+
+    parser.root.get_flowchart(file_path="../tests/test.txt", print_result=False)
 
     parser.root.get_flowchart(file_path="./test.txt", print_result=False)
 

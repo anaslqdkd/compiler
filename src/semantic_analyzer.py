@@ -11,6 +11,12 @@ def dfs_type_check(node):
     """
     if not node.children:
         return TokenType.lexicon[node.data]
+    
+    if node.data in ["LIST", "TUPLE"]:
+        return node.data
+    
+    if TokenType.lexicon[node.data] == "=":
+        return dfs_type_check(node.children[1])
 
     if TokenType.lexicon[node.data] in ['+', '-', '*', '//', '%', '<', '>']:
         left_type = dfs_type_check(node.children[0])
@@ -21,7 +27,7 @@ def dfs_type_check(node):
 
     for child in node.children:
         dfs_type_check(child)
-    return None 
+    # return None 
 
 def process_ast(root, identifier_lexicon):
     for statement in root.children:
@@ -31,6 +37,8 @@ def process_ast(root, identifier_lexicon):
             print(f"Variable '{var_name}' typée en {expr_type}")
         except SemanticError as e:
             print(f"Erreur sur la déclaration de {var_name} : {e}")
+
+
 
 def type_errors(given_tree: "Tree") -> None:
     # TODO: fonction qui vérifie les types pour les relations binaires
