@@ -1,4 +1,4 @@
-from lexer import TokenType
+from lexer import TokenType, Lexer
 from tree_struct import Tree
 from semantic_analyzer import dfs_type_check
 from sys import maxsize as InfSize
@@ -6,10 +6,12 @@ from sys import maxsize as InfSize
 
 class SymbolTable:
     _ST_id = 0
-    # On suppose que tout sera codé sur 4 octets
-    integer_size = 8
+    integer_size = 8 # Assuming every integer will be coded using 8 bits maximum
+    character_size = 16 # Assuming every character will respect the UTF-8 norm
 
-    def __init__(self, name: str, imbrication_level: int, englobing_table: "SymbolTable"):
+    def __init__(self, name: str, imbrication_level: int, englobing_table: "SymbolTable", debug_mode:bool):
+        self.debug_mode = debug_mode
+
         self.name = name
         self.symbols = {}
         self.imbrication_level = imbrication_level
@@ -24,7 +26,6 @@ class SymbolTable:
         coef = -1 if is_parameter else 1
         depl = 0
         for symbol in self.symbols.values():
-            print(symbol, type(symbol))
             # It would mean both symbols are either both parameters or both variables
             if symbol["depl"] * coef >= 0:
                 if symbol["type"] == "INTEGER":
@@ -34,19 +35,20 @@ class SymbolTable:
         return coef * depl
 
     def calculate_depl_compound(self, node: Tree, is_parameter: bool) -> int:
-        # depl = self.calculate_depl(is_parameter)
         depl = 0
         for child in node.children:
             if child.data in TokenType.lexicon.keys() and TokenType.lexicon[child.data] == 'INTEGER':
-                depl += 8
+                depl += self.integer_size
             if child.data in ['LIST', 'TUPLE']:
                 depl += self.calculate_depl_compound(child, is_parameter)
         return depl
+    
+    def calculate_depl_string(self, node: Tree, lexer:Lexer, is_parameter: bool) -> int:
+        return len(lexer.constant_lexicon[node.father.children[1].value]) * self.character_size
 
     # ---------------------------------------------------------------------------------------------
 
-    # FIXME: get_type with Amine's function
-    def add_value(self, node: Tree, is_parameter: bool = False) -> None:
+    def add_value(self, node: Tree, lexer:Lexer, is_parameter: bool = False) -> None:
         if node.value not in self.symbols.keys():
             if is_parameter:
                 # Adding a parameter
@@ -56,20 +58,25 @@ class SymbolTable:
                 }
             else:
                 # Adding a variable
-                print(TokenType.lexicon[node.data],
-                      node.line_index, node.father.data)
                 type = dfs_type_check(node.father)
+
+                depl = InfSize
+                if type in ["LIST", "TUPLE"]: depl = self.calculate_depl_compound(node.father.children[1], is_parameter)
+                elif type == "STRING": depl = self.calculate_depl_string(node.father.children[1], lexer, is_parameter)
+                elif type is not None: depl = self.calculate_depl(is_parameter)
+
+                if self.debug_mode: print(f"Adding the identifier {node.value}, of type {type} and size {depl}")
+
                 self.symbols[node.value] = {
                     "type": type if type is not None else "<undefined>",
-                    "depl": InfSize if type is None or type == "STRING" else self.calculate_depl(is_parameter)
+                    "depl": depl
                 }
 
     def add_indented_block(self, function_node: Tree) -> "SymbolTable":
         node_children = function_node.children
         if node_children[0].value not in self.symbols.keys():
             # Adding a function
-            newST = SymbolTable(
-                node_children[0].value, self.imbrication_level + 1, self)
+            newST = SymbolTable(node_children[0].value, self.imbrication_level + 1, self, self.debug_mode)
             self.symbols[node_children[0].value] = {
                 "type": function_node.data.lower(),
                 "symbol table": newST
@@ -78,24 +85,6 @@ class SymbolTable:
             return newST
         raise Exception(
             f"Could not add this function to the ST, another one with the same identifier ({node_children[0]}) exists.")
-
-    def add_compound_values(self, node: Tree, is_parameter: bool = False) -> None:
-        print("add_compound_values", node.data)
-        if node.value not in self.symbols.keys():
-            if is_parameter:
-                # Adding a parameter
-                self.symbols[node.value] = {
-                    "type": node.data,
-                    # "depl": SymbolTable.element_size_for_depl_calculation * self.get_parameters_amount()
-                    "depl": self.calculate_depl_compound(node, False)
-                }
-            else:
-                # Adding a variable
-                self.symbols[node.value] = {
-                    "type": node.data,
-                    "depl": self.calculate_depl_compound(node, False)
-                    # "depl": - SymbolTable.element_size_for_depl_calculation * self.get_variables_amount()
-                }
 
     # ---------------------------------------------------------------------------------------------
 
@@ -113,18 +102,13 @@ class SymbolTable:
                 break
         return if_found
 
+# -------------------------------------------------------------------------------------------------
 
 def is_function_identifier(node: Tree) -> bool:
     return node.data in TokenType.lexicon.keys() and TokenType.lexicon[node.data] == 'IDENTIFIER' and node.father.data == "function" and node.father.children.index(node) == 0
 
-
-def is_list_tuple_identifier(node: Tree) -> bool:
-    return node.data in TokenType.lexicon.keys() and TokenType.lexicon[node.data] == 'IDENTIFIER' and node.father.children[1].data in ["LIST", "TUPLE"]
-
-
 def is_parameter(node: Tree) -> bool:
     while node.father is not None:
-        print(node.father.data)
         if node.father.data == "function":
             return True
         elif not node.father.is_terminal:
@@ -132,12 +116,10 @@ def is_parameter(node: Tree) -> bool:
         node = node.father
     raise ValueError("Could not find function or non-terminal node")
 
-
 # -------------------------------------------------------------------------------------------------
 
-def build_sts(ast: Tree) -> list["SymbolTable"]:
+def build_sts(ast: Tree, lexer:Lexer, debug_mode: bool=False) -> list["SymbolTable"]:
     def build_st_rec(ast: Tree, symbol_table: "SymbolTable"):
-        print("build_st_rec", ast.data)
         current_st = symbol_table
         # All ifs & elifs
         if ast.data in ["if", "else", "function", "while", "for"]:
@@ -146,22 +128,17 @@ def build_sts(ast: Tree) -> list["SymbolTable"]:
                 ast.data in TokenType.lexicon.keys()
                 and TokenType.lexicon[ast.data] == 'IDENTIFIER'
                 and not is_function_identifier(ast)
-                and not is_list_tuple_identifier(ast)
         ):
-            current_st.add_value(ast, is_parameter=is_parameter(ast))
-        elif ast.data in ["LIST", "TUPLE"]:
-            current_st.add_compound_values(ast)
+            current_st.add_value(ast, lexer, is_parameter=is_parameter(ast))
 
         # For loop on all children
         for child in ast.children:
-            print("²²²²²²²²²²²²²²²²²²²²²²²²²²²²²", child.data)
             build_st_rec(child, current_st)
     global_st = SymbolTable(
-        name="Global", imbrication_level=0, englobing_table=None)
+        name="Global", imbrication_level=0, englobing_table=None, debug_mode=debug_mode)
     all_sts = [global_st]
     build_st_rec(ast, global_st)
     return all_sts
-
 
 def print_all_symbol_tables(symbol_tables: list, indent: int = 0):
     # NOTE: idk ce que ça fait, ce n'est pas moi qui l'a écrit
@@ -173,7 +150,6 @@ def print_all_symbol_tables(symbol_tables: list, indent: int = 0):
 
         # Iterate over the symbols in the symbol table
 
-        # print("000000", symbol_table.name)
         for name, attributes in symbol_table.symbols.items():
             print(f"{indentation}{name}:")
             for key, value in attributes.items():
