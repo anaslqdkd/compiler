@@ -8,6 +8,10 @@ class SymbolTable:
     _ST_id = 0
     integer_size = 8 # Assuming every integer will be coded using 8 bits maximum
     character_size = 16 # Assuming every character will respect the UTF-8 norm
+    node_counter = 0
+    node_counter_else = 0
+    node_counter_if = 0
+    node_counter_for = 0
 
     def __init__(self, name: str, imbrication_level: int, englobing_table: "SymbolTable", debug_mode:bool):
         self.debug_mode = debug_mode
@@ -74,11 +78,34 @@ class SymbolTable:
 
     def add_indented_block(self, function_node: Tree) -> "SymbolTable":
         node_children = function_node.children
-        if node_children[0].value not in self.symbols.keys():
+        type_label = function_node.data
+
+        if node_children[0].value is None and function_node.data in TokenType.lexicon.keys():
+            new_label = 0
+            type_label = TokenType.lexicon[function_node.data]
+            if TokenType.lexicon[function_node.data] == "else":
+                new_label = TokenType.lexicon[function_node.data] + " "+ str(self.node_counter_else)
+                self.node_counter_else += 1
+            if TokenType.lexicon[function_node.data] == "if":
+                new_label = TokenType.lexicon[function_node.data] + " " + str(self.node_counter_if)
+                self.node_counter_if += 1
+            if TokenType.lexicon[function_node.data] == "for":
+                new_label = TokenType.lexicon[function_node.data]  + " "+  str(self.node_counter_for)
+                self.node_counter_for += 1
+
+            newST = SymbolTable(str(new_label), self.imbrication_level + 1, self, self.debug_mode)
+            self.symbols[new_label] = {
+                "type": type_label,
+                "symbol table": newST
+            }
+            self.node_counter += 1
+            return newST
+
+        elif node_children[0].value not in self.symbols.keys() and node_children[0].value is not None:
             # Adding a function
             newST = SymbolTable(node_children[0].value, self.imbrication_level + 1, self, self.debug_mode)
             self.symbols[node_children[0].value] = {
-                "type": function_node.data.lower(),
+                "type": function_node.data,
                 "symbol table": newST
             }
 
@@ -123,6 +150,8 @@ def build_sts(ast: Tree, lexer:Lexer, debug_mode: bool=False) -> list["SymbolTab
         current_st = symbol_table
         # All ifs & elifs
         if ast.data in ["if", "else", "function", "while", "for"]:
+            current_st = current_st.add_indented_block(ast)
+        elif ast.data in TokenType.lexicon.keys() and TokenType.lexicon[ast.data] in ["if", "else"]:
             current_st = current_st.add_indented_block(ast)
         elif (
                 ast.data in TokenType.lexicon.keys()
