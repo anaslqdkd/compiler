@@ -38,11 +38,8 @@ class SymbolTable:
         if TokenType.lexicon[node.data] == "=":
             return self.dfs_type_check(node.children[1])
         if TokenType.lexicon[node.data] == 'IDENTIFIER':
-            print(self.symbols.keys())
-            # TODO: replace with if node.value in one of the sts
-            if node.value in self.symbols.keys():
-                # FIXME: à remplacer plutôt par if node.value if one of the englobing sts
-                return self.symbols[node.value]["type"]
+            if find_type(self, node.value) != None:
+                return find_type(self, node.value)
 
         if TokenType.lexicon[node.data] in ['+', '-', '*', '//', '%', '<', '>']:
             left_type = self.dfs_type_check(node.children[0])
@@ -62,7 +59,7 @@ class SymbolTable:
         depl = 0
         for symbol in self.symbols.values():
             # It would mean both symbols are either both parameters or both variables
-            if symbol["depl"] * coef >= 0:
+            if "depl" in symbol and symbol["depl"] * coef >= 0:
                 if symbol["type"] == "INTEGER":
                     depl += self.integer_size
                 if symbol["type"] == "<undefined>":
@@ -88,7 +85,7 @@ class SymbolTable:
     # ---------------------------------------------------------------------------------------------
 
     def add_value(self, node: Tree, lexer: Lexer, is_parameter: bool = False) -> None:
-        if node.value not in self.symbols.keys():
+        if not in_st(self, node.value):
             if is_parameter:
                 # Adding a parameter
                 self.symbols[node.value] = {
@@ -244,11 +241,18 @@ def print_all_symbol_tables(symbol_tables: list, indent: int = 0):
 
 
 def find_type(current_st: "SymbolTable", node_value: int):
-    # NOTE: une ébauche du truc mais comment trouver la "vraie" table courante ?
     if node_value in current_st.symbols.keys():
         return current_st.symbols[node_value]["type"]
-    if current_st.englobing_table == None:
-        return 
+    elif current_st.englobing_table == None:
+        return None
     else:
-        find_type(current_st.englobing_table, node_value)
+        return find_type(current_st.englobing_table, node_value)
 
+
+def in_st(current_st: "SymbolTable", node_value: int):
+    if node_value in current_st.symbols.keys():
+        return True
+    elif current_st.englobing_table == None:
+        return False
+    else:
+        return in_st(current_st.englobing_table, node_value)

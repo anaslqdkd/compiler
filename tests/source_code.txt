@@ -1,6 +1,9 @@
 # Définition d'une fonction pour calculer le carré d'un nombre
-b = 4
-c = "SR"
-f = c
-a = "lfkjs" + "lskfj"
+r = "flsdk"
+def gaga(x):
+	a = 4
+	b = 5
+	if a > 0:
+		f = r
+		p = a
 
