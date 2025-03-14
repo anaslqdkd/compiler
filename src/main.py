@@ -2,7 +2,6 @@ from lexer import *
 from parser import *
 from st_builder import build_sts, print_all_symbol_tables
 # from st_builder import init_st, print_all_symbol_tables
-from semantic_analyzer import process_ast, dfs_type_check
 
 
 def main():
