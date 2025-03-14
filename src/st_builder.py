@@ -44,11 +44,9 @@ class SymbolTable:
         if TokenType.lexicon[node.data] in ['+', '-', '*', '//', '%', '<', '>']:
             left_type = self.dfs_type_check(node.children[0])
             right_type = self.dfs_type_check(node.children[1])
-            # if left_type != right_type:
-            # raise SemanticError(
-            #     f"Erreur de typage : impossible de faire l'opération entre {left_type} et {right_type}")
-            # print("ERROR")
-            # return
+            if left_type != right_type:
+                raise SemanticError(
+                    f"Erreur de typage : impossible de faire l'opération entre {left_type} et {right_type}")
             return left_type
 
         for child in node.children:
@@ -85,6 +83,13 @@ class SymbolTable:
     # ---------------------------------------------------------------------------------------------
 
     def add_value(self, node: Tree, lexer: Lexer, is_parameter: bool = False) -> None:
+        if in_st(self, node.value):
+            left_type = self.dfs_type_check(node)
+            right_type = self.dfs_type_check(node.father)
+            if (left_type != right_type):
+                raise SemanticError(
+                    f"Type error: cannot assign {right_type} to identifier of type {left_type}")
+
         if not in_st(self, node.value):
             if is_parameter:
                 # Adding a parameter
