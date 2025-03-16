@@ -25,6 +25,7 @@ class SymbolTable:
         SymbolTable._ST_id += 1
 
     # ---------------------------------------------------------------------------------------------
+
     def dfs_type_check(self, node):
         """
         Parcours récursif de l'AST pour vérifier le typage et renvoyer le type de l'expression.
@@ -38,6 +39,7 @@ class SymbolTable:
         if TokenType.lexicon[node.data] == "=":
             return self.dfs_type_check(node.children[1])
         if TokenType.lexicon[node.data] == 'IDENTIFIER':
+            print("Identifier found: %s" % node.value)
             print(self.symbols.keys())
             # TODO: replace with if node.value in one of the sts
             if node.value in self.symbols.keys():
@@ -178,22 +180,19 @@ class SymbolTable:
 
 # -------------------------------------------------------------------------------------------------
 
-
 def is_function_identifier(node: Tree) -> bool:
     return node.data in TokenType.lexicon.keys() and TokenType.lexicon[node.data] == 'IDENTIFIER' and node.father.data == "function" and node.father.children.index(node) == 0
-
 
 def is_parameter(node: Tree) -> bool:
     while node.father is not None:
         if node.father.data == "function":
             return True
-        elif not node.father.is_terminal:
+        elif not node.father.is_terminal or (node.father.data in TokenType.lexicon.keys() and TokenType.lexicon[node.father.data] == '='):
             return False
         node = node.father
     raise ValueError("Could not find function or non-terminal node")
 
 # -------------------------------------------------------------------------------------------------
-
 
 def build_sts(ast: Tree, lexer: Lexer, debug_mode: bool = False) -> list["SymbolTable"]:
     def build_st_rec(ast: Tree, symbol_table: "SymbolTable"):

@@ -1,46 +1,180 @@
 graph TD
 0["axiome"]
 3["S1"]
-5["= (L2)"]
-style 5 stroke:#caf9fb,stroke-width:2px
+4["function (L2)"]
+style 4 stroke:#caf9fb,stroke-width:2px
 6["IDENTIFIER => 1 (L2)"]
 style 6 stroke:#caf9fb,stroke-width:2px
-18["INTEGER => 1 (L2)"]
+9["IDENTIFIER => 2 (L2)"]
+style 9 stroke:#caf9fb,stroke-width:2px
+13["Block"]
+17["= (L3)"]
+style 17 stroke:#caf9fb,stroke-width:2px
+18["IDENTIFIER => 3 (L3)"]
 style 18 stroke:#caf9fb,stroke-width:2px
-29["= (L3)"]
-style 29 stroke:#caf9fb,stroke-width:2px
-30["IDENTIFIER => 2 (L3)"]
+30["INTEGER => 1 (L3)"]
 style 30 stroke:#caf9fb,stroke-width:2px
-42["STRING => 2 (L3)"]
+41["= (L4)"]
+style 41 stroke:#caf9fb,stroke-width:2px
+42["IDENTIFIER => 4 (L4)"]
 style 42 stroke:#caf9fb,stroke-width:2px
-53["= (L4)"]
-style 53 stroke:#caf9fb,stroke-width:2px
+50["\+ (L4)"]
+style 50 stroke:#caf9fb,stroke-width:2px
 54["IDENTIFIER => 3 (L4)"]
 style 54 stroke:#caf9fb,stroke-width:2px
-66["IDENTIFIER => 2 (L4)"]
-style 66 stroke:#caf9fb,stroke-width:2px
-77["= (L5)"]
-style 77 stroke:#caf9fb,stroke-width:2px
-78["IDENTIFIER => 4 (L5)"]
-style 78 stroke:#caf9fb,stroke-width:2px
-86["\+ (L5)"]
-style 86 stroke:#caf9fb,stroke-width:2px
-90["STRING => 3 (L5)"]
-style 90 stroke:#caf9fb,stroke-width:2px
-98["STRING => 4 (L5)"]
-style 98 stroke:#caf9fb,stroke-width:2px
+62["IDENTIFIER => 2 (L4)"]
+style 62 stroke:#caf9fb,stroke-width:2px
+73["= (L5)"]
+style 73 stroke:#caf9fb,stroke-width:2px
+74["IDENTIFIER => 5 (L5)"]
+style 74 stroke:#caf9fb,stroke-width:2px
+553["LIST (L5)"]
+96["INTEGER => 2 (L5)"]
+style 96 stroke:#caf9fb,stroke-width:2px
+113["IDENTIFIER => 4 (L5)"]
+style 113 stroke:#caf9fb,stroke-width:2px
+131["= (L6)"]
+style 131 stroke:#caf9fb,stroke-width:2px
+141["IDENTIFIER => 5 (L6)"]
+style 141 stroke:#caf9fb,stroke-width:2px
+147["INTEGER => 3 (L6)"]
+style 147 stroke:#caf9fb,stroke-width:2px
+175["IDENTIFIER => 3 (L6)"]
+style 175 stroke:#caf9fb,stroke-width:2px
+187["return (L7)"]
+style 187 stroke:#caf9fb,stroke-width:2px
+197["IDENTIFIER => 5 (L7)"]
+style 197 stroke:#caf9fb,stroke-width:2px
+209["function (L8)"]
+style 209 stroke:#caf9fb,stroke-width:2px
+211["IDENTIFIER => 6 (L8)"]
+style 211 stroke:#caf9fb,stroke-width:2px
+561["TUPLE (L8)"]
+214["IDENTIFIER => 7 (L8)"]
+style 214 stroke:#caf9fb,stroke-width:2px
+217["IDENTIFIER => 8 (L8)"]
+style 217 stroke:#caf9fb,stroke-width:2px
+221["Block"]
+225["= (L9)"]
+style 225 stroke:#caf9fb,stroke-width:2px
+226["IDENTIFIER => 9 (L9)"]
+style 226 stroke:#caf9fb,stroke-width:2px
+258["IDENTIFIER => 7 (L9)"]
+style 258 stroke:#caf9fb,stroke-width:2px
+282["= (L10)"]
+style 282 stroke:#caf9fb,stroke-width:2px
+283["IDENTIFIER => 10 (L10)"]
+style 283 stroke:#caf9fb,stroke-width:2px
+284["IDENTIFIER => 9 (L10)"]
+style 284 stroke:#caf9fb,stroke-width:2px
+297["INTEGER => 3 (L10)"]
+style 297 stroke:#caf9fb,stroke-width:2px
+309["= (L11)"]
+style 309 stroke:#caf9fb,stroke-width:2px
+310["IDENTIFIER => 11 (L11)"]
+style 310 stroke:#caf9fb,stroke-width:2px
+311["IDENTIFIER => 9 (L11)"]
+style 311 stroke:#caf9fb,stroke-width:2px
+324["INTEGER => 2 (L11)"]
+style 324 stroke:#caf9fb,stroke-width:2px
+336["if (L12)"]
+style 336 stroke:#caf9fb,stroke-width:2px
+341["< (L12)"]
+style 341 stroke:#caf9fb,stroke-width:2px
+346["IDENTIFIER => 10 (L12)"]
+style 346 stroke:#caf9fb,stroke-width:2px
+356["IDENTIFIER => 11 (L12)"]
+style 356 stroke:#caf9fb,stroke-width:2px
+363["Block"]
+368["print (L13)"]
+style 368 stroke:#caf9fb,stroke-width:2px
+380["True => True (L13)"]
+style 380 stroke:#caf9fb,stroke-width:2px
+394["return (L14)"]
+style 394 stroke:#caf9fb,stroke-width:2px
+400["\+ (L14)"]
+style 400 stroke:#caf9fb,stroke-width:2px
+404["IDENTIFIER => 8 (L14)"]
+style 404 stroke:#caf9fb,stroke-width:2px
+412["INTEGER => 2 (L14)"]
+style 412 stroke:#caf9fb,stroke-width:2px
+423["else"]
+style 423 stroke:#caf9fb,stroke-width:2px
+426["Block"]
+431["print (L16)"]
+style 431 stroke:#caf9fb,stroke-width:2px
+443["False => False (L16)"]
+style 443 stroke:#caf9fb,stroke-width:2px
+457["return (L17)"]
+style 457 stroke:#caf9fb,stroke-width:2px
+467["IDENTIFIER => 8 (L17)"]
+style 467 stroke:#caf9fb,stroke-width:2px
+490["IDENTIFIER => 6 (L18)"]
+style 490 stroke:#caf9fb,stroke-width:2px
+562["TUPLE (L18)"]
+512["INTEGER => 1 (L18)"]
+style 512 stroke:#caf9fb,stroke-width:2px
+529["INTEGER => 1 (L18)"]
+style 529 stroke:#caf9fb,stroke-width:2px
 0 --> 3
-3 --> 5
-5 --> 6
-5 --> 18
-3 --> 29
-29 --> 30
-29 --> 42
-3 --> 53
-53 --> 54
-53 --> 66
-3 --> 77
-77 --> 78
-77 --> 86
-86 --> 90
-86 --> 98
+3 --> 4
+4 --> 6
+4 --> 9
+4 --> 13
+13 --> 17
+17 --> 18
+17 --> 30
+13 --> 41
+41 --> 42
+41 --> 50
+50 --> 54
+50 --> 62
+13 --> 73
+73 --> 74
+73 --> 553
+553 --> 96
+553 --> 113
+13 --> 131
+131 --> 141
+131 --> 147
+147 --> 175
+13 --> 187
+187 --> 197
+3 --> 209
+209 --> 211
+209 --> 561
+561 --> 214
+561 --> 217
+209 --> 221
+221 --> 225
+225 --> 226
+225 --> 258
+221 --> 282
+282 --> 283
+282 --> 284
+284 --> 297
+221 --> 309
+309 --> 310
+309 --> 311
+311 --> 324
+221 --> 336
+336 --> 341
+341 --> 346
+341 --> 356
+336 --> 363
+363 --> 368
+368 --> 380
+363 --> 394
+394 --> 400
+400 --> 404
+400 --> 412
+221 --> 423
+423 --> 426
+426 --> 431
+431 --> 443
+426 --> 457
+457 --> 467
+3 --> 490
+490 --> 562
+562 --> 512
+562 --> 529

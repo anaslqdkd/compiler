@@ -24,7 +24,7 @@ $B$ & $\to$ & $CN$ | \textbf{Newline} \textbf{Begin} $DB_1$ \textbf{End}\\
 $B_1$ & $\to$ & $DB_1 \ | \ \varepsilon$\\
 $C$ & $\to$ & \textbf{return} $E$ | \textbf{ident} $C_2$ | $EC_1$ | \textbf{print}$(E_1)$\\
 $C_1$ & $\to$ & $[E]=E \ | \ \varepsilon$\\
-$C_2$ & $\to$ & $= E \ | \ \varepsilon$\\
+$C_2$ & $\to$ & $= E \ | \ =$ \textbf{ident}$[E] \ | \ \varepsilon$\\
 $D$ & $\to$ & $CN$ | \textbf{if} $E$ : $BD_1$ | \textbf{for} \textbf{indent} \textbf{in} $E$ : $B$\\
 $D_1$ & $\to$ & \textbf{else :} $B$ | $\varepsilon$\\
 $E$ & $\to$ & $E_\text{or}$\\

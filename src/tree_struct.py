@@ -91,11 +91,35 @@ class Tree:
             raise ValueError(
                 "There are no father to this Node. Can't erase it.")
 
+    # ---------------------------------------------------------------------------------------------
+    
     def print_node(self) -> None:
         print(
             f"Node: {self.data}, Line Index: {self.line_index}, Terminal: {self.is_terminal}"
         )
         pass
+
+    def __eq__(self, other):
+        if isinstance(other, Tree):
+            res = self.data == other.data and self.line_index == other.line_index and self.is_terminal == other.is_terminal and len(self.children) == len(other.children)
+            if res:
+                for child_index in range(len(self.children)):
+                    res = self.children[child_index] == other.children[child_index]
+                    if not res:
+                        return False
+            return res
+        return False
+    
+    def __ne__(self, value):
+        return not self.__eq__(value)
+    
+    def copy(self)->"Tree":
+        copied_node = Tree(data=self.data, _father=self.father, line_index=self.line_index, is_terminal=self.is_terminal, value=self.value)
+        for child in self.children:
+            copied_node.children.append(child.copy())
+        return copied_node
+
+    # ---------------------------------------------------------------------------------------------
 
     def get_flowchart(self, file_path: str, print_result: bool = False) -> None:
         nodes = []
@@ -116,7 +140,7 @@ class Tree:
                     label = f"[\"{data} => {node.value} (L{node.line_index})\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
                 elif node.line_index == -1 or node.data == "axiome":
                     label = f"[\"{data}\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
-                elif data in ["+", "-", "*", "/", "<", ">"]:
+                elif data in ["+", "-", "*", "/", ">"]:
                     label = f"[\"\\{data} (L{node.line_index})\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
                 else:
                     label = (
@@ -321,6 +345,7 @@ def manage_equalities(given_tree: "Tree") -> None:
         if (
             child.data in TokenType.lexicon.keys()
             and TokenType.lexicon[child.data] == "="
+            and i == 0 # An "=" assigning something has to be the first children
         ):
             grandfather = given_tree.father
             grandfather.data = child.data
@@ -454,23 +479,63 @@ def fuse_chains(given_tree: "Tree", chaining_nodes: list[str]) -> None:
                         child.children.insert(j, c)
                         c.father = child
                 else:
+                    fuse_chains(grandchild, chaining_nodes)
                     j += 1
             i += 1
         else:
             fuse_chains(child, chaining_nodes)
             i += 1
 
-def manage_unitary_minus(given_tree:"Tree")->None:
+def manage_E_un(given_tree:"Tree")->None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
-        if (child.data == "E_un"):
-            child.data = "-"
-            child.line_index = child.children[0].line_index
-            child.is_terminal = True
+        if child.data in ["E_un", "C1"]:
+            # If one parameter: unary minus / else function or list or tuple calling
+            if len(child.children) == 1:
+                child.data = "-"
+                child.line_index = child.children[0].line_index
+                child.is_terminal = True
+            else:
+                child.data = child.children[0].data
+                child.value = child.children[0].value
+                child.line_index = child.children[0].line_index
+                child.is_terminal = True
+                child.children.pop(0)
             i += 1
         else:
-            manage_unitary_minus(child)
+            manage_E_un(child)
+            i += 1
+
+def manage_C2(given_tree:"Tree")->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if child.data == "C2":
+            container_node = child.children[0]
+            child.data = container_node.data
+            child.value = container_node.value
+            child.line_index = container_node.line_index
+            child.is_terminal = True
+            child.children.pop(0)
+            for c in child.children:
+                manage_C2(c)
+            i += 1
+        else:
+            manage_C2(child)
+            i += 1
+
+def rename_blocks(given_tree:"Tree")->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if child.data == "B":
+            child.data = "Block"
+            for c in child.children:
+                rename_blocks(c)
+            i += 1
+        else:
+            rename_blocks(child)
             i += 1
 
 def transform_to_ast(given_tree: "Tree") -> None:
@@ -484,6 +549,7 @@ def transform_to_ast(given_tree: "Tree") -> None:
     compact_non_terminals_chain(given_tree)
     manage_relations(given_tree, ["+", "-", "*", "//",
                      "%", "<=", ">=", "<", ">", "!=", "==", "/"])
+    manage_E_un(given_tree)
     manage_equalities(given_tree)
     compact_non_terminals_chain(given_tree)
     manage_functions(given_tree)
@@ -491,8 +557,16 @@ def transform_to_ast(given_tree: "Tree") -> None:
     manage_returns(given_tree)
     manage_fors(given_tree)
     manage_ifs(given_tree)
-    manage_unitary_minus(given_tree)
-    fuse_chains(given_tree, ["A", "C", "D", "S1", "B1", "B"])
+    manage_C2(given_tree)
+
+    # Finally fuse all chains
+    prev_tree = given_tree.copy()
+    fuse_chains(given_tree, ["A", "D", "S1", "B", "B1", "C"])
+    while prev_tree != given_tree:
+        prev_tree = given_tree.copy()
+        fuse_chains(given_tree, ["A", "D", "S1", "B", "B1", "C"])
+    
+    rename_blocks(given_tree)
 
 # -------------------------------------------------------------------------------------------------
 # Sample

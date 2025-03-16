@@ -1,6 +1,18 @@
 # Définition d'une fonction pour calculer le carré d'un nombre
-b = 4
-c = "SR"
-f = c
-a = "lfkjs" + "lskfj"
-
+def fa(o): 
+    a = 5
+    c = a + o
+    liste = [1, c]
+    liste[0] = a
+    return liste
+def kkkg(x, y):
+    L = fa(x)
+    L0 = L[0]
+    L1 = L[1]
+    if L0 < L1:
+        print(True)
+        return y + 1
+    else:
+        print(False)
+        return y
+kkkg(5, 5)
