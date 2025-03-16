@@ -1,3 +1,4 @@
+from typing import Optional
 from lexer import TokenType, Lexer
 from semantic_analyzer import SemanticError
 from tree_struct import Tree
@@ -41,13 +42,13 @@ class SymbolTable:
         if TokenType.lexicon[node.data] == 'IDENTIFIER':
             if find_type(self, node.value) != None:
                 return find_type(self, node.value)
-
+        # FIXME: si l'un des membres de l'opérande est un paramètre : s'il n'a pas encore de type défini, lui en définir un pour que l'opération réussisse
         if TokenType.lexicon[node.data] in ['+', '-', '*', '//', '%', '<', '>']:
             left_type = self.dfs_type_check(node.children[0])
             right_type = self.dfs_type_check(node.children[1])
             if left_type != right_type:
                 raise SemanticError(
-                    f"Erreur de typage : impossible de faire l'opération entre {left_type} et {right_type}")
+                    f"Erreur de typage : impossible de faire l'opération (ligne {node.line_index}) entre {left_type} et {right_type}")
             return left_type
 
         for child in node.children:
@@ -76,8 +77,10 @@ class SymbolTable:
 
     def calculate_depl_string(self, node: Tree, lexer: Lexer, is_parameter: bool) -> int:
         # NOTE: j'ai mis inf pour quelque chose du type: a = "ldkfj" + "lfk", à voir si on change àa ou on le fait à l'execution
-        if (node.father.children[1].value) in lexer.constant_lexicon.keys():
-            return len(lexer.constant_lexicon[node.father.children[1].value]) * self.character_size
+        if in_st(self, node.value):
+            return find_depl(self, node.value)
+        elif node.value in lexer.constant_lexicon.keys():
+            return len(lexer.constant_lexicon[node.value]) * self.character_size
         else:
             return InfSize
 
@@ -87,9 +90,9 @@ class SymbolTable:
         if in_st(self, node.value):
             left_type = self.dfs_type_check(node)
             right_type = self.dfs_type_check(node.father)
-            if (left_type != right_type):
-                raise SemanticError(
-                    f"Type error: cannot assign {right_type} to identifier of type {left_type}")
+            # if (left_type != right_type):
+                # raise SemanticError(
+                #     f"Type error: cannot assign {right_type} to identifier of type {left_type}")
 
         if not in_st(self, node.value):
             if is_parameter:
@@ -107,8 +110,7 @@ class SymbolTable:
                     depl = self.calculate_depl_compound(
                         node.father.children[1], is_parameter)
                 elif type == "STRING":
-                    depl = self.calculate_depl_string(
-                        node.father.children[1], lexer, is_parameter)
+                    depl = self.calculate_depl_string(node.father.children[1], lexer, is_parameter)
                 elif type is not None:
                     depl = self.calculate_depl(is_parameter)
 
@@ -162,22 +164,6 @@ class SymbolTable:
             return newST
         raise Exception(
             f"Could not add this function to the ST, another one with the same identifier ({node_children[0]}) exists.")
-
-    # ---------------------------------------------------------------------------------------------
-
-    # TODO: verify this function
-    def contains_symbol(self, name: str, st: "SymbolTable" = None) -> bool:
-        if st is None:
-            st = self
-        if_found = False
-        while not is_found:
-            if name in st.symbols.keys():
-                is_found = True
-            elif st.englobing_table is not None:
-                is_found = st.contains_symbol(name, st.englobing_table)
-            else:
-                break
-        return if_found
 
 # -------------------------------------------------------------------------------------------------
 
@@ -251,8 +237,16 @@ def find_type(current_st: "SymbolTable", node_value: int):
     else:
         return find_type(current_st.englobing_table, node_value)
 
+def find_depl(current_st: "SymbolTable", node_value: int)->Optional[int]:
+    if node_value in current_st.symbols.keys():
+        return current_st.symbols[node_value]["depl"]
+    elif current_st.englobing_table == None:
+        return None
+    else:
+        return find_depl(current_st.englobing_table, node_value)
 
-def in_st(current_st: "SymbolTable", node_value: int):
+
+def in_st(current_st: "SymbolTable", node_value: int)->bool:
     if node_value in current_st.symbols.keys():
         return True
     elif current_st.englobing_table == None:

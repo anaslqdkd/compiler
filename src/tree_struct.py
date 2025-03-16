@@ -328,7 +328,6 @@ def manage_relations(given_tree: "Tree", relation_symbols: list[str]) -> None:
             child.data in TokenType.lexicon.keys()
             and TokenType.lexicon[child.data] in relation_symbols
         ):
-            print(child.line_index, TokenType.lexicon[child.data])
             grandfather = given_tree.father
             grandfather.data = child.data
             grandfather.line_index = child.line_index

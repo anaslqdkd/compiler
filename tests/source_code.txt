@@ -1,6 +1,6 @@
 # Définition d'une fonction pour calculer le carré d'un nombre
 def fa(o): 
-    a = 5
+    a = 5 - 8 * 8 * 8
     c = a + o
     liste = [1, c]
     liste[0] = a
