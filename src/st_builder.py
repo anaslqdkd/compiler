@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict, Set, Optional
 from lexer import TokenType, Lexer
 from semantic_analyzer import SemanticError
 from tree_struct import Tree
@@ -15,81 +15,122 @@ class SymbolTable:
     node_counter_for = 0
 
     def __init__(self, name: str, imbrication_level: int, englobing_table: "SymbolTable", debug_mode: bool):
-        self.debug_mode = debug_mode
+        self.debug_mode:bool = debug_mode
 
-        self.name = name
-        self.symbols = {}
-        self.imbrication_level = imbrication_level
-        self.englobing_table = englobing_table
+        self.name:str = name
+        self.symbols:Dict[str, Any] = {}
+        self.function_identifiers:Set[int] = englobing_table.function_identifiers if englobing_table is not None else set()
+        self.imbrication_level:int = imbrication_level
+        self.englobing_table:Optional["SymbolTable"] = englobing_table
 
-        self.region_id = SymbolTable._ST_id
+        self.current_positive_depl = 0
+        self.current_negative_depl = 0
+
+        self.region_id:int = SymbolTable._ST_id
         SymbolTable._ST_id += 1
+
+    def set_type(self, node:Tree, new_type:str, lexer:Lexer, need_to_recalculate_depl:bool=False)->bool:
+        node_value = node.value
+        if in_st(self, node_value):
+            symbol = find_symbol(self, node_value)
+            symbol["type"] = new_type
+
+            if need_to_recalculate_depl:
+                depl = InfSize
+                if type in ["LIST", "TUPLE"]:
+                    depl = self.calculate_depl_compound(
+                        node.father.children[1], True)
+                elif type == "STRING":
+                    depl = self.calculate_depl_string(node.father.children[1], lexer, True)
+                elif type is not None:
+                    depl = self.calculate_depl(True)
+                symbol["depl"] = depl
+
+            return True
+        return False
 
     # ---------------------------------------------------------------------------------------------
 
-    def dfs_type_check(self, node):
-        """
-        Parcours récursif de l'AST pour vérifier le typage et renvoyer le type de l'expression.
-        """
+    def dfs_type_check(self, node:Tree, lexer:Lexer)->str:
         if not node.children and node.data in TokenType.lexicon.keys() and TokenType.lexicon[node.data] != 'IDENTIFIER':
             return TokenType.lexicon[node.data]
 
         if node.data in ["LIST", "TUPLE"]:
             return node.data
 
+        if node.data in self.function_identifiers:
+            return "<undefined function result>"
+
         if TokenType.lexicon[node.data] == "=":
-            return self.dfs_type_check(node.children[1])
+            return self.dfs_type_check(node.children[1], lexer)
         if TokenType.lexicon[node.data] == 'IDENTIFIER':
             if find_type(self, node.value) != None:
                 return find_type(self, node.value)
-        # FIXME: si l'un des membres de l'opérande est un paramètre : s'il n'a pas encore de type défini, lui en définir un pour que l'opération réussisse
         if TokenType.lexicon[node.data] in ['+', '-', '*', '//', '%', '<', '>']:
-            left_type = self.dfs_type_check(node.children[0])
-            right_type = self.dfs_type_check(node.children[1])
-            if left_type != right_type:
-                raise SemanticError(
-                    f"Erreur de typage : impossible de faire l'opération (ligne {node.line_index}) entre {left_type} et {right_type}")
-            return left_type
+            left_type = self.dfs_type_check(node.children[0], lexer)
+            right_type = self.dfs_type_check(node.children[1], lexer)
 
-        for child in node.children:
-            self.dfs_type_check(child)
+            if left_type != right_type:
+                if left_type == "<undefined>" or right_type == "<undefined>":
+                    undefined_child = node.children[0] if left_type == "<undefined>" else node.children[1]
+                    defined_child_type = right_type if left_type == "<undefined>" else left_type
+                    self.set_type(undefined_child, defined_child_type, lexer, True)
+                    return defined_child_type
+                else:
+                    raise SemanticError(
+                        f"Erreur de typage : impossible de faire l'opération (ligne {node.line_index}) entre {left_type} et {right_type}")
+            return left_type
+        return "<undefined>"
 
     def calculate_depl(self, is_parameter: bool) -> int:
         coef = -1 if is_parameter else 1
-        depl = 0
-        for symbol in self.symbols.values():
-            # It would mean both symbols are either both parameters or both variables
-            if "depl" in symbol and symbol["depl"] * coef >= 0:
-                if symbol["type"] == "INTEGER":
-                    depl += self.integer_size
-                if symbol["type"] == "<undefined>":
-                    return coef * InfSize
-        return coef * depl
+        depl = self.current_negative_depl if is_parameter else self.current_positive_depl
+
+        if abs(depl) != InfSize:
+            depl += self.integer_size * coef
+
+        if is_parameter:
+            self.current_negative_depl = depl
+        else:
+            self.current_positive_depl = depl
+        return depl
 
     def calculate_depl_compound(self, node: Tree, is_parameter: bool) -> int:
-        depl = 0
+        coef = -1 if is_parameter else 1
+        depl = self.current_negative_depl if is_parameter else self.current_positive_depl
         for child in node.children:
             if child.data in TokenType.lexicon.keys() and TokenType.lexicon[child.data] == 'INTEGER':
-                depl += self.integer_size
+                depl += self.integer_size * coef
             if child.data in ['LIST', 'TUPLE']:
                 depl += self.calculate_depl_compound(child, is_parameter)
+        if is_parameter:
+            self.current_negative_depl = depl
+        else:
+            self.current_positive_depl = depl
         return depl
 
     def calculate_depl_string(self, node: Tree, lexer: Lexer, is_parameter: bool) -> int:
+        coef = -1 if is_parameter else 1
         # NOTE: j'ai mis inf pour quelque chose du type: a = "ldkfj" + "lfk", à voir si on change àa ou on le fait à l'execution
         if in_st(self, node.value):
             return find_depl(self, node.value)
         elif node.value in lexer.constant_lexicon.keys():
-            return len(lexer.constant_lexicon[node.value]) * self.character_size
+            depl = len(lexer.constant_lexicon[node.value]) * self.character_size * coef
+            if is_parameter:
+                self.current_negative_depl += depl
+                return self.current_negative_depl
+            else:
+                self.current_positive_depl += depl
+                return self.current_positive_depl
         else:
-            return InfSize
+            return InfSize * coef
 
     # ---------------------------------------------------------------------------------------------
 
     def add_value(self, node: Tree, lexer: Lexer, is_parameter: bool = False) -> None:
         if in_st(self, node.value):
-            left_type = self.dfs_type_check(node)
-            right_type = self.dfs_type_check(node.father)
+            left_type = self.dfs_type_check(node, lexer)
+            right_type = self.dfs_type_check(node.father, lexer)
             # if (left_type != right_type):
                 # raise SemanticError(
                 #     f"Type error: cannot assign {right_type} to identifier of type {left_type}")
@@ -103,7 +144,7 @@ class SymbolTable:
                 }
             else:
                 # Adding a variable
-                type = self.dfs_type_check(node.father)
+                type = self.dfs_type_check(node.father, lexer)
 
                 depl = InfSize
                 if type in ["LIST", "TUPLE"]:
@@ -167,17 +208,23 @@ class SymbolTable:
 
 # -------------------------------------------------------------------------------------------------
 
-def is_function_identifier(node: Tree) -> bool:
-    return node.data in TokenType.lexicon.keys() and TokenType.lexicon[node.data] == 'IDENTIFIER' and node.father.data == "function" and node.father.children.index(node) == 0
-
-def is_parameter(node: Tree) -> bool:
-    while node.father is not None:
-        if node.father.data == "function":
+    def is_function_identifier(self, node: Tree) -> bool:
+        if node.value in self.function_identifiers:
             return True
-        elif not node.father.is_terminal or (node.father.data in TokenType.lexicon.keys() and TokenType.lexicon[node.father.data] == '='):
-            return False
-        node = node.father
-    raise ValueError("Could not find function or non-terminal node")
+        else:
+            res = node.data in TokenType.lexicon.keys() and TokenType.lexicon[node.data] == 'IDENTIFIER' and node.father.data == "function" and node is node.father.children[0]
+            if res:
+                self.function_identifiers.add(node.value)
+            return res
+
+    def is_parameter(self, node: Tree) -> bool:
+        while node.father is not None:
+            if node.father.data == "function":
+                return True
+            elif not node.father.is_terminal or (node.father.data in TokenType.lexicon.keys() and TokenType.lexicon[node.father.data] == '='):
+                return False
+            node = node.father
+        raise ValueError("Could not find function or non-terminal node")
 
 # -------------------------------------------------------------------------------------------------
 
@@ -192,9 +239,9 @@ def build_sts(ast: Tree, lexer: Lexer, debug_mode: bool = False) -> list["Symbol
         elif (
                 ast.data in TokenType.lexicon.keys()
                 and TokenType.lexicon[ast.data] == 'IDENTIFIER'
-                and not is_function_identifier(ast)
+                and not symbol_table.is_function_identifier(ast)
         ):
-            current_st.add_value(ast, lexer, is_parameter=is_parameter(ast))
+            current_st.add_value(ast, lexer, is_parameter=symbol_table.is_parameter(ast))
 
         # For loop on all children
         for child in ast.children:
@@ -228,6 +275,13 @@ def print_all_symbol_tables(symbol_tables: list, indent: int = 0):
 
         print(f"{indentation}" + "-" * 40)
 
+def find_symbol(current_st: "SymbolTable", node_value: int):
+    if node_value in current_st.symbols.keys():
+        return current_st.symbols[node_value]
+    elif current_st.englobing_table == None:
+        return None
+    else:
+        return find_symbol(current_st.englobing_table, node_value)
 
 def find_type(current_st: "SymbolTable", node_value: int):
     if node_value in current_st.symbols.keys():

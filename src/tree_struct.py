@@ -230,7 +230,7 @@ def list_pruning(given_tree: "Tree") -> None:
                         data="LIST",
                         _father=given_tree,
                         line_index=children[i].line_index,
-                        is_terminal=False,
+                        is_terminal=True,
                     )
                     for node in nodes_in_the_list:
                         remove_banned_data(node, ["E1", "E2"])
@@ -270,7 +270,7 @@ def tuple_pruning(given_tree: "Tree") -> None:
                         data="TUPLE",
                         _father=given_tree,
                         line_index=children[i].line_index,
-                        is_terminal=False,
+                        is_terminal=True,
                     )
                     for node in nodes_in_the_tuple:
                         remove_banned_data(node, ["I", "I1"])
