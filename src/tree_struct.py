@@ -1,4 +1,4 @@
-from lexer import TokenType
+from src.lexer import TokenType
 
 # -------------------------------------------------------------------------------------------------
 # Tree

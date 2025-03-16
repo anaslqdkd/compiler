@@ -1,9 +1,9 @@
 from typing import Any, Dict, Set, Optional
-from lexer import TokenType, Lexer
-from semantic_analyzer import SemanticError
-from tree_struct import Tree
 from sys import maxsize as InfSize
 
+from src.lexer import TokenType, Lexer
+from src.semantic_analyzer import SemanticError
+from src.tree_struct import Tree
 
 class SymbolTable:
     _ST_id = 0
@@ -251,7 +251,6 @@ def build_sts(ast: Tree, lexer: Lexer, debug_mode: bool = False) -> list["Symbol
     all_sts = [global_st]
     build_st_rec(ast, global_st)
     return all_sts
-
 
 def print_all_symbol_tables(symbol_tables: list, indent: int = 0):
     # NOTE: idk ce que ça fait, ce n'est pas moi qui l'a écrit

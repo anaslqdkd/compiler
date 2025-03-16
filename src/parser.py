@@ -1,11 +1,11 @@
-from lexer import *
-from tree_struct import *
+from src.lexer import *
+from src.tree_struct import *
 
 
-with open("../tests/source_code.txt", "r") as file:
-    source_code = file.read()
+# with open("../tests/source_code.txt", "r") as file:
+#     source_code = file.read()
 
-lexer = Lexer(source_code)
+# lexer = Lexer(source_code)
 
 
 class Parser:
