@@ -65,6 +65,7 @@ class SymbolTable:
             return self.dfs_type_check(node.children[1], lexer)
         if TokenType.lexicon[node.data] == 'IDENTIFIER':
             if find_type(self, node.value) != None:
+                # print(f"the type is {find_type(self, node.value)} and the node value is {node.value}")
                 return find_type(self, node.value)
         if TokenType.lexicon[node.data] in ['+', '-', '*', '//', '%', '<', '>']:
             left_type = self.dfs_type_check(node.children[0], lexer)
@@ -128,13 +129,6 @@ class SymbolTable:
     # ---------------------------------------------------------------------------------------------
 
     def add_value(self, node: Tree, lexer: Lexer, is_parameter: bool = False) -> None:
-        if in_st(self, node.value):
-            left_type = self.dfs_type_check(node, lexer)
-            right_type = self.dfs_type_check(node.father, lexer)
-            # if (left_type != right_type):
-                # raise SemanticError(
-                #     f"Type error: cannot assign {right_type} to identifier of type {left_type}")
-
         if not in_st(self, node.value):
             if is_parameter:
                 # Adding a parameter
@@ -144,6 +138,11 @@ class SymbolTable:
                 }
             else:
                 # Adding a variable
+                if self.identifier_in_list(node):
+                    if not in_st(self, node.value):
+                        raise SemanticError(f"the identifier of id: {node.value} is not defined, at the line {node.line_index}")
+                    return
+
                 type = self.dfs_type_check(node.father, lexer)
 
                 depl = InfSize
@@ -216,6 +215,13 @@ class SymbolTable:
             if res:
                 self.function_identifiers.add(node.value)
             return res
+
+    def identifier_in_list(self, node: Tree) -> bool:
+        if node.father != None and node.father.data in TokenType.lexicon.keys() and TokenType.lexicon[node.father.data] == "return":
+            return True
+        if node.father != None and node.father.data in ["LIST", "TUPLE"]:
+            return True
+        return False
 
     def is_parameter(self, node: Tree) -> bool:
         while node.father is not None:
