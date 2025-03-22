@@ -62,6 +62,12 @@ class Tree:
             ),
         )
 
+    def get_child_id(self, child:"Tree") -> int:
+        for i in range(len(self.children)):
+            if self.children[i] is child:
+                return i
+        return -1
+
     def is_leaf(self) -> bool:
         return len(self.children) == 0
 
@@ -344,14 +350,23 @@ def manage_equalities(given_tree: "Tree") -> None:
         if (
             child.data in TokenType.lexicon.keys()
             and TokenType.lexicon[child.data] == "="
-            and i == 0 # An "=" assigning something has to be the first children
         ):
-            grandfather = given_tree.father
-            grandfather.data = child.data
-            grandfather.line_index = child.line_index
-            grandfather.is_terminal = True
-            given_tree.children.remove(child)
-            i += 1
+            equal_id = given_tree.get_child_id(child)
+            left_side = child.father.children[equal_id - 1]
+            child.children.insert(0, left_side)
+            child.father.children.pop(equal_id-1)
+
+            # If one of the sides of the equality is a list or a tuple
+            if len(child.children) > 2:
+                if child.children[2].data in ["LIST", "TUPLE"]:
+                    element_index = child.children[2].children[0]
+                    child.children[1].children.append(element_index)
+                    child.children.pop(2)
+                elif child.children[1].data in ["LIST", "TUPLE"]:
+                    element_index = child.children[1].children[0]
+                    child.children[0].children.append(element_index)
+                    child.children.pop(1)
+
         else:
             manage_equalities(child)
             i += 1
@@ -496,11 +511,30 @@ def manage_E_un(given_tree:"Tree")->None:
                 child.line_index = child.children[0].line_index
                 child.is_terminal = True
             else:
-                child.data = child.children[0].data
-                child.value = child.children[0].value
-                child.line_index = child.children[0].line_index
-                child.is_terminal = True
-                child.children.pop(0)
+                equal_node, equal_id = None, -1
+                for j in range(len(child.children)):
+                    c = child.children[j]
+                    if c.data in TokenType.lexicon and TokenType.lexicon[c.data] == "=":
+                        equal_node = c
+                        equal_id = j
+                        break
+
+                if equal_node is not None:
+                    # It's a tuple / list element
+                    child.data = equal_node.data
+                    child.value = equal_node.value
+                    child.line_index = equal_node.line_index
+                    child.is_terminal = True
+                    child.children.pop(equal_id)
+                else:
+                    # It's a function call
+                    child.data = child.children[0].data
+                    child.value = child.children[0].value
+                    child.line_index = child.children[0].line_index
+                    child.is_terminal = True
+                    child.children.pop(0)
+                    for c in child.children:
+                        manage_E_un(c)
             i += 1
         else:
             manage_E_un(child)
@@ -549,7 +583,6 @@ def transform_to_ast(given_tree: "Tree") -> None:
     manage_relations(given_tree, ["+", "-", "*", "//",
                      "%", "<=", ">=", "<", ">", "!=", "==", "/"])
     manage_E_un(given_tree)
-    manage_equalities(given_tree)
     compact_non_terminals_chain(given_tree)
     manage_functions(given_tree)
     manage_prints(given_tree)
@@ -566,6 +599,7 @@ def transform_to_ast(given_tree: "Tree") -> None:
         fuse_chains(given_tree, ["A", "D", "S1", "B", "B1", "C"])
     
     rename_blocks(given_tree)
+    manage_equalities(given_tree)
 
 # -------------------------------------------------------------------------------------------------
 # Sample

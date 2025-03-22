@@ -5,13 +5,13 @@ graph TD
 style 4 stroke:#caf9fb,stroke-width:2px
 6["IDENTIFIER => 1 (L2)"]
 style 6 stroke:#caf9fb,stroke-width:2px
-577["TUPLE (L2)"]
-style 577 stroke:#caf9fb,stroke-width:2px
+579["TUPLE (L2)"]
+style 579 stroke:#caf9fb,stroke-width:2px
 9["IDENTIFIER => 2 (L2)"]
 style 9 stroke:#caf9fb,stroke-width:2px
 13["Block"]
-17["= (L3)"]
-style 17 stroke:#caf9fb,stroke-width:2px
+19["= (L3)"]
+style 19 stroke:#caf9fb,stroke-width:2px
 18["IDENTIFIER => 3 (L3)"]
 style 18 stroke:#caf9fb,stroke-width:2px
 26["\- (L3)"]
@@ -28,8 +28,8 @@ style 39 stroke:#caf9fb,stroke-width:2px
 style 44 stroke:#caf9fb,stroke-width:2px
 50["INTEGER => 2 (L3)"]
 style 50 stroke:#caf9fb,stroke-width:2px
-61["= (L4)"]
-style 61 stroke:#caf9fb,stroke-width:2px
+63["= (L4)"]
+style 63 stroke:#caf9fb,stroke-width:2px
 62["IDENTIFIER => 4 (L4)"]
 style 62 stroke:#caf9fb,stroke-width:2px
 70["\+ (L4)"]
@@ -38,22 +38,22 @@ style 70 stroke:#caf9fb,stroke-width:2px
 style 74 stroke:#caf9fb,stroke-width:2px
 82["IDENTIFIER => 2 (L4)"]
 style 82 stroke:#caf9fb,stroke-width:2px
-93["= (L5)"]
-style 93 stroke:#caf9fb,stroke-width:2px
+95["= (L5)"]
+style 95 stroke:#caf9fb,stroke-width:2px
 94["IDENTIFIER => 5 (L5)"]
 style 94 stroke:#caf9fb,stroke-width:2px
-573["LIST (L5)"]
-style 573 stroke:#caf9fb,stroke-width:2px
+575["LIST (L5)"]
+style 575 stroke:#caf9fb,stroke-width:2px
 116["INTEGER => 3 (L5)"]
 style 116 stroke:#caf9fb,stroke-width:2px
 133["IDENTIFIER => 4 (L5)"]
 style 133 stroke:#caf9fb,stroke-width:2px
-151["= (L6)"]
-style 151 stroke:#caf9fb,stroke-width:2px
+167["= (L6)"]
+style 167 stroke:#caf9fb,stroke-width:2px
 161["IDENTIFIER => 5 (L6)"]
 style 161 stroke:#caf9fb,stroke-width:2px
-167["LIST (L6)"]
-style 167 stroke:#caf9fb,stroke-width:2px
+178["INTEGER => 4 (L6)"]
+style 178 stroke:#caf9fb,stroke-width:2px
 195["IDENTIFIER => 3 (L6)"]
 style 195 stroke:#caf9fb,stroke-width:2px
 207["return (L7)"]
@@ -64,37 +64,35 @@ style 217 stroke:#caf9fb,stroke-width:2px
 style 229 stroke:#caf9fb,stroke-width:2px
 231["IDENTIFIER => 6 (L8)"]
 style 231 stroke:#caf9fb,stroke-width:2px
-581["TUPLE (L8)"]
-style 581 stroke:#caf9fb,stroke-width:2px
+583["TUPLE (L8)"]
+style 583 stroke:#caf9fb,stroke-width:2px
 234["IDENTIFIER => 7 (L8)"]
 style 234 stroke:#caf9fb,stroke-width:2px
 237["IDENTIFIER => 8 (L8)"]
 style 237 stroke:#caf9fb,stroke-width:2px
 241["Block"]
-245["= (L9)"]
-style 245 stroke:#caf9fb,stroke-width:2px
+247["= (L9)"]
+style 247 stroke:#caf9fb,stroke-width:2px
 246["IDENTIFIER => 9 (L9)"]
 style 246 stroke:#caf9fb,stroke-width:2px
+256["IDENTIFIER => 1 (L9)"]
+style 256 stroke:#caf9fb,stroke-width:2px
 278["IDENTIFIER => 7 (L9)"]
 style 278 stroke:#caf9fb,stroke-width:2px
-302["= (L10)"]
-style 302 stroke:#caf9fb,stroke-width:2px
+304["= (L10)"]
+style 304 stroke:#caf9fb,stroke-width:2px
 303["IDENTIFIER => 10 (L10)"]
 style 303 stroke:#caf9fb,stroke-width:2px
-304["IDENTIFIER => 9 (L10)"]
-style 304 stroke:#caf9fb,stroke-width:2px
-575["LIST (L10)"]
-style 575 stroke:#caf9fb,stroke-width:2px
+306["IDENTIFIER => 9 (L10)"]
+style 306 stroke:#caf9fb,stroke-width:2px
 317["INTEGER => 4 (L10)"]
 style 317 stroke:#caf9fb,stroke-width:2px
-329["= (L11)"]
-style 329 stroke:#caf9fb,stroke-width:2px
+331["= (L11)"]
+style 331 stroke:#caf9fb,stroke-width:2px
 330["IDENTIFIER => 11 (L11)"]
 style 330 stroke:#caf9fb,stroke-width:2px
-331["IDENTIFIER => 9 (L11)"]
-style 331 stroke:#caf9fb,stroke-width:2px
-576["LIST (L11)"]
-style 576 stroke:#caf9fb,stroke-width:2px
+333["IDENTIFIER => 9 (L11)"]
+style 333 stroke:#caf9fb,stroke-width:2px
 344["INTEGER => 3 (L11)"]
 style 344 stroke:#caf9fb,stroke-width:2px
 356["if (L12)"]
@@ -108,8 +106,8 @@ style 376 stroke:#caf9fb,stroke-width:2px
 383["Block"]
 388["print (L13)"]
 style 388 stroke:#caf9fb,stroke-width:2px
-579["TUPLE (L13)"]
-style 579 stroke:#caf9fb,stroke-width:2px
+581["TUPLE (L13)"]
+style 581 stroke:#caf9fb,stroke-width:2px
 400["True => True (L13)"]
 style 400 stroke:#caf9fb,stroke-width:2px
 414["return (L14)"]
@@ -125,80 +123,83 @@ style 443 stroke:#caf9fb,stroke-width:2px
 446["Block"]
 451["print (L16)"]
 style 451 stroke:#caf9fb,stroke-width:2px
-580["TUPLE (L16)"]
-style 580 stroke:#caf9fb,stroke-width:2px
+582["TUPLE (L16)"]
+style 582 stroke:#caf9fb,stroke-width:2px
 463["False => False (L16)"]
 style 463 stroke:#caf9fb,stroke-width:2px
 477["return (L17)"]
 style 477 stroke:#caf9fb,stroke-width:2px
 487["IDENTIFIER => 8 (L17)"]
 style 487 stroke:#caf9fb,stroke-width:2px
-510["IDENTIFIER => 6 (L18)"]
-style 510 stroke:#caf9fb,stroke-width:2px
-582["TUPLE (L18)"]
-style 582 stroke:#caf9fb,stroke-width:2px
-532["INTEGER => 1 (L18)"]
-style 532 stroke:#caf9fb,stroke-width:2px
-549["INTEGER => 1 (L18)"]
-style 549 stroke:#caf9fb,stroke-width:2px
+504["= (L18)"]
+style 504 stroke:#caf9fb,stroke-width:2px
+503["IDENTIFIER => 12 (L18)"]
+style 503 stroke:#caf9fb,stroke-width:2px
+513["IDENTIFIER => 6 (L18)"]
+style 513 stroke:#caf9fb,stroke-width:2px
+584["TUPLE (L18)"]
+style 584 stroke:#caf9fb,stroke-width:2px
+535["INTEGER => 1 (L18)"]
+style 535 stroke:#caf9fb,stroke-width:2px
+552["INTEGER => 1 (L18)"]
+style 552 stroke:#caf9fb,stroke-width:2px
 0 --> 3
 3 --> 4
 4 --> 6
-4 --> 577
-577 --> 9
+4 --> 579
+579 --> 9
 4 --> 13
-13 --> 17
-17 --> 18
-17 --> 26
+13 --> 19
+19 --> 18
+19 --> 26
 26 --> 30
 26 --> 35
 35 --> 38
 35 --> 39
 39 --> 44
 39 --> 50
-13 --> 61
-61 --> 62
-61 --> 70
+13 --> 63
+63 --> 62
+63 --> 70
 70 --> 74
 70 --> 82
-13 --> 93
-93 --> 94
-93 --> 573
-573 --> 116
-573 --> 133
-13 --> 151
-151 --> 161
-151 --> 167
+13 --> 95
+95 --> 94
+95 --> 575
+575 --> 116
+575 --> 133
+13 --> 167
+167 --> 161
+161 --> 178
 167 --> 195
 13 --> 207
 207 --> 217
 3 --> 229
 229 --> 231
-229 --> 581
-581 --> 234
-581 --> 237
+229 --> 583
+583 --> 234
+583 --> 237
 229 --> 241
-241 --> 245
-245 --> 246
-245 --> 278
-241 --> 302
-302 --> 303
-302 --> 304
-304 --> 575
-575 --> 317
-241 --> 329
-329 --> 330
-329 --> 331
-331 --> 576
-576 --> 344
+241 --> 247
+247 --> 246
+247 --> 256
+256 --> 278
+241 --> 304
+304 --> 303
+304 --> 306
+306 --> 317
+241 --> 331
+331 --> 330
+331 --> 333
+333 --> 344
 241 --> 356
 356 --> 361
 361 --> 366
 361 --> 376
 356 --> 383
 383 --> 388
-388 --> 579
-579 --> 400
+388 --> 581
+581 --> 400
 383 --> 414
 414 --> 420
 420 --> 424
@@ -206,11 +207,13 @@ style 549 stroke:#caf9fb,stroke-width:2px
 241 --> 443
 443 --> 446
 446 --> 451
-451 --> 580
-580 --> 463
+451 --> 582
+582 --> 463
 446 --> 477
 477 --> 487
-3 --> 510
-510 --> 582
-582 --> 532
-582 --> 549
+3 --> 504
+504 --> 503
+504 --> 513
+513 --> 584
+584 --> 535
+584 --> 552
