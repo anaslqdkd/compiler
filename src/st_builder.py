@@ -20,6 +20,7 @@ class SymbolTable:
         self.name:str = name
         self.symbols:Dict[str, Any] = {}
         self.function_identifiers:Set[int] = englobing_table.function_identifiers if englobing_table is not None else set()
+        self.function_return:Dict = englobing_table.function_return if englobing_table is not None else dict()
         self.imbrication_level:int = imbrication_level
         self.englobing_table:Optional["SymbolTable"] = englobing_table
 
@@ -51,22 +52,22 @@ class SymbolTable:
 
     # ---------------------------------------------------------------------------------------------
 
-    def dfs_type_check(self, node:Tree, lexer:Lexer)->str:
+    def dfs_type_check(self, node:Tree, lexer:Lexer)->Optional[str]:
         if not node.children and node.data in TokenType.lexicon.keys() and TokenType.lexicon[node.data] != 'IDENTIFIER':
             return TokenType.lexicon[node.data]
 
+        if node.data in ["LIST", "TUPLE"]:
+            return node.data
+        if node.value in self.function_identifiers:
+            return self.function_return[node.value]
+
         if node.data in TokenType.lexicon.keys():
-            if node.data in ["LIST", "TUPLE"]:
-                return node.data
-
-            if node.data in self.function_identifiers:
-                return "<undefined function result>"
-
             if TokenType.lexicon[node.data] == "=":
                 return self.dfs_type_check(node.children[1], lexer)
             if TokenType.lexicon[node.data] == 'IDENTIFIER':
+                if node.value in self.function_identifiers:
+                    return self.function_return[node.value]
                 if find_type(self, node.value) != None:
-                    # print(f"the type is {find_type(self, node.value)} and the node value is {node.value}")
                     return find_type(self, node.value)
             if TokenType.lexicon[node.data] in ['+', '-', '*', '//', '%', '<', '>']:
                 left_type = self.dfs_type_check(node.children[0], lexer)
@@ -113,10 +114,10 @@ class SymbolTable:
 
     def calculate_depl_string(self, node: Tree, lexer: Lexer, is_parameter: bool) -> int:
         coef = -1 if is_parameter else 1
-        # NOTE: j'ai mis inf pour quelque chose du type: a = "ldkfj" + "lfk", à voir si on change àa ou on le fait à l'execution
         if in_st(self, node.value):
             return find_depl(self, node.value)
-        elif node.value in lexer.constant_lexicon.keys():
+        # FIXME: à règler le lexique pour que ça fonctionne
+        elif node.value in lexer.constant_keys.keys():
             depl = len(lexer.constant_lexicon[node.value]) * self.character_size * coef
             if is_parameter:
                 self.current_negative_depl += depl
@@ -215,6 +216,7 @@ class SymbolTable:
             res = node.data in TokenType.lexicon.keys() and TokenType.lexicon[node.data] == 'IDENTIFIER' and node.father.data == "function" and node is node.father.children[0]
             if res:
                 self.function_identifiers.add(node.value)
+                self.function_return[node.value] = "unknown"
             return res
 
     def identifier_in_list(self, node: Tree) -> bool:
@@ -233,6 +235,14 @@ class SymbolTable:
             node = node.father
         raise ValueError("Could not find function or non-terminal node")
 
+    def get_function_id(self, node: "Tree") -> Optional[int]:
+        if node.data == "axiome":
+            return None
+        elif node.data == "function":
+            return node.children[0].value
+        else:
+            return self.get_function_id(node.father)
+
 # -------------------------------------------------------------------------------------------------
 
 def build_sts(ast: Tree, lexer: Lexer, debug_mode: bool = False) -> list["SymbolTable"]:
@@ -243,6 +253,14 @@ def build_sts(ast: Tree, lexer: Lexer, debug_mode: bool = False) -> list["Symbol
             current_st = current_st.add_indented_block(ast)
         elif ast.data in TokenType.lexicon.keys() and TokenType.lexicon[ast.data] in ["if", "else"]:
             current_st = current_st.add_indented_block(ast)
+        elif ast.data in TokenType.lexicon.keys() and TokenType.lexicon[ast.data] == "return":
+            function_type: str
+            if TokenType.lexicon[ast.children[0].data] == "IDENTIFIER":
+                function_type = find_type(current_st, ast.children[0].value)
+            else:
+                function_type = current_st.dfs_type_check(ast.children[0], lexer)
+            function_id = current_st.get_function_id(ast)
+            current_st.function_return[function_id] = function_type
         elif (
                 ast.data in TokenType.lexicon.keys()
                 and TokenType.lexicon[ast.data] == 'IDENTIFIER'
