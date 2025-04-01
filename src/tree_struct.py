@@ -143,14 +143,16 @@ class Tree:
 
                 color = "#caf9fb"
                 if node.value is not None:
-                    label = f"[\"{data} => {node.value} (L{node.line_index})\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
-                elif node.line_index == -1 or node.data == "axiome":
+                    label = f"[\"{data} => {node.value} (L{node.line_index})\nfather: {node.father.data}\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
+                elif node.line_index == -1:
+                    label = f"[\"{data}\nfather: {node.father.data}\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
+                elif node.data == "axiome":
                     label = f"[\"{data}\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
                 elif data in ["+", "-", "*", "/", ">"]:
-                    label = f"[\"\\{data} (L{node.line_index})\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
+                    label = f"[\"\\{data} (L{node.line_index})\nfather: {node.father.data}\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
                 else:
                     label = (
-                        f"[\"{data} (L{node.line_index})\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
+                        f"[\"{data} (L{node.line_index})\nfather: {node.father.data}\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
                     )
                 nodes.append(f'{node_id}{label}')
                 seen_nodes[node_id] = True
@@ -571,6 +573,14 @@ def rename_blocks(given_tree:"Tree")->None:
             rename_blocks(child)
             i += 1
 
+def reajust_fathers(given_tree:"Tree")->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        child.father = given_tree
+        reajust_fathers(child)
+        i += 1
+
 def transform_to_ast(given_tree: "Tree") -> None:
     remove_banned_characters(
         given_tree, [":", ",", "in", "NEWLINE", "BEGIN", "END", "EOF"])
@@ -600,6 +610,7 @@ def transform_to_ast(given_tree: "Tree") -> None:
     
     rename_blocks(given_tree)
     manage_equalities(given_tree)
+    reajust_fathers(given_tree)
 
 # -------------------------------------------------------------------------------------------------
 # Sample
