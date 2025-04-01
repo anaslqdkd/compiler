@@ -573,6 +573,29 @@ def rename_blocks(given_tree:"Tree")->None:
             rename_blocks(child)
             i += 1
 
+def manage_function_calls(given_tree:"Tree")->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if child.data in TokenType.lexicon and TokenType.lexicon[child.data] == "IDENTIFIER":
+            if len(child.children) > 0:
+                parameter_node = Tree(
+                        data="Parameters",
+                        line_index=child.line_index,
+                        is_terminal=True,
+                        _father=child
+                    )
+                while len(child.children) > 0:
+                    c = child.children[0]
+                    parameter_node.children.append(c)
+                    c.father = parameter_node
+                    child.children.pop()
+                child.children.append(parameter_node)
+            i += 1
+        else:
+            manage_function_calls(child)
+            i += 1
+
 def reajust_fathers(given_tree:"Tree")->None:
     i = 0
     while i < len(given_tree.children):
@@ -610,6 +633,7 @@ def transform_to_ast(given_tree: "Tree") -> None:
     
     rename_blocks(given_tree)
     manage_equalities(given_tree)
+    manage_function_calls(given_tree)    
     reajust_fathers(given_tree)
 
 # -------------------------------------------------------------------------------------------------
