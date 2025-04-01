@@ -68,7 +68,11 @@ class SymbolTable:
             else:
                 parameters_nb = len(node.children[0].children)
             if (parameters_nb != self.function_return[node.value]["parameter_nb"]):
-                raise SemanticError(f"Erreur sémantique, nr de paramètres à la ligne {node.line_index}")
+                raise SemanticError(
+                    f"Erreur sémantique, nr de paramètres à la ligne {node.line_index}")
+            # TODO: ici pour la vérif des types de fonctions, quelque chose du type, for each child, check type, and compare with type in function_return
+
+                print("error")
             return self.function_return[node.value]["return_type"]
 
         if node.data in TokenType.lexicon.keys():
@@ -143,6 +147,12 @@ class SymbolTable:
     # ---------------------------------------------------------------------------------------------
 
     def add_value(self, node: Tree, lexer: Lexer, is_parameter: bool = False) -> None:
+        # TODO: gérér le type de paramèters dans les appels de fonctions
+        if in_st(self, node.value):
+            print(node.value)
+            if find_type(self, node.value) == "<undefined>":
+                self.symbols[node.value]["type"] = self.dfs_type_check(
+                    node.father.children[1], lexer)
         if not in_st(self, node.value):
             if is_parameter:
                 # Adding a parameter
@@ -233,7 +243,7 @@ class SymbolTable:
                 self.function_identifiers.add(node.value)
                 self.function_return[node.value] = "unknown"
                 self.function_return[node.value] = {
-                    "return_type": "undefined", "parameter_nb": "undefined"}
+                    "return_type": "undefined", "parameter_nb": "undefined", "parameter_types": {}}
             return res
 
     def identifier_in_list(self, node: Tree) -> bool:
