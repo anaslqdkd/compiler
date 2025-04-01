@@ -15,4 +15,4 @@ def kkkg(x, y):
     else:
         print(False)
         return y
-kkkg(5, 5)
+res = kkkg(5, 5)
