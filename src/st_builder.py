@@ -55,33 +55,34 @@ class SymbolTable:
         if not node.children and node.data in TokenType.lexicon.keys() and TokenType.lexicon[node.data] != 'IDENTIFIER':
             return TokenType.lexicon[node.data]
 
-        if node.data in ["LIST", "TUPLE"]:
-            return node.data
+        if node.data in TokenType.lexicon.keys():
+            if node.data in ["LIST", "TUPLE"]:
+                return node.data
 
-        if node.data in self.function_identifiers:
-            return "<undefined function result>"
+            if node.data in self.function_identifiers:
+                return "<undefined function result>"
 
-        if TokenType.lexicon[node.data] == "=":
-            return self.dfs_type_check(node.children[1], lexer)
-        if TokenType.lexicon[node.data] == 'IDENTIFIER':
-            if find_type(self, node.value) != None:
-                # print(f"the type is {find_type(self, node.value)} and the node value is {node.value}")
-                return find_type(self, node.value)
-        if TokenType.lexicon[node.data] in ['+', '-', '*', '//', '%', '<', '>']:
-            left_type = self.dfs_type_check(node.children[0], lexer)
-            right_type = self.dfs_type_check(node.children[1], lexer)
+            if TokenType.lexicon[node.data] == "=":
+                return self.dfs_type_check(node.children[1], lexer)
+            if TokenType.lexicon[node.data] == 'IDENTIFIER':
+                if find_type(self, node.value) != None:
+                    # print(f"the type is {find_type(self, node.value)} and the node value is {node.value}")
+                    return find_type(self, node.value)
+            if TokenType.lexicon[node.data] in ['+', '-', '*', '//', '%', '<', '>']:
+                left_type = self.dfs_type_check(node.children[0], lexer)
+                right_type = self.dfs_type_check(node.children[1], lexer)
 
-            if left_type != right_type:
-                if left_type == "<undefined>" or right_type == "<undefined>":
-                    undefined_child = node.children[0] if left_type == "<undefined>" else node.children[1]
-                    defined_child_type = right_type if left_type == "<undefined>" else left_type
-                    self.set_type(undefined_child, defined_child_type, lexer, True)
-                    return defined_child_type
-                else:
-                    raise SemanticError(
-                        f"Erreur de typage : impossible de faire l'opération (ligne {node.line_index}) entre {left_type} et {right_type}")
-            return left_type
-        return "<undefined>"
+                if left_type != right_type:
+                    if left_type == "<undefined>" or right_type == "<undefined>":
+                        undefined_child = node.children[0] if left_type == "<undefined>" else node.children[1]
+                        defined_child_type = right_type if left_type == "<undefined>" else left_type
+                        self.set_type(undefined_child, defined_child_type, lexer, True)
+                        return defined_child_type
+                    else:
+                        raise SemanticError(
+                            f"Erreur de typage : impossible de faire l'opération (ligne {node.line_index}) entre {left_type} et {right_type}")
+                return left_type
+            return "<undefined>"
 
     def calculate_depl(self, is_parameter: bool) -> int:
         coef = -1 if is_parameter else 1
