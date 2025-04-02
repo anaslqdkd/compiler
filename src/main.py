@@ -13,10 +13,11 @@ def main():
     parser.parse()
     transform_to_ast(parser.root)
 
-    parser.root.get_flowchart(file_path="../tests/test.txt", print_result=False)
+    print(parser.lexer.constant_lexicon)
+    print(parser.lexer.identifier_lexicon)
 
-    print(dfs_type_check(parser.root.children[0])) # Noeud "=" 
-    process_ast(parser.root, lexer.identifier_lexicon)
+    parser.root.get_flowchart(file_path="../tests/test.txt", print_result=False)
+    # process_ast(parser.root, lexer.identifier_lexicon)
 
 if __name__ == "__main__":
     main()
