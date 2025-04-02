@@ -1,6 +1,6 @@
-from tree_struct import Tree
-from parser import *
-from lexer import *
+from src.tree_struct import Tree
+from src.parser import *
+from src.lexer import *
 
 class SemanticError(Exception):
     pass

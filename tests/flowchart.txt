@@ -25,22 +25,22 @@ style 18 stroke:#caf9fb,stroke-width:2px
 26["\- (L3)
 father: 51"]
 style 26 stroke:#caf9fb,stroke-width:2px
-30["INTEGER => 1 (L3)
+30["INTEGER => -1 (L3)
 father: 41"]
 style 30 stroke:#caf9fb,stroke-width:2px
 35["\* (L3)
 father: 41"]
 style 35 stroke:#caf9fb,stroke-width:2px
-38["INTEGER => 2 (L3)
+38["INTEGER => -2 (L3)
 father: 42"]
 style 38 stroke:#caf9fb,stroke-width:2px
 39["\* (L3)
 father: 42"]
 style 39 stroke:#caf9fb,stroke-width:2px
-44["INTEGER => 2 (L3)
+44["INTEGER => -2 (L3)
 father: 42"]
 style 44 stroke:#caf9fb,stroke-width:2px
-50["INTEGER => 2 (L3)
+50["INTEGER => -2 (L3)
 father: 42"]
 style 50 stroke:#caf9fb,stroke-width:2px
 63["= (L4)
@@ -67,7 +67,7 @@ style 94 stroke:#caf9fb,stroke-width:2px
 104["LIST (L5)
 father: 51"]
 style 104 stroke:#caf9fb,stroke-width:2px
-116["INTEGER => 3 (L5)
+116["INTEGER => -3 (L5)
 father: LIST"]
 style 116 stroke:#caf9fb,stroke-width:2px
 133["IDENTIFIER => 4 (L5)
@@ -82,10 +82,10 @@ style 152 stroke:#caf9fb,stroke-width:2px
 162["LIST (L6)
 father: 51"]
 style 162 stroke:#caf9fb,stroke-width:2px
-174["INTEGER => 3 (L6)
+174["INTEGER => -3 (L6)
 father: LIST"]
 style 174 stroke:#caf9fb,stroke-width:2px
-191["INTEGER => 4 (L6)
+191["INTEGER => -4 (L6)
 father: LIST"]
 style 191 stroke:#caf9fb,stroke-width:2px
 225["= (L7)
@@ -94,7 +94,7 @@ style 225 stroke:#caf9fb,stroke-width:2px
 219["IDENTIFIER => 6 (L7)
 father: 51"]
 style 219 stroke:#caf9fb,stroke-width:2px
-236["INTEGER => 5 (L7)
+236["INTEGER => -5 (L7)
 father: 10"]
 style 236 stroke:#caf9fb,stroke-width:2px
 253["IDENTIFIER => 3 (L7)
@@ -131,7 +131,7 @@ style 305 stroke:#caf9fb,stroke-width:2px
 304["IDENTIFIER => 3 (L10)
 father: 51"]
 style 304 stroke:#caf9fb,stroke-width:2px
-316["INTEGER => 1 (L10)
+316["INTEGER => -1 (L10)
 father: 51"]
 style 316 stroke:#caf9fb,stroke-width:2px
 329["= (L11)
@@ -149,19 +149,19 @@ style 348 stroke:#caf9fb,stroke-width:2px
 358["TUPLE (L11)
 father: Parameters"]
 style 358 stroke:#caf9fb,stroke-width:2px
-370["INTEGER => 3 (L11)
+370["INTEGER => -3 (L11)
 father: TUPLE"]
 style 370 stroke:#caf9fb,stroke-width:2px
-387["INTEGER => 4 (L11)
+387["INTEGER => -4 (L11)
 father: TUPLE"]
 style 387 stroke:#caf9fb,stroke-width:2px
 409["TUPLE (L11)
 father: Parameters"]
 style 409 stroke:#caf9fb,stroke-width:2px
-421["INTEGER => 3 (L11)
+421["INTEGER => -3 (L11)
 father: TUPLE"]
 style 421 stroke:#caf9fb,stroke-width:2px
-438["INTEGER => 4 (L11)
+438["INTEGER => -4 (L11)
 father: TUPLE"]
 style 438 stroke:#caf9fb,stroke-width:2px
 471["= (L12)
@@ -170,7 +170,7 @@ style 471 stroke:#caf9fb,stroke-width:2px
 470["IDENTIFIER => 8 (L12)
 father: 51"]
 style 470 stroke:#caf9fb,stroke-width:2px
-482["INTEGER => 1 (L12)
+482["INTEGER => -1 (L12)
 father: 51"]
 style 482 stroke:#caf9fb,stroke-width:2px
 495["= (L13)
@@ -182,7 +182,7 @@ style 494 stroke:#caf9fb,stroke-width:2px
 497["IDENTIFIER => 10 (L13)
 father: 51"]
 style 497 stroke:#caf9fb,stroke-width:2px
-508["INTEGER => 5 (L13)
+508["INTEGER => -5 (L13)
 father: 10"]
 style 508 stroke:#caf9fb,stroke-width:2px
 522["= (L14)
@@ -194,7 +194,7 @@ style 521 stroke:#caf9fb,stroke-width:2px
 524["IDENTIFIER => 10 (L14)
 father: 51"]
 style 524 stroke:#caf9fb,stroke-width:2px
-535["INTEGER => 3 (L14)
+535["INTEGER => -3 (L14)
 father: 10"]
 style 535 stroke:#caf9fb,stroke-width:2px
 547["if (L15)
