@@ -299,10 +299,20 @@ def manage_functions(given_tree: "Tree") -> None:
             child.data in TokenType.lexicon.keys()
             and TokenType.lexicon[child.data] == "def"
         ):
+            # Renaming the "function" node
             given_tree.data = "function"
             given_tree.line_index = child.line_index
             given_tree.is_terminal = True
             given_tree.children.remove(child)
+
+            # Parameters
+            given_tree.children.pop(1)
+            parameter_node = Tree(data = "Parameters", _father=given_tree, line_index=given_tree.line_index, is_terminal=True)
+            while not (given_tree.children[1].data in TokenType.lexicon.keys() and TokenType.lexicon[given_tree.children[1].data] == ")"):
+                parameter_node.children.append(given_tree.children[1])
+                given_tree.children.pop(1)
+            given_tree.children.pop(1)
+            given_tree.children.insert(1, parameter_node)
             i += 1
         else:
             manage_functions(child)
@@ -511,7 +521,7 @@ def tuple_pruning(given_tree:"Tree")->None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
-        if child.data in TokenType.lexicon and TokenType.lexicon[child.data] == "(":
+        if child.data in TokenType.lexicon and TokenType.lexicon[child.data] == "(" and len(child.children) > 0:
             child.data = "TUPLE"
             child.children.pop(-1)
             i += 1
