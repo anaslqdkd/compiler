@@ -216,88 +216,6 @@ def remove_n(given_tree: "Tree") -> None:
             remove_n(child)
             i += 1
 
-def list_pruning(given_tree: "Tree") -> None:
-    if not given_tree.children:
-        return
-    for child in given_tree.children:
-        list_pruning(child)
-    children = given_tree.children
-    i = 0
-    while i < len(children) - 1:
-        if (
-            children[i].data in TokenType.lexicon.keys()
-            and TokenType.lexicon[children[i].data] == "["
-        ):
-            for j in range(i + 1, len(children)):
-                if (
-                    children[j].data in TokenType.lexicon.keys()
-                    and TokenType.lexicon[children[j].data] == "]"
-                ):
-                    nodes_in_the_list = children[i + 1: j]
-                    list_node = Tree(
-                        data="LIST",
-                        _father=given_tree,
-                        line_index=children[i].line_index,
-                        is_terminal=True,
-                    )
-                    for node in nodes_in_the_list:
-                        remove_banned_data(node, ["E1", "E2"])
-                        for child in node.children:
-                            list_node.add_tree_child(child)
-                    given_tree.children = children[:i] + \
-                        [list_node] + children[j + 1:]
-                    break
-            else:
-                i += 1
-                continue
-            children = given_tree.children
-            i = 0
-        else:
-            i += 1
-    pass
-
-def tuple_pruning(given_tree: "Tree") -> None:
-    if not given_tree.children:
-        return
-    for child in given_tree.children:
-        tuple_pruning(child)
-    children = given_tree.children
-    i = 0
-    while i < len(children) - 1:
-        if (
-            children[i].data in TokenType.lexicon.keys()
-            and TokenType.lexicon[children[i].data] == "("
-        ):
-            for j in range(i + 1, len(children)):
-                if (
-                    children[j].data in TokenType.lexicon.keys()
-                    and TokenType.lexicon[children[j].data] == ")"
-                ):
-                    nodes_in_the_tuple = children[i + 1: j]
-                    tuple_node = Tree(
-                        data="TUPLE",
-                        _father=given_tree,
-                        line_index=children[i].line_index,
-                        is_terminal=True,
-                    )
-                    for node in nodes_in_the_tuple:
-                        remove_banned_data(node, ["I", "I1"])
-                        remove_banned_data(node, ["E2"])
-                        for child in node.children:
-                            tuple_node.add_tree_child(child)
-                    given_tree.children = (
-                        children[:i] + [tuple_node] + children[j + 1:]
-                    )
-                    break
-            else:
-                i += 1
-                continue
-            children = given_tree.children
-            i = 0
-        else:
-            i += 1
-    pass
-
 def remove_childless_non_terminal_trees(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
@@ -579,22 +497,66 @@ def manage_function_calls(given_tree:"Tree")->None:
         child = given_tree.children[i]
         if child.data in TokenType.lexicon and TokenType.lexicon[child.data] == "IDENTIFIER":
             if len(child.children) > 0:
-                parameter_node = Tree(
-                        data="Parameters",
-                        line_index=child.line_index,
-                        is_terminal=True,
-                        _father=child
-                    )
-                while len(child.children) > 0:
-                    c = child.children[0]
-                    parameter_node.children.append(c)
-                    c.father = parameter_node
-                    child.children.pop()
-                child.children.append(parameter_node)
-            i += 1
+                parameter_node = child.children[0]
+                parameter_node.data = "Parameters"
+                parameter_node.is_terminal = True
+                parameter_node.line_index = child.line_index
+                parameter_node.children.pop(0)
+                parameter_node.children.pop(-1)
         else:
             manage_function_calls(child)
+        i += 1
+
+def tuple_pruning(given_tree:"Tree")->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if child.data in TokenType.lexicon and TokenType.lexicon[child.data] == "(":
+            child.data = "TUPLE"
+            child.children.pop(-1)
             i += 1
+        else:
+            tuple_pruning(child)
+            i += 1
+
+def list_pruning(given_tree:"Tree")->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if child.data in TokenType.lexicon and TokenType.lexicon[child.data] == "[" and len(child.children) > 0:
+            child.data = "LIST"
+            child.children.pop(-1)
+            i += 1
+        else:
+            list_pruning(child)
+            i += 1
+
+def manage_container_search(given_tree:"Tree")->None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if child.data in TokenType.lexicon and TokenType.lexicon[child.data] == "[":
+            print(f"Need to rework at {child.line_index}")
+
+            j = i
+            while not (given_tree.children[j].data in TokenType.lexicon and TokenType.lexicon[given_tree.children[j].data] == "]"):
+                j += 1
+            
+            container_node = given_tree.children[i-1]
+            tokens = j - i - 1  #How many nodes to move
+            while tokens > 0:
+                container_node.children.append(given_tree.children[i+1])
+                given_tree.children.pop(i+1)
+                tokens -= 1
+            # Removing both brackets
+            given_tree.children.pop(i)
+            given_tree.children.pop(i)
+
+            i += 1
+        else:
+            manage_container_search(child)
+            i += 1
+
 
 def reajust_fathers(given_tree:"Tree")->None:
     i = 0
@@ -608,8 +570,6 @@ def transform_to_ast(given_tree: "Tree") -> None:
     remove_banned_characters(
         given_tree, [":", ",", "in", "NEWLINE", "BEGIN", "END", "EOF"])
     remove_n(given_tree)
-    list_pruning(given_tree)
-    tuple_pruning(given_tree)
     remove_banned_data(given_tree, ["N"])
     remove_childless_non_terminal_trees(given_tree)
     compact_non_terminals_chain(given_tree)
@@ -624,16 +584,21 @@ def transform_to_ast(given_tree: "Tree") -> None:
     manage_ifs(given_tree)
     manage_C2(given_tree)
 
-    # Finally fuse all chains
+    # Fuse all chains
     prev_tree = given_tree.copy()
     fuse_chains(given_tree, ["A", "D", "S1", "B", "B1", "C"])
     while prev_tree != given_tree:
         prev_tree = given_tree.copy()
         fuse_chains(given_tree, ["A", "D", "S1", "B", "B1", "C"])
     
-    rename_blocks(given_tree)
     manage_equalities(given_tree)
-    manage_function_calls(given_tree)    
+    rename_blocks(given_tree)
+    fuse_chains(given_tree, ["E_un", "E1"])
+    manage_function_calls(given_tree)
+    list_pruning(given_tree)
+    tuple_pruning(given_tree)
+    fuse_chains(given_tree, ["TUPLE", "LIST", "E1", "E2"])
+    manage_container_search(given_tree)
     reajust_fathers(given_tree)
 
 # -------------------------------------------------------------------------------------------------
