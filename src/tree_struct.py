@@ -609,6 +609,7 @@ def transform_to_ast(given_tree: "Tree") -> None:
     tuple_pruning(given_tree)
     fuse_chains(given_tree, ["TUPLE", "LIST", "E1", "E2"])
     manage_container_search(given_tree)
+    fuse_chains(given_tree, ["Parameters", "I"])
     reajust_fathers(given_tree)
 
 # -------------------------------------------------------------------------------------------------
