@@ -8,8 +8,8 @@ from src.tree_struct import Tree
 
 class SymbolTable:
     _ST_id = 0
-    integer_size = 8  # Assuming every integer will be coded using 8 bits maximum
-    character_size = 16  # Assuming every character will respect the UTF-8 norm
+    integer_size = 8*4  # Assuming every integer will be coded using 4 bytes (8*4 bits) maximum
+    character_size = 8  # Assuming every character will respect the UTF-8 norm
     node_counter = 0
     node_counter_else = 0
     node_counter_if = 0
@@ -132,7 +132,7 @@ class SymbolTable:
         if in_st(self, node.value):
             return find_depl(self, node.value)
         # FIXME: à règler le lexique pour que ça fonctionne
-        elif node.value in lexer.constant_keys.keys():
+        elif node.value in lexer.constant_lexicon.keys():
             depl = len(
                 lexer.constant_lexicon[node.value]) * self.character_size * coef
             if is_parameter:
@@ -149,7 +149,6 @@ class SymbolTable:
     def add_value(self, node: Tree, lexer: Lexer, is_parameter: bool = False) -> None:
         # TODO: gérér le type de paramèters dans les appels de fonctions
         if in_st(self, node.value):
-            print(node.value)
             if find_type(self, node.value) == "<undefined>":
                 self.symbols[node.value]["type"] = self.dfs_type_check(
                     node.father.children[1], lexer)

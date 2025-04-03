@@ -8,7 +8,7 @@ def fa(ol):
     return liste
 def kkkg(x, y):
     a = 5
-    L = fa((1, 2), (1, 2))
+    L = fa(5)
     x = 5
     L0 = L[0]
     L1 = L[1]
@@ -16,3 +16,5 @@ def kkkg(x, y):
         print(True)
     return x
 kkkg(5, 5)
+test = "AA"
+test2 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"

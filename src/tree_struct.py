@@ -546,7 +546,6 @@ def manage_container_search(given_tree:"Tree")->None:
     while i < len(given_tree.children):
         child = given_tree.children[i]
         if child.data in TokenType.lexicon and TokenType.lexicon[child.data] == "[":
-            print(f"Need to rework at {child.line_index}")
 
             j = i
             while not (given_tree.children[j].data in TokenType.lexicon and TokenType.lexicon[given_tree.children[j].data] == "]"):
