@@ -67,8 +67,8 @@ class SymbolTable:
                 call_type = self.dfs_type_check(child, lexer)
                 assigned_type = self.function_return[node.value]["parameter_types"][i]
                 if call_type != assigned_type:
-                    # raise SemanticError(f"Erreur sémantique à la ligne {node.line_index}, le type devrait être {assigned_type} mais est {call_type} pour paramètre nb {i} (ça commence par 0)")
-                    print("buu")
+                    if call_type != "<undefined>":
+                        raise SemanticError(f"Erreur sémantique à la ligne {node.line_index}, le type devrait être {assigned_type} mais est {call_type} pour paramètre nb {i} (ça commence par 0)")
                 i += 1
             parameters_nb: int
             if len(node.children[0].children) == 0:
@@ -83,11 +83,6 @@ class SymbolTable:
 
         if node.data in TokenType.lexicon.keys():
             if TokenType.lexicon[node.data] == "=":
-                # si le membre gauche pas un truc du type liste [qqch]
-                if (len(node.children[0].children)>0):
-                    print("the left member is %%%%", node.children[0].children[0])
-
-
                 return self.dfs_type_check(node.children[1], lexer)
             if TokenType.lexicon[node.data] == 'IDENTIFIER':
                 if node.value in self.function_identifiers:
@@ -165,27 +160,21 @@ class SymbolTable:
     # ---------------------------------------------------------------------------------------------
 
     def add_value(self, node: Tree, lexer: Lexer, is_parameter: bool = False) -> None:
-        print(self.list_identifiers)
         # TODO: gérér le type de paramèters dans les appels de fonctions
         if in_st(self, node.value):
-            # print(node.value)
             if find_type(self, node.value) == "<undefined>":
-                self.symbols[node.value]["type"] = self.dfs_type_check(
-                    node.father.children[1], lexer)
+                if node.father.data in TokenType.lexicon.keys() and TokenType.lexicon[node.father.data] == "=":
+                    self.symbols[node.value]["type"] = self.dfs_type_check(
+                        node.father.children[1], lexer)
             else:
 
                 if node.father.data in TokenType.lexicon.keys() and TokenType.lexicon[node.father.data] == "=":
-                    # TODO: à changer ici  pour les types des choses du type list[0]
-                    # print(node.value)
-                    # print(self.is_list_identifier(node))
                     if self.is_list_identifier(node):
                         if len(node.father.children[0].children) == 0:
-                            print("333EZ")
                             self.symbols[node.father.children[0].value]["type"] = "unknown list item"
                         else:
                             return
                     else:
-
                         self.symbols[node.value]["type"] = self.dfs_type_check(node.father.children[1], lexer)
                         return
 
@@ -340,7 +329,6 @@ class SymbolTable:
 def build_sts(ast: Tree, lexer: Lexer, debug_mode: bool = False) -> list["SymbolTable"]:
     def build_st_rec(ast: Tree, symbol_table: "SymbolTable"):
         current_st = symbol_table
-        # print(current_st.function_return)
         # All ifs & elifs
         if ast.data in ["if", "else", "function", "while", "for"]:
             current_st = current_st.add_indented_block(ast)
@@ -365,6 +353,9 @@ def build_sts(ast: Tree, lexer: Lexer, debug_mode: bool = False) -> list["Symbol
             symbol_table.is_list_identifier(ast)
             current_st.add_value(
                 ast, lexer, is_parameter=symbol_table.is_parameter(ast))
+        elif (symbol_table.is_function_identifier(ast)):
+            if (ast.father.data in TokenType.lexicon.keys() and TokenType.lexicon[ast.father.data] == "=" and symbol_table.function_return[ast.value]["return_type"] == "LIST"):
+                symbol_table.list_identifiers.add(ast.father.children[0].value)
 
         # For loop on all children
         for child in ast.children:
