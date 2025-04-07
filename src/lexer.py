@@ -65,7 +65,7 @@ class Lexer:
         
         # Counters for lexicon indices
         self.next_identifier_index = 1
-        self.next_constant_index = 1
+        self.next_constant_index = -1
 
         self.expect_indent = False
 
@@ -163,7 +163,7 @@ class Lexer:
         if value not in self.constant_lexicon.values():
             self.constant_lexicon[self.next_constant_index] = value
             index = self.next_constant_index
-            self.next_constant_index += 1
+            self.next_constant_index -= 1
         else:
             # Find existing index
             index = next(k for k, v in self.constant_lexicon.items() if v == value)
@@ -183,7 +183,7 @@ class Lexer:
                 if full_string not in self.constant_lexicon.values():
                     self.constant_lexicon[self.next_constant_index] = full_string
                     index = self.next_constant_index
-                    self.next_constant_index += 1
+                    self.next_constant_index -= 1
                 else:
                     # Find existing index
                     index = next(k for k, v in self.constant_lexicon.items() if v == full_string)
