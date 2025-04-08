@@ -29,6 +29,8 @@ class SymbolTable:
         self.current_positive_depl = 0
         self.current_negative_depl = 0
 
+        self.undefined_types = ["<undefined>", "unknown list item"]
+
         self.region_id: int = SymbolTable._ST_id
         SymbolTable._ST_id += 1
 
@@ -36,40 +38,25 @@ class SymbolTable:
         node_value = node.value
         if in_st(self, node_value):
             symbol = find_symbol(self, node_value)
-            symbol["type"] = new_type
+            if symbol is not None:
+                symbol["type"] = new_type
 
-            if need_to_recalculate_depl:
-                depl = InfSize
-                if type in ["LIST", "TUPLE"]:
-                    depl = self.calculate_depl_compound(
-                        node.father.children[1], True)
-                elif type == "STRING":
-                    depl = self.calculate_depl_string(
-                        node.father.children[1], lexer, True)
-                elif type is not None:
-                    depl = self.calculate_depl(True)
-                symbol["depl"] = depl
-
-            return True
+                if need_to_recalculate_depl:
+                    depl = InfSize
+                    if new_type in ["LIST", "TUPLE"]:
+                        depl = self.calculate_depl_compound(
+                            node.father.children[1], True)
+                    elif new_type == "STRING":
+                        depl = self.calculate_depl_string(
+                            node.father.children[1], lexer, True)
+                    elif new_type is not None:
+                        depl = self.calculate_depl(True)
+                    symbol["depl"] = depl
+                return True
         return False
 
-    # ---------------------------------------------------------------------------------------------
-
-    def dfs_type_check(self, node: Tree, lexer: Lexer) -> Optional[str]:
-        if not node.children and node.data in TokenType.lexicon.keys() and TokenType.lexicon[node.data] != 'IDENTIFIER':
-            return TokenType.lexicon[node.data]
-
-        if node.data in ["LIST", "TUPLE"]:
-            return node.data
+    def check_function_call(self, node: Tree, lexer: Lexer) -> Optional[str]:
         if node.value in self.function_identifiers:
-            i = 0
-            for child in node.father.children[1].children[0].children:
-                call_type = self.dfs_type_check(child, lexer)
-                assigned_type = self.function_return[node.value]["parameter_types"][i]
-                if call_type != assigned_type:
-                    if call_type != "<undefined>":
-                        raise SemanticError(f"Erreur sémantique à la ligne {node.line_index}, le type devrait être {assigned_type} mais est {call_type} pour paramètre nb {i} (ça commence par 0)")
-                i += 1
             parameters_nb: int
             if len(node.children[0].children) == 0:
                 parameters_nb = 1
@@ -79,7 +66,27 @@ class SymbolTable:
                 raise SemanticError(
                     f"Erreur sémantique, nr de paramètres à la ligne {node.line_index} devrait être {self.function_return[node.value]["parameter_nb"]} mais est {parameters_nb}")
 
+            i = 0
+            for child in node.father.children[1].children[0].children:
+                call_type = self.dfs_type_check(child, lexer)
+                assigned_type = self.function_return[node.value]["parameter_types"][i]
+                if call_type != assigned_type:
+                    # if call_type != "<undefined>" and assigned_type != "<undefined>":
+                    if call_type not in self.undefined_types and assigned_type not in self.undefined_types:
+                        raise SemanticError(f"Erreur sémantique à la ligne {node.line_index}, le type devrait être {assigned_type} mais est {call_type} pour paramètre nb {i} (ça commence par 0)")
+                i += 1
             return self.function_return[node.value]["return_type"]
+
+
+    # ---------------------------------------------------------------------------------------------
+
+    def dfs_type_check(self, node: Tree, lexer: Lexer) -> Optional[str]:
+        if not node.children and node.data in TokenType.lexicon.keys() and TokenType.lexicon[node.data] != 'IDENTIFIER':
+            return TokenType.lexicon[node.data]
+
+        if node.data in ["LIST", "TUPLE"]:
+            return node.data
+        self.check_function_call(node, lexer)
 
         if node.data in TokenType.lexicon.keys():
             if TokenType.lexicon[node.data] == "=":
@@ -104,8 +111,9 @@ class SymbolTable:
                     if left_type == "<undefined>" or right_type == "<undefined>":
                         undefined_child = node.children[0] if left_type == "<undefined>" else node.children[1]
                         defined_child_type = right_type if left_type == "<undefined>" else left_type
-                        self.set_type(undefined_child,
-                                      defined_child_type, lexer, True)
+                        if defined_child_type != None:
+                            self.set_type(undefined_child,
+                                          defined_child_type, lexer, True)
                         return defined_child_type
                     else:
                         raise SemanticError(
@@ -140,12 +148,11 @@ class SymbolTable:
             self.current_positive_depl = depl
         return depl
 
-    def calculate_depl_string(self, node: Tree, lexer: Lexer, is_parameter: bool) -> int:
+    def calculate_depl_string(self, node: Tree, lexer: Lexer, is_parameter: bool) -> Optional[int]:
         coef = -1 if is_parameter else 1
         if in_st(self, node.value):
             return find_depl(self, node.value)
-        # FIXME: à règler le lexique pour que ça fonctionne
-        elif node.value in lexer.constant_keys.keys():
+        elif node.value in lexer.constant_lexicon.keys():
             depl = len(
                 lexer.constant_lexicon[node.value]) * self.character_size * coef
             if is_parameter:
@@ -164,8 +171,18 @@ class SymbolTable:
         if in_st(self, node.value):
             if find_type(self, node.value) == "<undefined>":
                 if node.father.data in TokenType.lexicon.keys() and TokenType.lexicon[node.father.data] == "=":
+                    if len(node.children) > 0:
+                        print(node.children[0].data)
+                        if node.children[0].data in TokenType.lexicon.keys() and TokenType.lexicon[node.children[0].data] == 'INTEGER':
+                            print(node.value)
+                            self.symbols[node.value]["type"] = "LIST" 
+
+                        else:
+                            self.symbols[node.value]["type"] = self.dfs_type_check(
+                            node.father.children[1], lexer)
+                else:
                     self.symbols[node.value]["type"] = self.dfs_type_check(
-                        node.father.children[1], lexer)
+                    node.father.children[1], lexer)
             else:
 
                 if node.father.data in TokenType.lexicon.keys() and TokenType.lexicon[node.father.data] == "=":
@@ -317,6 +334,7 @@ class SymbolTable:
                 node.children[1].children)
             i = 0
             for child in node.children[1].children:
+                # TODO: à changer ici pour les return list[0]
                 self.function_return[node.children[0].value]["parameter_types"][i] = self.dfs_type_check(child, lexer)
                 i += 1
             return node.children[0].value
@@ -342,13 +360,11 @@ def build_sts(ast: Tree, lexer: Lexer, debug_mode: bool = False) -> list["Symbol
                 function_type = current_st.dfs_type_check(
                     ast.children[0], lexer)
             function_id = current_st.get_function_id(ast, lexer)
-            # current_st.function_return[function_id] = function_type
             current_st.function_return[function_id]["return_type"] = function_type
         elif (
                 ast.data in TokenType.lexicon.keys()
                 and TokenType.lexicon[ast.data] == 'IDENTIFIER'
                 and not symbol_table.is_function_identifier(ast)
-                # and not symbol_table.is_list_identifier(ast)
         ):
             symbol_table.is_list_identifier(ast)
             current_st.add_value(

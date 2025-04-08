@@ -1,18 +1,15 @@
 # Définition d'une fonction pour calculer le carré d'un nombre
 def fa(ol): 
-    a = 5 - 8 * 8 * 8
-    c = a + o
-    liste = [1, c]
-    ol = [1, 2]
-    liste[0] = a
-    return liste
-def kkkg(x, y):
-    a = 5
-    L = fa((1, 2), (1, 2))
-    x = 5
-    L0 = L[0]
-    L1 = L[1]
-    if L0 < L1:
-        print(True)
-    return x
-kkkg(5, 5)
+	a = ol[1]
+	ol = [1, 2]
+	f = ol[1]
+	f = [1, 2]
+	return ol
+def gaga(x):
+	l = [2, 2]
+	L = fa(l)
+	L0 = L[1]
+	return L0
+def f(a):
+	r = 4
+	a = gaga(r)
