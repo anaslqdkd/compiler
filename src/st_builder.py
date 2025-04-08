@@ -56,26 +56,49 @@ class SymbolTable:
         return False
 
     def check_function_call(self, node: Tree, lexer: Lexer) -> Optional[str]:
+        # print(node.value)
         if node.value in self.function_identifiers:
-            parameters_nb: int
-            if len(node.children[0].children) == 0:
-                parameters_nb = 1
-            else:
-                parameters_nb = len(node.children[0].children)
-            if (parameters_nb != self.function_return[node.value]["parameter_nb"]):
-                raise SemanticError(
-                    f"Erreur sémantique, nr de paramètres à la ligne {node.line_index} devrait être {self.function_return[node.value]["parameter_nb"]} mais est {parameters_nb}")
+            if node.father.data in TokenType.lexicon.keys() and TokenType.lexicon[node.father.data] == "=":
+                # if it is an assignement, a = fn(x)
 
-            i = 0
-            for child in node.father.children[1].children[0].children:
-                call_type = self.dfs_type_check(child, lexer)
-                assigned_type = self.function_return[node.value]["parameter_types"][i]
-                if call_type != assigned_type:
-                    # if call_type != "<undefined>" and assigned_type != "<undefined>":
-                    if call_type not in self.undefined_types and assigned_type not in self.undefined_types:
-                        raise SemanticError(f"Erreur sémantique à la ligne {node.line_index}, le type devrait être {assigned_type} mais est {call_type} pour paramètre nb {i} (ça commence par 0)")
-                i += 1
-            return self.function_return[node.value]["return_type"]
+                parameters_nb: int
+                if len(node.children[0].children) == 0:
+                    parameters_nb = 1
+                else:
+                    parameters_nb = len(node.children[0].children)
+                if (parameters_nb != self.function_return[node.value]["parameter_nb"]):
+                    raise SemanticError(
+                        f"Erreur sémantique, nr de paramètres à la ligne {node.line_index} devrait être {self.function_return[node.value]["parameter_nb"]} mais est {parameters_nb}")
+
+                i = 0
+                for child in node.father.children[1].children[0].children:
+                    call_type = self.dfs_type_check(child, lexer)
+                    assigned_type = self.function_return[node.value]["parameter_types"][i]
+                    if call_type != assigned_type:
+                        if call_type not in self.undefined_types and assigned_type not in self.undefined_types:
+                            raise SemanticError(f"Erreur sémantique à la ligne {node.line_index}, le type devrait être {assigned_type} mais est {call_type} pour paramètre nb {i} (ça commence par 0)")
+                    i += 1
+                return self.function_return[node.value]["return_type"]
+            else:
+                # if it is a function call, fn(x)
+                if len(node.children) > 0:
+                    if node.value in self.function_return.keys():
+                        if len(node.children[0].children) == 0:
+                            parameters_nb = 1
+                        else:
+                            parameters_nb = len(node.children[0].children)
+                        if (parameters_nb != self.function_return[node.value]["parameter_nb"]):
+                            raise SemanticError("Erreur nb de paramètres")
+                        i = 0
+                        for child in node.children[0].children:
+                            call_type = self.dfs_type_check(child, lexer)
+                            assigned_type = self.function_return[node.value]["parameter_types"][i]
+                            if call_type != assigned_type:
+                                if call_type not in self.undefined_types and assigned_type not in self.undefined_types:
+                                    print(call_type, assigned_type)
+                                    raise SemanticError("Erreur de typage de paramètre à la ligne", node.line_index)
+                            i += 1
+
 
 
     # ---------------------------------------------------------------------------------------------
@@ -86,7 +109,7 @@ class SymbolTable:
 
         if node.data in ["LIST", "TUPLE"]:
             return node.data
-        self.check_function_call(node, lexer)
+        # self.check_function_call(node, lexer)
 
         if node.data in TokenType.lexicon.keys():
             if TokenType.lexicon[node.data] == "=":
@@ -368,7 +391,9 @@ def build_sts(ast: Tree, lexer: Lexer, debug_mode: bool = False) -> list["Symbol
                 ast, lexer, is_parameter=symbol_table.is_parameter(ast))
         elif (symbol_table.is_function_identifier(ast)):
             if (ast.father.data in TokenType.lexicon.keys() and TokenType.lexicon[ast.father.data] == "=" and symbol_table.function_return[ast.value]["return_type"] == "LIST"):
+                # if L = fn(x) and the return type of fn is list
                 symbol_table.list_identifiers.add(ast.father.children[0].value)
+            symbol_table.check_function_call(ast, lexer)
 
         # For loop on all children
         for child in ast.children:

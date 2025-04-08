@@ -1,13 +1,10 @@
 # Définition d'une fonction pour calculer le carré d'un nombre
-def fa(ol): 
-	a = ol[0]
-	ol = [1, 2]
-	ol[1] = 5
-	return ol
-def gaga(x):
-	l = [2, 2]
-	L = fa(l)
-	L0 = L[1]
-	return L0
-def f(a):
-	a = gaga(r)
+def feur(x, y):
+	a = 5
+	x = "lffsk"
+	y = 4
+	l = [1, 1]
+	return a
+def main(a):
+	feur("lskf", 3)
+	a = feur("lskf",3)
