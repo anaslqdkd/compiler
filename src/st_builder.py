@@ -19,7 +19,7 @@ class SymbolTable:
         self.debug_mode: bool = debug_mode
 
         self.name: str = name
-        self.symbols: Dict[str, Any] = {}
+        self.symbols: Dict[int, Any] = {}
         self.function_identifiers: Set[int] = englobing_table.function_identifiers if englobing_table is not None else set()
         self.list_identifiers: Set[int] = englobing_table.list_identifiers if englobing_table is not None else set()
         self.function_return: Dict = englobing_table.function_return if englobing_table is not None else dict()
@@ -167,30 +167,28 @@ class SymbolTable:
     # ---------------------------------------------------------------------------------------------
 
     def add_value(self, node: Tree, lexer: Lexer, is_parameter: bool = False) -> None:
-        # TODO: gérér le type de paramèters dans les appels de fonctions
         if in_st(self, node.value):
             if find_type(self, node.value) == "<undefined>":
                 if node.father.data in TokenType.lexicon.keys() and TokenType.lexicon[node.father.data] == "=":
                     if len(node.children) > 0:
-                        print(node.children[0].data)
                         if node.children[0].data in TokenType.lexicon.keys() and TokenType.lexicon[node.children[0].data] == 'INTEGER':
-                            print(node.value)
                             self.symbols[node.value]["type"] = "LIST" 
+                            if node.father.children[0].data in TokenType.lexicon.keys() and TokenType.lexicon[node.father.children[0].data] == "IDENTIFIER":
+                                self.symbols[node.father.children[0].value]["type"] = "unknown list item"
 
-                        else:
-                            self.symbols[node.value]["type"] = self.dfs_type_check(
-                            node.father.children[1], lexer)
-                else:
-                    self.symbols[node.value]["type"] = self.dfs_type_check(
-                    node.father.children[1], lexer)
+                    else:
+                        self.symbols[node.value]["type"] = self.dfs_type_check(
+                        node.father.children[1], lexer)
             else:
 
                 if node.father.data in TokenType.lexicon.keys() and TokenType.lexicon[node.father.data] == "=":
+                    print(node.father.children[1].data)
                     if self.is_list_identifier(node):
-                        if len(node.father.children[0].children) == 0:
+                        if len(node.father.children[0].children) == 0 and not (node.father.children[1].data == "LIST"):
                             self.symbols[node.father.children[0].value]["type"] = "unknown list item"
-                        else:
-                            return
+                        if node.father.children[1].data == "LIST":
+                            self.symbols[node.value]["type"] = self.dfs_type_check(node.father.children[1], lexer)
+
                     else:
                         self.symbols[node.value]["type"] = self.dfs_type_check(node.father.children[1], lexer)
                         return
@@ -290,7 +288,6 @@ class SymbolTable:
             return res
 
     def is_list_identifier(self, node: Tree) -> bool:
-        # FIXME: pb pour liste en tant que paramètre
         if node.value in self.list_identifiers:
             return True
         else:
@@ -353,7 +350,7 @@ def build_sts(ast: Tree, lexer: Lexer, debug_mode: bool = False) -> list["Symbol
         elif ast.data in TokenType.lexicon.keys() and TokenType.lexicon[ast.data] in ["if", "else"]:
             current_st = current_st.add_indented_block(ast)
         elif ast.data in TokenType.lexicon.keys() and TokenType.lexicon[ast.data] == "return":
-            function_type: str
+            function_type: Optional[str]
             if TokenType.lexicon[ast.children[0].data] == "IDENTIFIER":
                 function_type = find_type(current_st, ast.children[0].value)
             else:
@@ -414,7 +411,7 @@ def find_symbol(current_st: "SymbolTable", node_value: int):
         return find_symbol(current_st.englobing_table, node_value)
 
 
-def find_type(current_st: "SymbolTable", node_value: int):
+def find_type(current_st: "SymbolTable", node_value: int) -> Optional[str]:
     if node_value in current_st.symbols.keys():
         return current_st.symbols[node_value]["type"]
     elif current_st.englobing_table == None:

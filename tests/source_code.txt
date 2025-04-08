@@ -1,9 +1,8 @@
 # Définition d'une fonction pour calculer le carré d'un nombre
 def fa(ol): 
-	a = ol[1]
+	a = ol[0]
 	ol = [1, 2]
-	f = ol[1]
-	f = [1, 2]
+	ol[1] = 5
 	return ol
 def gaga(x):
 	l = [2, 2]
@@ -11,5 +10,4 @@ def gaga(x):
 	L0 = L[1]
 	return L0
 def f(a):
-	r = 4
 	a = gaga(r)
