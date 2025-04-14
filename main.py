@@ -5,7 +5,7 @@ from src.semantic_analyzer import process_ast
 from src.asm_generator import generate_asm
 
 def main():
-    with open("tests/semantics.txt", "r") as file:
+    with open("tests/source_code.txt", "r") as file:
         source_code = file.read()
 
     lexer = Lexer(source_code)
@@ -15,13 +15,13 @@ def main():
 
     parser.root.get_flowchart(file_path="tests/flowchart.txt", print_result=False)
 
-    # print("\nToken lexicon", TokenType.lexicon)
-    # print("\nIdentifier Lexicon:\n", lexer.identifier_lexicon)
-    # print("\nConstant Lexicon:\n", lexer.constant_lexicon)
+    print("\nToken lexicon", TokenType.lexicon)
+    print("\nIdentifier Lexicon:\n", lexer.identifier_lexicon)
+    print("\nConstant Lexicon:\n", lexer.constant_lexicon)
 
-    st = build_sts(parser.root, lexer)
+    sts = build_sts(parser.root, lexer)
     print()
-    print_all_symbol_tables(st)
+    print_all_symbol_tables(sts)
 
     process_ast(parser.root, lexer.identifier_lexicon)
     output_file_path = "tests/asm_code.asm"

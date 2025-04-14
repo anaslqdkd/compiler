@@ -138,9 +138,11 @@ class SymbolTable:
                             self.set_type(undefined_child,
                                           defined_child_type, lexer, True)
                         return defined_child_type
-                    else:
+                    elif not (left_type in ["True", "False", "INTEGER"] and right_type in ["True", "False", "INTEGER"]):
                         raise SemanticError(
                             f"Erreur de typage : impossible de faire l'opération (ligne {node.line_index}) entre {left_type} et {right_type}")
+                if (left_type in ["True", "False", "INTEGER"] and right_type in ["True", "False", "INTEGER"]):
+                    return "INTEGER"
                 return left_type
             return "<undefined>"
 
