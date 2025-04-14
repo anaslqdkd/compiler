@@ -22,21 +22,26 @@ def dfs_type_check(node):
         left_type = dfs_type_check(node.children[0])
         right_type = dfs_type_check(node.children[1])
         if left_type != right_type:
-            raise SemanticError(f"Erreur de typage : impossible de faire l'opération entre {left_type} et {right_type}")
+            if not (left_type in ["True", "False", "INTEGER"] and right_type in ["True", "False", "INTEGER"]):
+                raise SemanticError(f"TypeError: unsupported operand type(s) for {TokenType.lexicon[node.data]}: '{left_type}' and '{right_type}'")
+        if (left_type in ["True", "False", "INTEGER"] and right_type in ["True", "False", "INTEGER"]):
+            return "INTEGER"
         return left_type
 
     for child in node.children:
         dfs_type_check(child)
-    # return None 
 
 def process_ast(root, identifier_lexicon):
-    for statement in root.children:
-        var_name = identifier_lexicon[statement.children[0].value]
+    line_number = 1
+    statements = root.children[0].children
+    for node in statements:
+        line_number += 1
+        var_name = identifier_lexicon[node.children[0].value]
         try:
-            expr_type = dfs_type_check(statement.children[1])
-            print(f"Variable '{var_name}' typée en {expr_type}")
+            expr_type = dfs_type_check(node.children[1])
+            print(f"Variable '{var_name}' typed in {expr_type}")
         except SemanticError as e:
-            print(f"Erreur sur la déclaration de {var_name} : {e}")
+            print(f"Line {line_number}, error on variable '{var_name}' - {e}")
 
 
 
