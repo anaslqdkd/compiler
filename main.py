@@ -4,7 +4,7 @@ from src.st_builder import build_sts, print_all_symbol_tables
 from src.semantic_analyzer import process_ast
 
 def main():
-    with open("tests/semantic.txt", "r") as file:
+    with open("tests/semantics.txt", "r") as file:
         source_code = file.read()
 
     lexer = Lexer(source_code)
