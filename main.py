@@ -1,7 +1,6 @@
 from src.lexer import *
 from src.parser import *
 from src.st_builder import build_sts, print_all_symbol_tables
-from src.semantic_analyzer import process_ast
 from src.asm_generator import generate_asm
 
 def main():
@@ -21,11 +20,10 @@ def main():
 
     sts = build_sts(parser.root, lexer)
     print()
-    print_all_symbol_tables(sts)
+    print_all_symbol_tables(sts, lexer)
 
-    process_ast(parser.root, lexer.identifier_lexicon)
-    output_file_path = "tests/asm_code.asm"
-    generate_asm(output_file_path, parser.root, lexer, sts)
+    # output_file_path = "tests/asm_code.asm"
+    # generate_asm(output_file_path, parser.root, lexer, sts)
 
 if __name__ == "__main__":
     main()

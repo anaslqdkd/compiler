@@ -2,6 +2,8 @@
 a = 3
 def feur(x, y):
 	l = [1, 2]
+	yyy = 10 + y * 8 + a * 2 
+	print(a)
 	x[0] = 5
 	l[0] = 1
 	a = x[0]
