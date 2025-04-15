@@ -1,16 +1,20 @@
 # Définition d'une fonction pour calculer le carré d'un nombre
 a = 3
+def sans_param():
+	print(a)
+	return a
 def feur(x, y):
 	l = [1, 2]
-	yyy = 10 + y * 8 + a * 2 
+	yyy = 10 + y * 8 + a * 2 + True
 	print(a)
 	x[0] = 5
 	l[0] = 1
 	a = x[0]
 	return l
-def main(a):
+def main(a, b):
 	a = [1, 2]
 	return a
 def fr(x):
-	a = main(x)
-	return x
+	a = main(x, x)
+	return sans_param()
+P = fr(2)

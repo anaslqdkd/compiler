@@ -326,11 +326,20 @@ def manage_prints(given_tree: "Tree") -> None:
             child.data in TokenType.lexicon.keys()
             and TokenType.lexicon[child.data] == "print"
         ):
-            for c in given_tree.children:
-                if c != child:
-                    child.children.append(c)
-                    c.father = child
-                    given_tree.children.remove(c)
+            count = 0
+            while not (
+                given_tree.children[i + 2 + count].data in TokenType.lexicon.keys()
+                and TokenType.lexicon[given_tree.children[i + 2 + count].data] == ")"
+            ):
+                count += 1
+            
+            for k in range(count):
+                child.children.append(given_tree.children[i + 2])
+                given_tree.children.pop(i + 2)
+
+            given_tree.children.pop(i + 1)
+            given_tree.children.pop(i + 1)
+
             i += 1
         else:
             manage_prints(child)
@@ -344,10 +353,17 @@ def manage_returns(given_tree: "Tree") -> None:
             child.data in TokenType.lexicon.keys()
             and TokenType.lexicon[child.data] == "return"
         ):
-            returned_value = given_tree.children[i+1]
-            child.children.append(returned_value)
-            returned_value.father = child
-            given_tree.children.remove(returned_value)
+            while i + 1 < len(given_tree.children):
+                returned_value = given_tree.children[i+1]
+                print(returned_value.data, returned_value.line_index)
+                child.children.append(returned_value)
+                returned_value.father = child
+                given_tree.children.pop(i + 1)
+
+            while len(child.children) > 1:
+                child.children[0].children.append(child.children[1].children[0])
+                child.children.pop(1)
+
             i += 1
         else:
             manage_returns(child)
@@ -492,7 +508,7 @@ def rename_blocks(given_tree:"Tree")->None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
-        if child.data == "B":
+        if child.data in ["B", "C"]:
             child.data = "Block"
             for c in child.children:
                 rename_blocks(c)
@@ -566,7 +582,6 @@ def manage_container_search(given_tree:"Tree")->None:
             manage_container_search(child)
             i += 1
 
-
 def reajust_fathers(given_tree:"Tree")->None:
     i = 0
     while i < len(given_tree.children):
@@ -587,8 +602,6 @@ def transform_to_ast(given_tree: "Tree") -> None:
     manage_E_un(given_tree)
     compact_non_terminals_chain(given_tree)
     manage_functions(given_tree)
-    manage_prints(given_tree)
-    manage_returns(given_tree)
     manage_fors(given_tree)
     manage_ifs(given_tree)
     manage_C2(given_tree)
@@ -599,7 +612,7 @@ def transform_to_ast(given_tree: "Tree") -> None:
     while prev_tree != given_tree:
         prev_tree = given_tree.copy()
         fuse_chains(given_tree, ["A", "D", "S1", "B", "B1", "C"])
-    
+
     manage_equalities(given_tree)
     rename_blocks(given_tree)
     fuse_chains(given_tree, ["E_un", "E1"])
@@ -607,6 +620,8 @@ def transform_to_ast(given_tree: "Tree") -> None:
     list_pruning(given_tree)
     tuple_pruning(given_tree)
     fuse_chains(given_tree, ["TUPLE", "LIST", "E1", "E2"])
+    manage_prints(given_tree)
+    manage_returns(given_tree)
     manage_container_search(given_tree)
     fuse_chains(given_tree, ["Parameters", "I"])
     reajust_fathers(given_tree)

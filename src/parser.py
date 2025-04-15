@@ -1,12 +1,10 @@
 from src.lexer import *
 from src.tree_struct import *
 
+class ParsingFailedError(Exception):
+    pass
 
-# with open("../tests/source_code.txt", "r") as file:
-#     source_code = file.read()
-
-# lexer = Lexer(source_code)
-
+# -------------------------------------------------------------------------------------------------
 
 class Parser:
     "Parser class"
@@ -36,7 +34,8 @@ class Parser:
         if self.success:
             print("Parsing completed successfully")
         else:
-            print("Parsing failed")
+            self.root.get_flowchart(file_path="tests/flowchart.txt", print_result=False)
+            raise ParsingFailedError
 
     def parse_s(self):
         "S"
@@ -308,6 +307,10 @@ class Parser:
             self.parse_i_1()
             self.tree = self.tree.father
             return True
+        if TokenType.lexicon[token.number] == ")":
+            self.tree = self.tree.father
+            return True
+
         self.tree.add_tree_child(
             Tree(
                 data="ERROR",
@@ -1827,6 +1830,10 @@ class Parser:
             self.parse_e_2()
             self.tree = self.tree.father
             return True
+        if TokenType.lexicon[token.number] == ")":
+            self.tree = self.tree.father
+            return True
+
         self.tree.add_tree_child(
             Tree(
                 data="ERROR",
