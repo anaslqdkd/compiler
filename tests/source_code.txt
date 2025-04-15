@@ -1,10 +1,14 @@
 # Définition d'une fonction pour calculer le carré d'un nombre
+a = 3
 def feur(x, y):
-	a = 5
-	x = "lffsk"
-	y = 4
-	l = [1, 1]
-	return a
+	l = [1, 2]
+	x[0] = 5
+	l[0] = 1
+	a = x[0]
+	return l
 def main(a):
-	feur("lskf", 3)
-	a = feur("lskf",3)
+	a = [1, 2]
+	return a
+def fr(x):
+	a = main(x)
+	return x
