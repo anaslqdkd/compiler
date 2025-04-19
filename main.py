@@ -22,8 +22,8 @@ def main():
     print()
     print_all_symbol_tables(sts, lexer)
 
-    # output_file_path = "tests/asm_code.asm"
-    # generate_asm(output_file_path, parser.root, lexer, sts)
+    output_file_path = "tests/asm_code.asm"
+    generate_asm(output_file_path, parser.root, lexer, sts)
 
 if __name__ == "__main__":
     main()
