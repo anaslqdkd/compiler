@@ -1,11 +1,12 @@
 section .data
 	cst_1 dd 3
-	cst_2 dd 1
-	cst_3 dd 2
-	cst_4 dd 10
-	cst_5 dd 8
-	cst_6 dd 0
-	cst_7 dd 5
+	cst_2 db "flk", 0
+	cst_3 dd 1
+	cst_4 dd 2
+	cst_5 dd 10
+	cst_6 dd 8
+	cst_7 dd 0
+	cst_8 dd 5
 
 
 section .text
@@ -17,13 +18,8 @@ section .text
 
 
 _start:
-
-;	---End of program---
-	mov rax, 60
-	xor rdi, rdi 
-	syscall
-;	------------------------
 	mov dword [rbp+8], 3
+	call sans_param
 sans_param:
 
 ;	---Protocole d'entrée---
@@ -31,26 +27,38 @@ sans_param:
 	mov rbp, rsp
 ;	------------------------
 
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, cst_2
+	mov rdx, 4
+	syscall
+
 
 ;	---Protocole de sortie---
 	pop rbp
 	ret
 ;	------------------------
+
 
 feur:
 
 ;	---Protocole d'entrée---
 	push rbp
 	mov rbp, rsp
+	sub rsp, 24
 ;	------------------------
 
+
 	mov dword [rbp+8], 5
+
 	mov dword [rbp+8], 1
+
 
 ;	---Protocole de sortie---
 	pop rbp
 	ret
 ;	------------------------
+
 
 main:
 
@@ -60,22 +68,28 @@ main:
 ;	------------------------
 
 
+
 ;	---Protocole de sortie---
 	pop rbp
 	ret
 ;	------------------------
+
 
 fr:
 
 ;	---Protocole d'entrée---
 	push rbp
 	mov rbp, rsp
+	sub rsp, 4
 ;	------------------------
+
+	call main
 
 
 ;	---Protocole de sortie---
 	pop rbp
 	ret
 ;	------------------------
+
 
 ; EOF
