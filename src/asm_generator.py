@@ -156,12 +156,23 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: 
 
             for child in current_node.children:
                 build_components_rec(child, current_section)
+            # current_section["cade_section"].append()
+
         sections["_start"] = {}
         sections["_start"]["code_section"] = []
         sections["_start"]["start_protocol"] = []
         sections["_start"]["end_protocol"] = []
         current_section = sections["_start"]
         build_components_rec(current_node, current_section)
+        generate_end_of_program(current_section)
+
+    def generate_end_of_program(current_section: dict):
+        current_section["code_section"].append("\n")
+        current_section["code_section"].append(";\t---End of program---\n")
+        current_section["code_section"].append(f"\tmov rax, {60}\n")  # syscall exit
+        current_section["code_section"].append(f"\txor rdi, rdi \n")  # exit 0
+        current_section["code_section"].append(f"\tsyscall\n")  # pour quitter bien le programme
+        current_section["code_section"].append(";\t------------------------\n")
 
 
     def write_generated_code(sections: dict) -> None:
