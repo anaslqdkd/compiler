@@ -1,7 +1,7 @@
 from src.lexer import *
 from src.parser import *
 from src.st_builder import build_sts, print_all_symbol_tables
-from src.asm_generator import generate_asm
+from src.asm_generator2 import generate_asm
 
 def main():
     with open("tests/source_code.txt", "r") as file:

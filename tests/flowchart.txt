@@ -1,15 +1,27 @@
 graph TD
 0["axiome"]
-3["S1
+2["S1
 father: axiome"]
-7["= (L2)
+3["function (L1)
 father: S1"]
-style 7 stroke:#caf9fb,stroke-width:2px
-6["IDENTIFIER => 1 (L2)
+style 3 stroke:#caf9fb,stroke-width:2px
+5["IDENTIFIER => 1 (L1)
+father: function"]
+style 5 stroke:#caf9fb,stroke-width:2px
+300["Parameters (L1)
+father: function"]
+style 300 stroke:#caf9fb,stroke-width:2px
+10["Block
+father: function"]
+16["= (L2)
+father: Block"]
+style 16 stroke:#caf9fb,stroke-width:2px
+15["IDENTIFIER => 2 (L2)
 father: 51"]
-style 6 stroke:#caf9fb,stroke-width:2px
-18["INTEGER => -1 (L2)
+style 15 stroke:#caf9fb,stroke-width:2px
+27["INTEGER => -1 (L2)
 father: 51"]
+<<<<<<< HEAD
 style 18 stroke:#caf9fb,stroke-width:2px
 28["function (L3)
 father: S1"]
@@ -48,17 +60,42 @@ father: Parameters"]
 style 93 stroke:#caf9fb,stroke-width:2px
 96["IDENTIFIER => 5 (L6)
 father: Parameters"]
-style 96 stroke:#caf9fb,stroke-width:2px
-100["Block
-father: function"]
-106["= (L7)
+=======
+style 27 stroke:#caf9fb,stroke-width:2px
+40["= (L3)
 father: Block"]
-style 106 stroke:#caf9fb,stroke-width:2px
-105["IDENTIFIER => 6 (L7)
+style 40 stroke:#caf9fb,stroke-width:2px
+39["IDENTIFIER => 3 (L3)
 father: 51"]
-style 105 stroke:#caf9fb,stroke-width:2px
-115["LIST (L7)
+style 39 stroke:#caf9fb,stroke-width:2px
+51["INTEGER => -2 (L3)
 father: 51"]
+style 51 stroke:#caf9fb,stroke-width:2px
+64["= (L4)
+father: Block"]
+style 64 stroke:#caf9fb,stroke-width:2px
+63["IDENTIFIER => 4 (L4)
+father: 51"]
+style 63 stroke:#caf9fb,stroke-width:2px
+71["\+ (L4)
+father: 51"]
+style 71 stroke:#caf9fb,stroke-width:2px
+75["IDENTIFIER => 2 (L4)
+father: 40"]
+style 75 stroke:#caf9fb,stroke-width:2px
+83["IDENTIFIER => 3 (L4)
+father: 40"]
+style 83 stroke:#caf9fb,stroke-width:2px
+96["= (L5)
+father: Block"]
+>>>>>>> amine
+style 96 stroke:#caf9fb,stroke-width:2px
+95["IDENTIFIER => 5 (L5)
+father: 51"]
+style 95 stroke:#caf9fb,stroke-width:2px
+104["\* (L5)
+father: 51"]
+<<<<<<< HEAD
 style 115 stroke:#caf9fb,stroke-width:2px
 127["INTEGER => -3 (L7)
 father: LIST"]
@@ -67,19 +104,62 @@ style 127 stroke:#caf9fb,stroke-width:2px
 father: LIST"]
 style 144 stroke:#caf9fb,stroke-width:2px
 164["= (L8)
+=======
+style 104 stroke:#caf9fb,stroke-width:2px
+107["IDENTIFIER => 2 (L5)
+father: 42"]
+style 107 stroke:#caf9fb,stroke-width:2px
+113["IDENTIFIER => 3 (L5)
+father: 42"]
+style 113 stroke:#caf9fb,stroke-width:2px
+126["= (L6)
+>>>>>>> amine
 father: Block"]
-style 164 stroke:#caf9fb,stroke-width:2px
-163["IDENTIFIER => 7 (L8)
+style 126 stroke:#caf9fb,stroke-width:2px
+125["IDENTIFIER => 6 (L6)
+father: 51"]
+style 125 stroke:#caf9fb,stroke-width:2px
+134["// (L6)
+father: 51"]
+style 134 stroke:#caf9fb,stroke-width:2px
+137["IDENTIFIER => 3 (L6)
+father: 43"]
+style 137 stroke:#caf9fb,stroke-width:2px
+143["IDENTIFIER => 2 (L6)
+father: 43"]
+style 143 stroke:#caf9fb,stroke-width:2px
+156["= (L7)
+father: Block"]
+style 156 stroke:#caf9fb,stroke-width:2px
+155["IDENTIFIER => 7 (L7)
+father: 51"]
+style 155 stroke:#caf9fb,stroke-width:2px
+163["\- (L7)
 father: 51"]
 style 163 stroke:#caf9fb,stroke-width:2px
+<<<<<<< HEAD
 171["\+ (L8)
 father: 51"]
 style 171 stroke:#caf9fb,stroke-width:2px
 175["INTEGER => -5 (L8)
 father: 40"]
+=======
+167["IDENTIFIER => 3 (L7)
+father: 41"]
+style 167 stroke:#caf9fb,stroke-width:2px
+175["IDENTIFIER => 2 (L7)
+father: 41"]
+>>>>>>> amine
 style 175 stroke:#caf9fb,stroke-width:2px
-177["\+ (L8)
+187["return (L8)
+father: Block"]
+style 187 stroke:#caf9fb,stroke-width:2px
+193["\+ (L8)
+father: 29"]
+style 193 stroke:#caf9fb,stroke-width:2px
+197["IDENTIFIER => 4 (L8)
 father: 40"]
+<<<<<<< HEAD
 style 177 stroke:#caf9fb,stroke-width:2px
 180["\* (L8)
 father: 40"]
@@ -103,13 +183,42 @@ style 197 stroke:#caf9fb,stroke-width:2px
 father: 42"]
 style 203 stroke:#caf9fb,stroke-width:2px
 211["True => True (L8)
+=======
+style 197 stroke:#caf9fb,stroke-width:2px
+199["\+ (L8)
+>>>>>>> amine
 father: 40"]
-style 211 stroke:#caf9fb,stroke-width:2px
-223["print (L9)
-father: Block"]
-style 223 stroke:#caf9fb,stroke-width:2px
-235["IDENTIFIER => 1 (L9)
+style 199 stroke:#caf9fb,stroke-width:2px
+205["IDENTIFIER => 5 (L8)
+father: 40"]
+style 205 stroke:#caf9fb,stroke-width:2px
+207["\+ (L8)
+father: 40"]
+style 207 stroke:#caf9fb,stroke-width:2px
+213["IDENTIFIER => 6 (L8)
+father: 40"]
+style 213 stroke:#caf9fb,stroke-width:2px
+221["IDENTIFIER => 7 (L8)
+father: 40"]
+style 221 stroke:#caf9fb,stroke-width:2px
+238["= (L10)
+father: S1"]
+style 238 stroke:#caf9fb,stroke-width:2px
+237["IDENTIFIER => 8 (L10)
+father: 51"]
+style 237 stroke:#caf9fb,stroke-width:2px
+247["IDENTIFIER => 1 (L10)
+father: 51"]
+style 247 stroke:#caf9fb,stroke-width:2px
+257["Parameters (L10)
+father: 10"]
+style 257 stroke:#caf9fb,stroke-width:2px
+278["print (L11)
+father: S1"]
+style 278 stroke:#caf9fb,stroke-width:2px
+290["IDENTIFIER => 8 (L11)
 father: 30"]
+<<<<<<< HEAD
 style 235 stroke:#caf9fb,stroke-width:2px
 264["= (L10)
 father: Block"]
@@ -327,3 +436,51 @@ style 654 stroke:#caf9fb,stroke-width:2px
 635 --> 634
 635 --> 644
 644 --> 654
+=======
+style 290 stroke:#caf9fb,stroke-width:2px
+0 --> 2
+2 --> 3
+3 --> 5
+3 --> 300
+3 --> 10
+10 --> 16
+16 --> 15
+16 --> 27
+10 --> 40
+40 --> 39
+40 --> 51
+10 --> 64
+64 --> 63
+64 --> 71
+71 --> 75
+71 --> 83
+10 --> 96
+96 --> 95
+96 --> 104
+104 --> 107
+104 --> 113
+10 --> 126
+126 --> 125
+126 --> 134
+134 --> 137
+134 --> 143
+10 --> 156
+156 --> 155
+156 --> 163
+163 --> 167
+163 --> 175
+10 --> 187
+187 --> 193
+193 --> 197
+193 --> 199
+199 --> 205
+199 --> 207
+207 --> 213
+207 --> 221
+2 --> 238
+238 --> 237
+238 --> 247
+247 --> 257
+2 --> 278
+278 --> 290
+>>>>>>> amine
