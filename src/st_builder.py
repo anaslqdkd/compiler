@@ -43,6 +43,11 @@ class SymbolTable:
         self.region_id: int = SymbolTable._ST_id
         SymbolTable._ST_id += 1
 
+    def _getitem_(self, key):
+        if key in self.symbols:
+            return self.symbols[key]
+        raise KeyError(f"Symbol '{key}' not found")
+
     def set_type(self, node: Tree, new_type: str, lexer: Lexer, need_to_recalculate_depl: bool = False) -> bool:
         """
         Sets the type of a symbol associated with the given parse tree node, and optionally 
