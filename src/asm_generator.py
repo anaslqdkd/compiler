@@ -32,25 +32,25 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: 
 
     # Components ----------------------------------------------------------------------------------
 
-    def generate_code_for_function(function_node: Tree, englobant_st: SymbolTable, current_section: dict) -> None:
-        # rbp - base pointer
-        # rsp - stack pointer
-
-        # FIXME: à remettre, j'ai mis l'autre pour debug plus facilement
-        # function_name = f"f{function_node.children[0].value}_L{function_node.children[0].line_index}"
+    def generate_code_for_function_declarations(function_node: Tree, englobant_st: SymbolTable, current_section: dict) -> None:
+        # NOTE: rbp - base pointer /|/ rsp - stack pointer
 
         function_node_value = function_node.children[0].value
         function_symbol_table = englobant_st.symbols[function_node_value]['symbol table']
         size_to_allocate = get_local_variables_total_size(function_symbol_table)
 
+        # FIXME: à remettre, j'ai mis l'autre pour debug plus facilement
+        # function_name = f"f{function_node.children[0].value}_L{function_node.children[0].line_index}"
         function_name = f"{lexer.identifier_lexicon[function_node.children[0].value]}"
 
-        # Adding the texts to the file
+        # Declaring the function
         text_section.append(f"\tglobal {function_name}\n")
 
-        # protocole d'entrée
-        current_section["start_protocol"].append("\n\n;\t---Protocole d'entrée---\n")
-        # on sauvegarde l'adresse de la base de l'appelant -> chainage dynamique
+        # Entrance protocol
+        current_section["start_protocol"].append("\n;\t---Protocole d'entree---\n")
+        # lr contains the return address, but it might change => we need to save it
+        current_section["start_protocol"].append("\tpush lr\n")
+        # on sauvegarde l'adresse de la base de l'appelant -> chaînage dynamique
         current_section["start_protocol"].append("\tpush rbp\n")
         # le base pointer = sommet de la pile actuelle
         current_section["start_protocol"].append("\tmov rbp, rsp\n")
@@ -59,23 +59,25 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: 
             current_section["start_protocol"].append(f"\tsub rsp, {size_to_allocate}\n")
 
         current_section["start_protocol"].append(";\t------------------------\n")
-        current_section["start_protocol"].append("\n")
+
+        # Processing the function's body
+        for instr in function_node.children[2].children:
+            build_components_rec(instr, current_section)
 
         # protocole de sortie
-        current_section["end_protocol"].append("\n\n")
+        current_section["end_protocol"].append("\n")
         current_section["end_protocol"].append(";\t---Protocole de sortie---\n")
-        current_section["end_protocol"].append("\tpop rbp\n")
-        current_section["end_protocol"].append("\tret\n")
+        current_section["end_protocol"].append("\tpop rbp\n") # restore base pointer
+        current_section["end_protocol"].append("\tpop lr\n") # restore return address
+        current_section["end_protocol"].append("\tbx lr\n") # return to the caller
         current_section["end_protocol"].append(";\t------------------------\n")
         current_section["end_protocol"].append("\n\n")
         return
-
 
     def generate_function_call(node: Tree, englobing_table: SymbolTable, current_section: dict):
         # TODO: store the parameters
         function_name = lexer.identifier_lexicon[node.children[1].value]
         current_section["code_section"].append(f"\tcall {function_name}\n")
-
 
     def generate_assignment(node: Tree, englobing_table: SymbolTable, current_section: dict):
         if len(node.children) > 1:
@@ -215,33 +217,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: 
         pass
 
     def build_components(current_node: Tree):
-        def build_components_rec(current_node: Tree, section:dict) -> None:
-            current_section = section
-            if current_node.is_terminal:
-                if current_node.data == "function":
-                    section_name = lexer.identifier_lexicon[current_node.children[0].value]
-                    sections[section_name] = {}
-                    current_section = sections[section_name] 
-                    current_section["start_protocol"] = []
-                    current_section["code_section"] = []
-                    current_section["end_protocol"] = []
-                    generate_code_for_function(current_node, current_table, current_section)
-                elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "=":
-                    # si affectation
-                    if current_node.children[1].value != None and current_node.children[1].value in current_table.function_return.keys():
-                        generate_function_call(current_node, current_table, current_section)
-                    else:
-                        generate_assignment(current_node, current_table, current_section)
-                    #TODO: si membre gauche est une fonction (ex: current_node.value in current_table.function_return.keys() -> appel de fonction donc call etc)
-                elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "print":
-                    # si print
-                    generate_print(current_node, current_table, current_section)
-                # TODO: si appel de fonction tout court, sans affectation
-
-            for child in current_node.children:
-                build_components_rec(child, current_section)
-            # current_section["cade_section"].append()
-
         sections["_start"] = {}
         sections["_start"]["code_section"] = []
         sections["_start"]["start_protocol"] = []
@@ -249,6 +224,33 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: 
         current_section = sections["_start"]
         build_components_rec(current_node, current_section)
         generate_end_of_program(current_section)
+    def build_components_rec(current_node: Tree, section:dict) -> None:
+        current_section = section
+        if current_node.is_terminal:
+            if current_node.data == "function":
+                # Function declaration
+                section_name = lexer.identifier_lexicon[current_node.children[0].value]
+                sections[section_name] = {}
+                current_section = sections[section_name] 
+                current_section["start_protocol"] = []
+                current_section["code_section"] = []
+                current_section["end_protocol"] = []
+                generate_code_for_function_declarations(current_node, current_table, current_section)
+            elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "=":
+                # Affectation
+                if current_node.children[1].value != None and current_node.children[1].value in current_table.function_return.keys():
+                    generate_function_call(current_node, current_table, current_section)
+                else:
+                    generate_assignment(current_node, current_table, current_section)
+                #TODO: si membre gauche est une fonction (ex: current_node.value in current_table.function_return.keys() -> appel de fonction donc call etc)
+            elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "print":
+                # Prints
+                generate_print(current_node, current_table, current_section)
+            # TODO: si appel de fonction tout court, sans affectation
+        else:
+            for child in current_node.children:
+                build_components_rec(child, current_section)
+            # current_section["cade_section"].append()
 
     def generate_end_of_program(current_section: dict):
         current_section["code_section"].append("\n")
@@ -256,9 +258,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: 
         current_section["code_section"].append(f"\tmov rax, {60}\n")  # syscall exit
         current_section["code_section"].append(f"\txor rdi, rdi \n")  # exit 0
         current_section["code_section"].append(f"\tsyscall\n")  # pour quitter bien le programme
-        current_section["code_section"].append(";\t------------------------\n")
-
-    bss_section = setup_print_functions()
+        current_section["code_section"].append(";\t------------------------\n\n\n")
 
     def write_generated_code(sections: dict) -> None:
         if (len(data_section) > 1):
@@ -292,6 +292,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: 
     current_table = symbol_tables
     generate_code_for_constants()
     build_components(ast)
+    bss_section = [] # setup_print_functions()
     write_generated_code(sections)
     output_file.close()
     print("Generation done!")
