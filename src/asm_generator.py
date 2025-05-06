@@ -1,7 +1,7 @@
 from src.lexer import Lexer
 from src.lexer import TokenType
 from src.tree_struct import Tree
-from src.st_builder import SymbolTable
+from src.st_builder import*
 
 UTF8_CharSize = 8  # en bits
 
@@ -23,8 +23,7 @@ def sizeof(value):
 
 # NOTE: the produced ASM is NASM (Netwide Assembler)
 
-
-def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: SymbolTable) -> None:
+def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: SymbolTable) -> None:
     # Opening the output file
     output_file = open(output_file_path, 'w')
     data_section: list[str] = ["section .data\n"]
@@ -48,8 +47,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: 
 
         # Entrance protocol
         current_section["start_protocol"].append("\n;\t---Protocole d'entree---\n")
-        # lr contains the return address, but it might change => we need to save it
-        current_section["start_protocol"].append("\tpush lr\n")
         # on sauvegarde l'adresse de la base de l'appelant -> chaînage dynamique
         current_section["start_protocol"].append("\tpush rbp\n")
         # le base pointer = sommet de la pile actuelle
@@ -59,46 +56,45 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: 
             current_section["start_protocol"].append(f"\tsub rsp, {size_to_allocate}\n")
 
         current_section["start_protocol"].append(";\t------------------------\n")
+        current_section["start_protocol"].append("\n")
 
         # Processing the function's body
         for instr in function_node.children[2].children:
-            build_components_rec(instr, current_section)
+            build_components_rec(instr, function_symbol_table, current_section)
 
         # protocole de sortie
         current_section["end_protocol"].append("\n")
         current_section["end_protocol"].append(";\t---Protocole de sortie---\n")
         current_section["end_protocol"].append("\tpop rbp\n") # restore base pointer
-        current_section["end_protocol"].append("\tpop lr\n") # restore return address
-        current_section["end_protocol"].append("\tbx lr\n") # return to the caller
+        current_section["end_protocol"].append("\tret\n") # return to the caller
         current_section["end_protocol"].append(";\t------------------------\n")
         current_section["end_protocol"].append("\n\n")
         return
 
     def generate_function_call(node: Tree, englobing_table: SymbolTable, current_section: dict):
         # TODO: store the parameters
-        function_name = lexer.identifier_lexicon[node.children[1].value]
+        function_name = lexer.identifier_lexicon[node.value]
         current_section["code_section"].append(f"\tcall {function_name}\n")
 
-    def generate_assignment(node: Tree, englobing_table: SymbolTable, current_section: dict):
+    def generate_assignment(node: Tree, englobing_table: SymbolTable, current_section: dict, has_function_call: bool = False):
         if len(node.children) > 1:
-            left_identifier = node.children[0].value
-            right_identifier = node.children[1].value
-            # FIXME: mettre les constantes directiment definies dans .data, si c'est une constante..., changer la forme tout court
-            if right_identifier in lexer.constant_lexicon.keys():
-                right_identifier_value = lexer.constant_lexicon[right_identifier]
-            else:
-                return
-            # FIXME: get the right offset in the st
+            left_side_address = get_variable_address(englobing_table, node.children[0].value)
 
-            if isinstance(right_identifier_value, int):
-                depl = 8
-                # print(current_section)
-                current_section["code_section"].append(
-                    # base + depl
-                    f"\n\tmov dword [rbp{depl:+}], {right_identifier_value}\n")
-            if isinstance(right_identifier_value, str):
-                pass
-                # TODO: gérér les str et les autres trucs, type appels de fonction
+            right_side: str
+            if has_function_call:
+                # Right-side is a function call (=> return value is stored in "rax")
+                right_side = "rax"
+            elif node.children[1].value in lexer.constant_lexicon.keys():
+                # Right-side is a constant
+                right_side = f"cst_{abs(node.children[1].value)}"
+            elif in_st(englobing_table, node.children[1].value):
+                # Right side is an identifier
+                right_side = get_variable_address(englobing_table, node.children[1].value)
+            else:
+                # TODO: right-side of affectation could be an operation
+                raise
+
+            current_section["code_section"].append(f"\tmov {left_side_address}, {right_side}\n")  # Store the return value in the variable
         return
     
     def generate_binary_operation(node: Tree, englobing_table: SymbolTable, current_section: dict):
@@ -168,11 +164,12 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: 
         # Add the buffer in the bss section
         bss_section = ["section .bss\n"]
         bss_section.append("\tbuffer resb 20\n")  # Buffer for number conversion
-        
+
         # Add newline in data section
         data_section.append("\tnewline db 0xA\n")
         
         # Add the print_rax function to text section
+        text_section.append("\n\n;	---Print Protocol---\n")
         text_section.append("print_rax:\n")
         text_section.append("\tmov rcx, buffer + 20\n")
         text_section.append("\tmov rbx, 10\n")
@@ -196,8 +193,9 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: 
         text_section.append("\tmov rdi, 1\n")
         text_section.append("\tmov rsi, newline\n")
         text_section.append("\tmov rdx, 1\n")
-        text_section.append("\tsyscall\n\n")
-        text_section.append("\tret\n\n")
+        text_section.append("\tsyscall\n")
+        text_section.append("\tret\n")
+        text_section.append(";\t------------------------\n")
         
         return bss_section
 
@@ -216,15 +214,15 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: 
                 data_section.append(f"\tcst_{abs(key)} db {value}, 0\n")
         pass
 
-    def build_components(current_node: Tree):
+    def build_components(current_node: Tree, current_table:SymbolTable):
         sections["_start"] = {}
-        sections["_start"]["code_section"] = []
+        sections["_start"]["code_section"] = ["\n"]
         sections["_start"]["start_protocol"] = []
         sections["_start"]["end_protocol"] = []
         current_section = sections["_start"]
-        build_components_rec(current_node, current_section)
+        build_components_rec(current_node, current_table, current_section)
         generate_end_of_program(current_section)
-    def build_components_rec(current_node: Tree, section:dict) -> None:
+    def build_components_rec(current_node: Tree, current_table:SymbolTable, section:dict) -> None:
         current_section = section
         if current_node.is_terminal:
             if current_node.data == "function":
@@ -239,17 +237,18 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: 
             elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "=":
                 # Affectation
                 if current_node.children[1].value != None and current_node.children[1].value in current_table.function_return.keys():
-                    generate_function_call(current_node, current_table, current_section)
+                    generate_function_call(current_node.children[1], current_table, current_section)
+                    generate_assignment(current_node, current_table, current_section, True)
                 else:
                     generate_assignment(current_node, current_table, current_section)
-                #TODO: si membre gauche est une fonction (ex: current_node.value in current_table.function_return.keys() -> appel de fonction donc call etc)
             elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "print":
                 # Prints
                 generate_print(current_node, current_table, current_section)
-            # TODO: si appel de fonction tout court, sans affectation
+            elif TokenType.lexicon[current_node.data] == "IDENTIFIER" and len(current_node.children) > 0:
+                generate_function_call(current_node, current_table, current_section)
         else:
             for child in current_node.children:
-                build_components_rec(child, current_section)
+                build_components_rec(child, current_table, current_section)
             # current_section["cade_section"].append()
 
     def generate_end_of_program(current_section: dict):
@@ -289,15 +288,16 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: 
         output_file.write("; EOF")
 
     print(f"\nGenerating ASM code in \"{output_file_path}\"...\n")
-    current_table = symbol_tables
     generate_code_for_constants()
-    build_components(ast)
-    bss_section = [] # setup_print_functions()
+    build_components(ast, global_table)
+    bss_section = setup_print_functions()
     write_generated_code(sections)
     output_file.close()
     print("Generation done!")
     print("NOTE: the produced ASM is NASM (Netwide Assembler). Comments are preceded by a semicolon.\n")
     pass
+
+# ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 def get_local_variables_total_size(symbol_table: SymbolTable) -> int:
     total_size = 0
@@ -306,6 +306,34 @@ def get_local_variables_total_size(symbol_table: SymbolTable) -> int:
         if symbol_depl > 0:
             total_size += symbol_depl
     return total_size // 8
+
+def get_variable_address(symbol_table: SymbolTable, variable_id: int) -> int:
+    if variable_id in symbol_table.symbols.keys():
+        return symbol_table.symbols[variable_id]['depl']
+    elif symbol_table.englobing_table == None:
+        raise ValueError(f"Variable {variable_id} not found in symbol table.")
+    else:
+        return find_symbol(symbol_table.englobing_table, variable_id)
+
+# def find_symbol(current_st: "SymbolTable", node_value: int) -> Optional[Dict[int, Any]]:
+#     """
+#     Recursively searches for a symbol by its identifier in the current symbol table and its parent scopes.
+
+#     Parameters:
+#         current_st (SymbolTable): The symbol table to begin the search from.
+#         node_value (int): The identifier of the symbol to find.
+
+#     Returns:
+#         Optional[Dict[int, Any]]: The symbol's attributes dictionary if found, otherwise None.
+#     """
+#     if node_value in current_st.symbols.keys():
+#         return current_st.symbols[node_value]
+#     elif current_st.englobing_table == None:
+#         return None
+#     else:
+#         return find_symbol(current_st.englobing_table, node_value)
+
+
 
 # Headers in NASM:
 # section .data

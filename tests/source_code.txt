@@ -4,4 +4,5 @@ def f(n):
     b = 6
     return n + a + b
 
-f(4)
+C = f(4)
+f(8)
