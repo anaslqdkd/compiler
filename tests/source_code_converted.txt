@@ -1,69 +1,112 @@
 section .data
-    buffer db "    ", 10    ; Buffer pour stocker le résultat (4 chiffres max + nouvelle ligne)
-    buffer_len equ $ - buffer
+    a dq 7                 ; Constante a = 7 (quad word)
+    b dq 2                 ; Constante b = 2
+    newline db 0xA         ; Saut de ligne
+
+section .bss
+    buffer resb 20         ; Buffer pour conversion ASCII
 
 section .text
-    global _start           ; Point d'entrée pour ld
+    global _start
 
 _start:
-    ; Initialisation des variables
-    mov r8, 5               ; a = 5
-    mov r9, 10              ; b = 10
-    
-    ; Calcul c = a + b
-    mov r10, r8             ; r10 = a
-    add r10, r9             ; r10 = a + b = c (15)
-    
-    ; Calcul d = a * b
-    mov r11, r8             ; r11 = a
-    imul r11, r9            ; r11 = a * b = d (50)
-    
-    ; Calcul e = b // a (division entière)
-    mov rax, r9             ; rax = b (10)
-    xor rdx, rdx            ; Nettoyer rdx pour la division
-    div r8                  ; rax = b // a = e (2)
-    mov r12, rax            ; r12 = e
-    
-    ; Calcul f = b - a
-    mov r13, r9             ; r13 = b
-    sub r13, r8             ; r13 = b - a = f (5)
-    
-    ; Calcul du résultat final: c + d + e + f
-    mov rax, r10            ; rax = c
-    add rax, r11            ; rax = c + d
-    add rax, r12            ; rax = c + d + e
-    add rax, r13            ; rax = c + d + e + f = 15 + 50 + 2 + 5 = 72
-    
-    ; Convertir le nombre en ASCII
-    mov rcx, buffer         ; rcx = adresse du buffer
-    add rcx, 3              ; Positionner au dernier chiffre du buffer
-    mov rbx, 10             ; Base décimale
-    
-convert_loop:
-    xor rdx, rdx            ; Nettoyer rdx pour la division
-    div rbx                 ; Diviser rax par 10, quotient dans rax, reste dans rdx
-    add dl, '0'             ; Convertir le reste en caractère ASCII
-    mov [rcx], dl           ; Stocker le chiffre dans le buffer
-    dec rcx                 ; Reculer d'une position dans le buffer
-    
-    test rax, rax           ; Vérifier si quotient = 0
-    jnz convert_loop        ; Si non, continuer la conversion
-    
-    ; Ajuster pour afficher depuis le premier chiffre
-    inc rcx
-    
-    ; Calculer la longueur de la chaîne à afficher
-    mov rdx, buffer
-    add rdx, 4              ; Inclure le saut de ligne
-    sub rdx, rcx            ; rdx = longueur à afficher
-    
-    ; Afficher le résultat
-    mov rax, 1              ; sys_write
-    mov rdi, 1              ; stdout
-    mov rsi, rcx            ; adresse du premier chiffre
+    ; --- PUSH des constantes sur la pile ---
+    mov rax, [a]
+    push rax               ; push a
+    mov rbx, [b]
+    push rbx               ; push b
+
+    ; === Addition ===
+    pop rbx                ; b
+    pop rax                ; a
+    add rax, rbx
+    call print_rax
+
+    ; Remettre a et b sur la pile
+    mov rax, [a]
+    push rax
+    mov rbx, [b]
+    push rbx
+
+    ; === Soustraction ===
+    pop rbx
+    pop rax
+    sub rax, rbx
+    call print_rax
+
+    ; Remettre a et b sur la pile
+    mov rax, [a]
+    push rax
+    mov rbx, [b]
+    push rbx
+
+    ; === Multiplication ===
+    pop rbx
+    pop rax
+    imul rax, rbx
+    call print_rax
+
+    ; Remettre a et b sur la pile
+    mov rax, [a]
+    push rax
+    mov rbx, [b]
+    push rbx
+
+    ; === Division entière ===
+    pop rbx                ; b
+    pop rax                ; a
+    xor rdx, rdx
+    div rbx                ; rax = a // b
+    call print_rax
+
+    ; Remettre a et b sur la pile
+    mov rax, [a]
+    push rax
+    mov rbx, [b]
+    push rbx
+
+    ; === Modulo ===
+    pop rbx
+    pop rax
+    xor rdx, rdx
+    div rbx
+    mov rax, rdx           ; rax = a % b
+    call print_rax
+
+    ; === Exit ===
+    mov rax, 60
+    xor rdi, rdi
     syscall
-    
-    ; Sortir du programme
-    mov rax, 60             ; sys_exit
-    xor rdi, rdi            ; code de retour 0
+
+; =============================
+; Convert rax en ASCII et print
+; =============================
+print_rax:
+    mov rcx, buffer + 20
+    mov rbx, 10
+
+.convert_loop:
+    xor rdx, rdx
+    div rbx
+    add dl, '0'
+    dec rcx
+    mov [rcx], dl
+    test rax, rax
+    jnz .convert_loop
+
+    ; write result
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, rcx
+    mov rdx, buffer + 20
+    sub rdx, rcx
     syscall
+
+    ; newline
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, newline
+    mov rdx, 1
+    syscall
+
+    ret

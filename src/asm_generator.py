@@ -98,22 +98,106 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: 
                 pass
                 # TODO: gérér les str et les autres trucs, type appels de fonction
         return
+    
+    def generate_binary_operation(node: Tree, englobing_table: SymbolTable, current_section: dict):
+        """Generate assembly code for binary operations (+, -, *, //, %)"""
+        operation = node.data
+        left_operand = node.children[0]
+        right_operand = node.children[1]
+        
+        # Generate code to push operands to the stack
+        generate_expression(left_operand, englobing_table, current_section)
+        generate_expression(right_operand, englobing_table, current_section)
+        
+        current_section["code_section"].append("\t; Performing binary operation\n")
+        current_section["code_section"].append("\tpop rbx\n")  # Right operand
+        current_section["code_section"].append("\tpop rax\n")  # Left operand
+        
+        # Generate the appropriate operation instruction
+        if operation == 40:
+            current_section["code_section"].append("\tadd rax, rbx\n")
+        elif operation == 41:
+            current_section["code_section"].append("\tsub rax, rbx\n")
+        elif operation == 42:
+            current_section["code_section"].append("\timul rax, rbx\n")
+        elif operation == 43:
+            current_section["code_section"].append("\txor rdx, rdx\n")
+            current_section["code_section"].append("\tdiv rbx\n")
+        elif operation == 44:
+            current_section["code_section"].append("\txor rdx, rdx\n")
+            current_section["code_section"].append("\tdiv rbx\n")
+            current_section["code_section"].append("\tmov rax, rdx\n")  # Modulo result is in rdx
+        
+        # Push the result back to the stack
+        current_section["code_section"].append("\tpush rax\n")
+    
+    def generate_expression(node: Tree, englobing_table: SymbolTable, current_section: dict):
+        """Generate code for expressions (constants, variables, and operations)"""
+        if node.is_terminal:
+            if node.data == "constant":
+                # For a constant, push its value onto the stack
+                value = lexer.constant_lexicon[node.value]
+                current_section["code_section"].append(f"\tmov rax, {value}\n")
+                current_section["code_section"].append("\tpush rax\n")
+            elif node.data == "identifier":
+                # For a variable, load its value and push onto the stack
+                var_name = lexer.identifier_lexicon[node.value]
+                depl = englobing_table.symbols[var_name]['depl']
+                current_section["code_section"].append(f"\tmov rax, [rbp{-depl:+}]\n")
+                current_section["code_section"].append("\tpush rax\n")
+        else:
+            # For binary operations
+            if node.data in [40, 41, 42, 43, 44]:
+                generate_binary_operation(node, englobing_table, current_section)
 
     def generate_print(node: Tree, symbol_table: SymbolTable, current_section: dict):
-        # TODO: generate print asm code
+        """Generate code to print values, including numeric results"""
         to_print = node.children[0]
-
-        # 1: constantes (définies dans .data), marche que pour les str, pour les int il faut faire une conversion préalable, à faire
-        if to_print.value in lexer.constant_lexicon:
-            label = f"cst_{abs(to_print.value)}"
-            # length = symbol_table.symbols[to_print]["depl"]
-            length = 4 # à changer
-            current_section["code_section"].append("\tmov rax, 1\n")  # syscall: write
-            current_section["code_section"].append("\tmov rdi, 1\n")  # stdout
-            current_section["code_section"].append(f"\tmov rsi, {label}\n")
-            current_section["code_section"].append(f"\tmov rdx, {length}\n")
-            current_section["code_section"].append("\tsyscall\n")
-        # 2: identifiers etc...
+        
+        # Generate code to get the value to print into rax
+        generate_expression(to_print, symbol_table, current_section)
+        current_section["code_section"].append("\tpop rax\n")  # Pop the result to print
+        
+        # Call the print_rax function which handles numeric printing
+        current_section["code_section"].append("\tcall print_rax\n")
+    
+    def setup_print_functions():
+        """Add the print_rax function to the text section"""
+        # Add the buffer in the bss section
+        bss_section = ["section .bss\n"]
+        bss_section.append("\tbuffer resb 20\n")  # Buffer for number conversion
+        
+        # Add newline in data section
+        data_section.append("\tnewline db 0xA\n")
+        
+        # Add the print_rax function to text section
+        text_section.append("print_rax:\n")
+        text_section.append("\tmov rcx, buffer + 20\n")
+        text_section.append("\tmov rbx, 10\n")
+        text_section.append(".convert_loop:\n")
+        text_section.append("\txor rdx, rdx\n")
+        text_section.append("\tdiv rbx\n")
+        text_section.append("\tadd dl, '0'\n")
+        text_section.append("\tdec rcx\n")
+        text_section.append("\tmov [rcx], dl\n")
+        text_section.append("\ttest rax, rax\n")
+        text_section.append("\tjnz .convert_loop\n\n")
+        text_section.append("\t; write result\n")
+        text_section.append("\tmov rax, 1\n")
+        text_section.append("\tmov rdi, 1\n")
+        text_section.append("\tmov rsi, rcx\n")
+        text_section.append("\tmov rdx, buffer + 20\n")
+        text_section.append("\tsub rdx, rcx\n")
+        text_section.append("\tsyscall\n\n")
+        text_section.append("\t; newline\n")
+        text_section.append("\tmov rax, 1\n")
+        text_section.append("\tmov rdi, 1\n")
+        text_section.append("\tmov rsi, newline\n")
+        text_section.append("\tmov rdx, 1\n")
+        text_section.append("\tsyscall\n\n")
+        text_section.append("\tret\n\n")
+        
+        return bss_section
 
     # Recursive function and call -----------------------------------------------------------------
 
@@ -174,6 +258,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: 
         current_section["code_section"].append(f"\tsyscall\n")  # pour quitter bien le programme
         current_section["code_section"].append(";\t------------------------\n")
 
+    bss_section = setup_print_functions()
 
     def write_generated_code(sections: dict) -> None:
         if (len(data_section) > 1):
@@ -181,6 +266,13 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, symbol_tables: 
             for line in data_section:
                 output_file.write(line)
             output_file.write("\n\n")
+
+        if (len(bss_section) > 1):
+            # Write BSS section with our buffer
+            for line in bss_section:
+                output_file.write(line)
+            output_file.write("\n\n")
+
         if (len(text_section) > 1):
             # There's more than the header to write
             for line in text_section:

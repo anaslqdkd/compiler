@@ -1,95 +1,55 @@
 section .data
-	cst_1 dd 3
-	cst_2 db "flk", 0
-	cst_3 dd 1
-	cst_4 dd 2
-	cst_5 dd 10
-	cst_6 dd 8
-	cst_7 dd 0
-	cst_8 dd 5
+	newline db 0xA
+	cst_1 dd 7
+	cst_2 dd 2
+
+
+section .bss
+	buffer resb 20
 
 
 section .text
 	global _start
-	global sans_param
-	global feur
-	global main
-	global fr
+print_rax:
+	mov rcx, buffer + 20
+	mov rbx, 10
+
+.convert_loop:
+	xor rdx, rdx
+	div rbx
+	add dl, '0'
+	dec rcx
+	mov [rcx], dl
+	test rax, rax
+	jnz .convert_loop
+
+	; write result
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, rcx
+	mov rdx, buffer + 20
+	sub rdx, rcx
+	syscall
+
+	; newline
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, newline
+	mov rdx, 1
+	syscall
+
+	ret
+
 
 
 _start:
-	mov dword [rbp+8], 3
-	call sans_param
-sans_param:
+	mov dword [rbp+8], 7
 
-;	---Protocole d'entrée---
-	push rbp
-	mov rbp, rsp
-;	------------------------
+	mov dword [rbp+8], 2
 
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, cst_2
-	mov rdx, 4
+;	---End of program---
+	mov rax, 60
+	xor rdi, rdi 
 	syscall
-
-
-;	---Protocole de sortie---
-	pop rbp
-	ret
 ;	------------------------
-
-
-feur:
-
-;	---Protocole d'entrée---
-	push rbp
-	mov rbp, rsp
-	sub rsp, 24
-;	------------------------
-
-
-	mov dword [rbp+8], 5
-
-	mov dword [rbp+8], 1
-
-
-;	---Protocole de sortie---
-	pop rbp
-	ret
-;	------------------------
-
-
-main:
-
-;	---Protocole d'entrée---
-	push rbp
-	mov rbp, rsp
-;	------------------------
-
-
-
-;	---Protocole de sortie---
-	pop rbp
-	ret
-;	------------------------
-
-
-fr:
-
-;	---Protocole d'entrée---
-	push rbp
-	mov rbp, rsp
-	sub rsp, 4
-;	------------------------
-
-	call main
-
-
-;	---Protocole de sortie---
-	pop rbp
-	ret
-;	------------------------
-
-
 ; EOF
