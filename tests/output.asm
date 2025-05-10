@@ -1,19 +1,18 @@
 section .data
 	newline db 0xA
 
-
 section .bss
 	buffer resb 20
-
 
 section .text
 	global _start
 
 
-;	---Print Protocol---
+;---Print Protocol---
 print_rax:
 	mov rcx, buffer + 20
 	mov rbx, 10
+
 .convert_loop:
 	xor rdx, rdx
 	div rbx
@@ -38,10 +37,11 @@ print_rax:
 	mov rdx, 1
 	syscall
 	ret
-;	------------------------
+;--------------------
 
 
 _start:
+	; Allocating space for 3 local variables
 	push rbp
 	mov rbp, rsp
 	sub rsp, 24
@@ -79,11 +79,12 @@ _start:
 	mov rax, [rbp-24]
 	call print_rax
 
+
 ;	---End of program---
 	mov rax, 60
 	xor rdi, rdi 
 	syscall
-;	------------------------
+;	--------------------
 
 
 ; EOF

@@ -189,17 +189,17 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         """Add the print_rax function to the text section"""
         # Add the buffer in the bss section
         bss_section = ["section .bss\n"]
-        bss_section.append("\tbuffer resb 20\n")  # Buffer for number conversion
+        bss_section.append("\tbuffer resb 20")  # Buffer for number conversion
 
         # Add newline in data section
-        data_section.append("\tnewline db 0xA\n")
+        data_section.append("\tnewline db 0xA")
         
         # Add the print_rax function to text section
-        text_section.append("\n\n;	---Print Protocol---\n")
+        text_section.append("\n\n;---Print Protocol---\n")
         text_section.append("print_rax:\n")
         text_section.append("\tmov rcx, buffer + 20\n")
         text_section.append("\tmov rbx, 10\n")
-        text_section.append(".convert_loop:\n")
+        text_section.append("\n.convert_loop:\n")
         text_section.append("\txor rdx, rdx\n")
         text_section.append("\tdiv rbx\n")
         text_section.append("\tadd dl, '0'\n")
@@ -221,7 +221,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         text_section.append("\tmov rdx, 1\n")
         text_section.append("\tsyscall\n")
         text_section.append("\tret\n")
-        text_section.append(";\t------------------------\n")
+        text_section.append(";--------------------\n")
         
         return bss_section
 
@@ -234,7 +234,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         sections["_start"]["end_protocol"] = []
 
         
-        sections["_start"]["start_protocol"].append(f"\t; Allocating space for {len(global_table.symbols)} local variables\n")
+        sections["_start"]["start_protocol"].append(f"\n\t; Allocating space for {len(global_table.symbols)} local variables")
         sections["_start"]["start_protocol"].append("\n\tpush rbp\n")
         sections["_start"]["start_protocol"].append("\tmov rbp, rsp\n")
 
@@ -273,12 +273,12 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             # current_section["cade_section"].append()
 
     def generate_end_of_program(current_section: dict):
-        current_section["code_section"].append("\n")
+        current_section["code_section"].append("\n\n")
         current_section["code_section"].append(";\t---End of program---\n")
         current_section["code_section"].append(f"\tmov rax, {60}\n")  # syscall exit
         current_section["code_section"].append(f"\txor rdi, rdi \n")  # exit 0
         current_section["code_section"].append(f"\tsyscall\n")  # pour quitter bien le programme
-        current_section["code_section"].append(";\t------------------------\n\n\n")
+        current_section["code_section"].append(";\t--------------------\n\n\n")
 
     def write_generated_code(sections: dict) -> None:
         if (len(data_section) > 1):
