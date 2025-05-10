@@ -44,7 +44,7 @@ print_rax:
 _start:
 	push rbp
 	mov rbp, rsp
-	sub rsp, 32
+	sub rsp, 24
 
 	mov rax, 5
 	push rax
@@ -63,20 +63,20 @@ _start:
 	sub rax, rbx
 	push rax
 	pop rax
-	mov [rbp-32], rax
+	mov [rbp-8], rax
 	mov rax, 1
-	mov [rbp-64], rax
+	mov [rbp-16], rax
+	mov rax, 1
+	push rax
 
 	; Performing + operation
-	mov rax, [rbp-32]
-	mov rbx, [rbp-64]
 	add rax, rbx
 	push rax
 	pop rax
-	mov [rbp-96], rax
+	mov [rbp-24], rax
 
 	; print(c)
-	mov rax, [rbp-96]
+	mov rax, [rbp-24]
 	call print_rax
 
 ;	---End of program---

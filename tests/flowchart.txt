@@ -44,7 +44,7 @@ style 77 stroke:#caf9fb,stroke-width:2px
 81["IDENTIFIER => 1 (L3)
 father: 40"]
 style 81 stroke:#caf9fb,stroke-width:2px
-89["IDENTIFIER => 2 (L3)
+89["INTEGER => -4 (L3)
 father: 40"]
 style 89 stroke:#caf9fb,stroke-width:2px
 101["print (L4)

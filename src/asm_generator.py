@@ -232,9 +232,14 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         sections["_start"]["code_section"] = ["\n"]
         sections["_start"]["start_protocol"] = []
         sections["_start"]["end_protocol"] = []
+
+        
+        sections["_start"]["start_protocol"].append(f"\t; Allocating space for {len(global_table.symbols)} local variables\n")
         sections["_start"]["start_protocol"].append("\n\tpush rbp\n")
         sections["_start"]["start_protocol"].append("\tmov rbp, rsp\n")
-        sections["_start"]["start_protocol"].append("\tsub rsp, 32\n")  # Place pour a
+
+        # Set up the stack for local variables
+        sections["_start"]["start_protocol"].append(f"\tsub rsp, {len(global_table.symbols) * 8}\n") 
         current_section = sections["_start"]
         build_components_rec(current_node, current_table, current_section)
         generate_end_of_program(current_section)
