@@ -8,7 +8,7 @@ section .text
 	global _start
 
 
-;---Print Protocol---
+;	---Print Protocol---
 print_rax:
 	mov rcx, buffer + 20
 	mov rbx, 10
@@ -37,7 +37,7 @@ print_rax:
 	mov rdx, 1
 	syscall
 	ret
-;--------------------
+;	--------------------
 
 
 _start:

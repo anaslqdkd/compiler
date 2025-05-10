@@ -195,7 +195,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         data_section.append("\tnewline db 0xA")
         
         # Add the print_rax function to text section
-        text_section.append("\n\n;---Print Protocol---\n")
+        text_section.append("\n\n;\t---Print Protocol---\n")
         text_section.append("print_rax:\n")
         text_section.append("\tmov rcx, buffer + 20\n")
         text_section.append("\tmov rbx, 10\n")
@@ -221,7 +221,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         text_section.append("\tmov rdx, 1\n")
         text_section.append("\tsyscall\n")
         text_section.append("\tret\n")
-        text_section.append(";--------------------\n")
+        text_section.append(";\t--------------------\n")
         
         return bss_section
 
