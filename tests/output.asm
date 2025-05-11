@@ -9,7 +9,6 @@ section .data
 section .bss
 	buffer resb 20
 
-
 section .text
 	global _start
 	global f

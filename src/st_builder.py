@@ -19,7 +19,7 @@ class STError(Exception):
 
 class SymbolTable:
     _ST_id = 0
-    integer_size = 8*4  # Assuming every integer will be coded using 4 bytes (8*4 bits) maximum
+    integer_size = 8  # Assuming every integer will be coded using 4 bytes (8*4 bits) maximum
     character_size = 8  # Assuming every character will respect the UTF-8 norm
     node_counter = 0
     node_counter_else = 0

@@ -80,72 +80,94 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         if len(node.children) > 1:
             left_side_address = get_variable_address(englobing_table, node.children[0].value)
 
-            right_side: str
+
             if has_function_call:
                 # Right-side is a function call (=> return value is stored in "rax")
-                right_side = "rax"
+                current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
             elif node.children[1].value in lexer.constant_lexicon.keys():
-                # Right-side is a constant
-                right_side = f"cst_{abs(node.children[1].value)}"
+                # Right-side is a constant: mettre la constante dans la registre
+                value = lexer.constant_lexicon[node.children[1].value]
+                current_section["code_section"].append(f"\tmov rax, {value}\n")
+                current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
             elif in_st(englobing_table, node.children[1].value):
-                # Right side is an identifier
+                # Right side is an identifier: charger la variable puis la mettre en pile
                 right_side = get_variable_address(englobing_table, node.children[1].value)
+                current_section["code_section"].append(f"\tmov rax, [rbp-{right_side}]\n")
+                current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
+            elif not node.children[1].is_terminal:
+                # Right-side is an expression (operation)
+                generate_expression(node.children[1], englobing_table, current_section)
+                current_section["code_section"].append("\tpop rax\n")
+                current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
             else:
-                # TODO: right-side of affectation could be an operation
-                raise
+                ## Right-side is a complex expression (e.g. 1 + 2 - 3 * 4 ...)
+                # On génère le code pour l'expression, le résultat sera sur le sommet de la pile
 
-            current_section["code_section"].append(f"\tmov {left_side_address}, {right_side}\n")  # Store the return value in the variable
+                generate_binary_operation(node.children[1], englobing_table, current_section)
+                current_section["code_section"].append("\tpop rax\n")
+                current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
+
         return
-    
+
     def generate_binary_operation(node: Tree, englobing_table: SymbolTable, current_section: dict):
         """Generate assembly code for binary operations (+, -, *, //, %)"""
         operation = node.data
-        left_operand = node.children[0]
-        right_operand = node.children[1]
+
+        # Générer le code pour empiler les opérandes (gauche puis droite)
+        generate_expression(node.children[0], englobing_table, current_section)
+        generate_expression(node.children[1], englobing_table, current_section)
+
+        operation_type = TokenType.lexicon[operation]
+
+        current_section["code_section"].append(f"\n\t; Performing {operation_type} operation\n")
+
+        left_node_type = TokenType.lexicon[node.children[0].data]
+        right_node_type = TokenType.lexicon[node.children[1].data]
         
-        # Generate code to push operands to the stack
-        generate_expression(left_operand, englobing_table, current_section)
-        generate_expression(right_operand, englobing_table, current_section)
-        
-        current_section["code_section"].append("\t; Performing binary operation\n")
-        current_section["code_section"].append("\tpop rbx\n")  # Right operand
-        current_section["code_section"].append("\tpop rax\n")  # Left operand
-        
-        # Generate the appropriate operation instruction
-        if operation == 40:
+        if left_node_type == "IDENTIFIER" and right_node_type == "IDENTIFIER":
+            # If both operands are identifiers, we need to load their values into registers
+            left_side_address = get_variable_address(englobing_table, node.children[0].value)
+            right_side_address = get_variable_address(englobing_table, node.children[1].value)
+            current_section["code_section"].append(f"\tmov rax, [rbp-{left_side_address}]\n")
+            current_section["code_section"].append(f"\tmov rbx, [rbp-{right_side_address}]\n")
+        else:
+            current_section["code_section"].append("\tpop rbx\n")  # right operand
+            current_section["code_section"].append("\tpop rax\n")  # left operand
+
+        # Générer l'instruction d'opération appropriée
+        if operation == 40:      # +
             current_section["code_section"].append("\tadd rax, rbx\n")
-        elif operation == 41:
+        elif operation == 41:    # -
             current_section["code_section"].append("\tsub rax, rbx\n")
-        elif operation == 42:
+        elif operation == 42:    # *
             current_section["code_section"].append("\timul rax, rbx\n")
-        elif operation == 43:
+        elif operation == 43:    # //
             current_section["code_section"].append("\txor rdx, rdx\n")
             current_section["code_section"].append("\tdiv rbx\n")
-        elif operation == 44:
+        elif operation == 44:    # %
             current_section["code_section"].append("\txor rdx, rdx\n")
             current_section["code_section"].append("\tdiv rbx\n")
             current_section["code_section"].append("\tmov rax, rdx\n")  # Modulo result is in rdx
-        
-        # Push the result back to the stack
+
+        # Remettre le résultat sur la pile
         current_section["code_section"].append("\tpush rax\n")
-    
+
     def generate_expression(node: Tree, englobing_table: SymbolTable, current_section: dict):
         """Generate code for expressions (constants, variables, and operations)"""
         if node.is_terminal:
-            if node.data == "constant":
-                # For a constant, push its value onto the stack
+            node_type = TokenType.lexicon[node.data]
+            if node_type == "INTEGER":
+                # Pour une constante, charger la valeur puis empiler
                 value = lexer.constant_lexicon[node.value]
                 current_section["code_section"].append(f"\tmov rax, {value}\n")
                 current_section["code_section"].append("\tpush rax\n")
-            elif node.data == "identifier":
-                # For a variable, load its value and push onto the stack
+            elif node.data == "IDENTIFIER":
+                # Pour une variable, charger la valeur depuis la pile puis empiler
                 var_name = lexer.identifier_lexicon[node.value]
                 depl = englobing_table.symbols[var_name]['depl']
                 current_section["code_section"].append(f"\tmov rax, [rbp{-depl:+}]\n")
                 current_section["code_section"].append("\tpush rax\n")
-        else:
-            # For binary operations
-            if node.data in [40, 41, 42, 43, 44]:
+            elif node.data in [40, 41, 42, 43, 44]:
                 generate_binary_operation(node, englobing_table, current_section)
 
     def generate_print(node: Tree, symbol_table: SymbolTable, current_section: dict):
@@ -154,7 +176,11 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         
         # Generate code to get the value to print into rax
         generate_expression(to_print, symbol_table, current_section)
-        current_section["code_section"].append("\tpop rax\n")  # Pop the result to print
+
+        current_section["code_section"].append(f"\n\t; print({lexer.identifier_lexicon[to_print.value]})\n")  # Pop the result to print
+
+        left_side_address = get_variable_address(symbol_table, node.children[0].value)
+        current_section["code_section"].append(f"\tmov rax, [rbp-{left_side_address}]\n")
         
         # Call the print_rax function which handles numeric printing
         current_section["code_section"].append("\tcall print_rax\n")
@@ -166,14 +192,14 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         bss_section.append("\tbuffer resb 20\n")  # Buffer for number conversion
 
         # Add newline in data section
-        data_section.append("\tnewline db 0xA\n")
+        data_section.append("\tnewline db 0xA")
         
         # Add the print_rax function to text section
-        text_section.append("\n\n;	---Print Protocol---\n")
+        text_section.append("\n\n;\t---Print Protocol---\n")
         text_section.append("print_rax:\n")
         text_section.append("\tmov rcx, buffer + 20\n")
         text_section.append("\tmov rbx, 10\n")
-        text_section.append(".convert_loop:\n")
+        text_section.append("\n.convert_loop:\n")
         text_section.append("\txor rdx, rdx\n")
         text_section.append("\tdiv rbx\n")
         text_section.append("\tadd dl, '0'\n")
@@ -195,30 +221,25 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         text_section.append("\tmov rdx, 1\n")
         text_section.append("\tsyscall\n")
         text_section.append("\tret\n")
-        text_section.append(";\t------------------------\n")
+        text_section.append(";\t--------------------\n")
         
         return bss_section
 
     # Recursive function and call -----------------------------------------------------------------
-
-    def generate_code_for_constants() -> None:
-        # NOTE: Keys are negative in the constant lexicon
-        for key, value in lexer.constant_lexicon.items():
-            if type(value) is int:
-                if sizeof(value) <= 32:  # Can only store up to 32-bits integers
-                    data_section.append(f"\tcst_{abs(key)} dd {value}\n")
-                else:
-                    raise ValueError(
-                        f"Invalid constant value: {value} is too large.")
-            else:
-                data_section.append(f"\tcst_{abs(key)} db {value}, 0\n")
-        pass
 
     def build_components(current_node: Tree, current_table:SymbolTable):
         sections["_start"] = {}
         sections["_start"]["code_section"] = ["\n"]
         sections["_start"]["start_protocol"] = []
         sections["_start"]["end_protocol"] = []
+
+        
+        sections["_start"]["start_protocol"].append(f"\n\t; Allocating space for {len(global_table.symbols)} local variables")
+        sections["_start"]["start_protocol"].append("\n\tpush rbp\n")
+        sections["_start"]["start_protocol"].append("\tmov rbp, rsp\n")
+
+        # Set up the stack for local variables
+        sections["_start"]["start_protocol"].append(f"\tsub rsp, {len(global_table.symbols) * 8}\n") 
         current_section = sections["_start"]
         build_components_rec(current_node, current_table, current_section)
         generate_end_of_program(current_section)
@@ -252,12 +273,12 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             # current_section["cade_section"].append()
 
     def generate_end_of_program(current_section: dict):
-        current_section["code_section"].append("\n")
+        current_section["code_section"].append("\n\n")
         current_section["code_section"].append(";\t---End of program---\n")
         current_section["code_section"].append(f"\tmov rax, {60}\n")  # syscall exit
         current_section["code_section"].append(f"\txor rdi, rdi \n")  # exit 0
         current_section["code_section"].append(f"\tsyscall\n")  # pour quitter bien le programme
-        current_section["code_section"].append(";\t------------------------\n\n\n")
+        current_section["code_section"].append(";\t--------------------\n\n\n")
 
     def write_generated_code(sections: dict) -> None:
         if (len(data_section) > 1):
@@ -288,7 +309,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         output_file.write("; EOF")
 
     print(f"\nGenerating ASM code in \"{output_file_path}\"...\n")
-    generate_code_for_constants()
     build_components(ast, global_table)
     bss_section = setup_print_functions()
     write_generated_code(sections)
