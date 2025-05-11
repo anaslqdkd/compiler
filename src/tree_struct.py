@@ -170,6 +170,42 @@ class Tree:
         with open(file_path, "w") as file:
             file.write(graph)
 
+def revert_tree_list(tree_list: list["Tree"])->None:
+    if len(tree_list) == 0: return
+
+    in_tree = tree_list[0].father
+
+    res = []
+    operands = []
+    while len(tree_list) > 0:
+        node = tree_list.pop()
+        for c in node.children:
+            if not (c in tree_list or c in res):
+                operands.insert(0, c)
+        node.children = []
+        res.append(node)
+
+    operands.reverse()
+
+    for node_index in range(len(res)):
+        node = res[node_index]
+        op = operands.pop(0)
+        node.children.append(op)
+        if node_index == len(res) - 1:
+            op = operands.pop(0)
+            node.children.append(op)
+        else:
+            node.children.append(res[node_index + 1])
+        node.children.reverse()
+
+    previous_first_index = -1
+    for i in range(len(in_tree.children)):
+        if in_tree.children[i] is res[-1]:
+            previous_first_index = i
+            break
+    in_tree.children[previous_first_index] = res[0]
+    pass
+
 # -------------------------------------------------------------------------------------------------
 # Converter
 # -------------------------------------------------------------------------------------------------
@@ -582,6 +618,36 @@ def manage_container_search(given_tree:"Tree")->None:
             manage_container_search(child)
             i += 1
 
+# --------------------------------------------------------------------------------------------------------------------------
+
+def revert_equal_priority_operators(given_tree: "Tree", relation_priorities: list[list[str]], considered_nodes: list["Tree"] = [], p_group: list[str] = [])-> None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if child.data in TokenType.lexicon:
+            is_node_considered = False
+            if p_group == [] or TokenType.lexicon[child.data] in p_group:
+                for priority_group in relation_priorities:
+                    if TokenType.lexicon[child.data] in priority_group:
+                        is_initiator = len(p_group) == 0
+                        considered_nodes.append(child)
+                        revert_equal_priority_operators(child, relation_priorities, considered_nodes, priority_group)
+                        i += 1
+                        print(f"Child: {TokenType.lexicon[child.data]} ; among {len(considered_nodes)} nodes")
+                        if is_initiator:
+                            print(f"Child: {TokenType.lexicon[child.data]} initiated. It will do the reversal.")
+                            revert_tree_list(considered_nodes)
+                        is_node_considered = True
+                        break
+            if not is_node_considered:
+                revert_equal_priority_operators(child, relation_priorities)
+                i += 1
+        else:
+            revert_equal_priority_operators(child, relation_priorities)
+            i += 1
+
+# --------------------------------------------------------------------------------------------------------------------------
+
 def reajust_fathers(given_tree:"Tree")->None:
     i = 0
     while i < len(given_tree.children):
@@ -598,7 +664,7 @@ def transform_to_ast(given_tree: "Tree") -> None:
     remove_childless_non_terminal_trees(given_tree)
     compact_non_terminals_chain(given_tree)
     manage_relations(given_tree, ["+", "-", "*", "//",
-                     "%", "<=", ">=", "<", ">", "!=", "==", "/"])
+                     "%", "<=", ">=", "<", ">", "!=", "=="])
     manage_E_un(given_tree)
     compact_non_terminals_chain(given_tree)
     manage_functions(given_tree)
@@ -624,6 +690,8 @@ def transform_to_ast(given_tree: "Tree") -> None:
     manage_returns(given_tree)
     manage_container_search(given_tree)
     fuse_chains(given_tree, ["Parameters", "I"])
+    revert_equal_priority_operators(given_tree, [["+", "-"], ["*", "//",
+                     "%"], ["<=", ">=", "<", ">", "!=", "=="]])
     reajust_fathers(given_tree)
 
 # -------------------------------------------------------------------------------------------------

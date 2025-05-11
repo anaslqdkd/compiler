@@ -1,23 +1,19 @@
 section .data
-	cst_1 dd 7
-	cst_2 dd 6
-	cst_3 dd 4
-	cst_4 dd 8
 	newline db 0xA
-
 
 section .bss
 	buffer resb 20
 
+
 section .text
 	global _start
-	global f
 
 
 ;	---Print Protocol---
 print_rax:
 	mov rcx, buffer + 20
 	mov rbx, 10
+
 .convert_loop:
 	xor rdx, rdx
 	div rbx
@@ -42,35 +38,70 @@ print_rax:
 	mov rdx, 1
 	syscall
 	ret
-;	------------------------
+;	--------------------
 
 
 _start:
-	mov 32, cst_1
-	call f
-	mov 64, rax
-	call f
+	; Allocating space for 1 local variables
+	push rbp
+	mov rbp, rsp
+	sub rsp, 8
+
+	mov rax, 1
+	push rax
+	mov rax, 2
+	push rax
+
+	; Performing - operation
+	pop rbx
+	pop rax
+	sub rax, rbx
+	push rax
+	mov rax, 3
+	push rax
+	mov rax, 8
+	push rax
+
+	; Performing * operation
+	pop rbx
+	pop rax
+	imul rax, rbx
+	push rax
+
+	; Performing + operation
+	pop rbx
+	pop rax
+	add rax, rbx
+	push rax
+	mov rax, 5
+	push rax
+
+	; Performing + operation
+	pop rbx
+	pop rax
+	add rax, rbx
+	push rax
+	mov rax, 6
+	push rax
+
+	; Performing - operation
+	pop rbx
+	pop rax
+	sub rax, rbx
+	push rax
+	pop rax
+	mov [rbp-8], rax
+
+	; print(a)
+	mov rax, [rbp-8]
+	call print_rax
+
 
 ;	---End of program---
 	mov rax, 60
 	xor rdi, rdi 
 	syscall
-;	------------------------
-
-
-f:
-;	---Protocole d'entree---
-	push rbp
-	mov rbp, rsp
-	sub rsp, 4
-;	------------------------
-
-	mov 32, cst_2
-
-;	---Protocole de sortie---
-	pop rbp
-	ret
-;	------------------------
+;	--------------------
 
 
 ; EOF
