@@ -41,42 +41,34 @@ print_rax:
 
 
 _start:
-	; Allocating space for 3 local variables
+	; Allocating space for 1 local variables
 	push rbp
 	mov rbp, rsp
-	sub rsp, 24
+	sub rsp, 8
 
-	mov rax, 5
-	push rax
-	mov rax, 4
+	mov rax, 1
 	push rax
 	mov rax, 3
 	push rax
 
-	; Performing + operation
+	; Performing * operation
 	pop rbx
 	pop rax
-	add rax, rbx
+	imul rax, rbx
+	push rax
+	mov rax, 2
 	push rax
 
 	; Performing - operation
+	pop rbx
+	pop rax
 	sub rax, rbx
 	push rax
 	pop rax
 	mov [rbp-8], rax
-	mov rax, 1
-	mov [rbp-16], rax
-	mov rax, 1
-	push rax
 
-	; Performing + operation
-	add rax, rbx
-	push rax
-	pop rax
-	mov [rbp-24], rax
-
-	; print(c)
-	mov rax, [rbp-24]
+	; print(a)
+	mov rax, [rbp-8]
 	call print_rax
 
 

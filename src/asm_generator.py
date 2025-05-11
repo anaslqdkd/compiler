@@ -130,7 +130,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             right_side_address = get_variable_address(englobing_table, node.children[1].value)
             current_section["code_section"].append(f"\tmov rax, [rbp-{left_side_address}]\n")
             current_section["code_section"].append(f"\tmov rbx, [rbp-{right_side_address}]\n")
-        elif left_node_type == "INTEGER" and right_node_type == "INTEGER":
+        else:
             current_section["code_section"].append("\tpop rbx\n")  # right operand
             current_section["code_section"].append("\tpop rax\n")  # left operand
 
