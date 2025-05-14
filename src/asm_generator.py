@@ -1,13 +1,18 @@
+from os import error
+from typing import Dict, Optional
 from src.lexer import Lexer
 from src.lexer import TokenType
 from src.tree_struct import Tree
 from src.st_builder import*
+from src.st_builder import SymbolTable, find_symbol, in_st
 
 UTF8_CharSize = 8  # en bits
 
 # -------------------------------------------------------------------------------------------------
 
 sections = {}
+if_counter: int = 0
+else_counter: int = 0
 
 def sizeof(value):
     if isinstance(value, int):
@@ -89,6 +94,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 value = lexer.constant_lexicon[node.children[1].value]
                 current_section["code_section"].append(f"\tmov rax, {value}\n")
                 current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
+            # NOTE: il me semble que ce n'est pas necessaire de vérifier le in_st puisque sinon ça donnerait une erreur semantique ?
             elif in_st(englobing_table, node.children[1].value):
                 # Right side is an identifier: charger la variable puis la mettre en pile
                 right_side = get_variable_address(englobing_table, node.children[1].value)
@@ -180,8 +186,13 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         # Generate code to get the value to print into rax
         generate_expression(to_print, symbol_table, current_section)
 
-        current_section["code_section"].append(f"\n\t; print({lexer.identifier_lexicon[to_print.value]})\n")  # Pop the result to print
+        if to_print.data in TokenType.lexicon.keys() and TokenType.lexicon[to_print.data] in ["INTEGER", "STRING"]: 
+            # TODO: gérér les prints pour les constantes
+            current_section["code_section"].append(f"\n\t; print({lexer.constant_lexicon[to_print.value]})\n")  # Pop the result to print
+        else:
+            current_section["code_section"].append(f"\n\t; print({lexer.identifier_lexicon[to_print.value]})\n")  # Pop the result to print
 
+        # TODO: gérér les identifiers non locaux, ex: dans la table englobante
         left_side_address = get_variable_address(symbol_table, node.children[0].value)
         current_section["code_section"].append(f"\tmov rax, [rbp-{left_side_address}]\n")
         
@@ -246,6 +257,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         current_section = sections["_start"]
         build_components_rec(current_node, current_table, current_section)
         generate_end_of_program(current_section)
+
     def build_components_rec(current_node: Tree, current_table:SymbolTable, section:dict) -> None:
         current_section = section
         if current_node.is_terminal:
@@ -260,6 +272,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 generate_code_for_function_declarations(current_node, current_table, current_section)
             elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "=":
                 # Affectation
+                # print(current_table)
                 if current_node.children[1].value != None and current_node.children[1].value in current_table.function_return.keys():
                     generate_function_call(current_node.children[1], current_table, current_section)
                     generate_assignment(current_node, current_table, current_section, True)
@@ -270,10 +283,87 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 generate_print(current_node, current_table, current_section)
             elif TokenType.lexicon[current_node.data] == "IDENTIFIER" and len(current_node.children) > 0:
                 generate_function_call(current_node, current_table, current_section)
+            elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "if":
+                generate_if(current_node, current_table, current_section)
         else:
             for child in current_node.children:
                 build_components_rec(child, current_table, current_section)
             # current_section["cade_section"].append()
+
+    def generate_if(if_node: Tree, englobing_table: SymbolTable, current_section: Dict):
+        global if_counter
+        global else_counter
+        if_else = False
+        if_st_label = f"if {if_counter}"
+        else_child_number = 1 
+        if_child = 0
+
+        for i in range(0, len(if_node.father.children)):
+            if if_node.father.children[i] == if_node:
+                if_child = i
+        if if_node.father.children[if_child+1].data in TokenType.lexicon.keys() and TokenType.lexicon[if_node.father.children[if_child+1].data] == "else":
+            if_else = True
+            else_child_number = if_child+1
+
+        match (TokenType.lexicon[if_node.children[0].data]):
+            case "==":
+                comparison_label = "jne"  
+            case "!=":
+                comparison_label = "je"  
+            case ">=":
+                comparison_label = "jge"
+            case ">":
+                comparison_label = "jg"
+            case "<=":
+                comparison_label = "jle" 
+            case "<":
+                comparison_label = "jl" 
+            case _:
+                raise error
+
+
+        if_table = englobing_table.symbols[if_st_label]['symbol table']
+
+        left_expr = if_node.children[0].children[0]
+        right_expr = if_node.children[0].children[1]
+
+        current_section["code_section"].append(f"\t; if {if_counter}\n")
+        evaluate_expression(left_expr, if_table, current_section)
+        evaluate_expression(right_expr, if_table, current_section, "rbx")
+
+        if if_else:
+            jump_label = f"else_{else_counter}"
+        else:
+            jump_label = f"end_if_{if_counter}"
+
+        current_section["code_section"].append(f"\n\tcmp rax, rbx")
+        current_section["code_section"].append(f"\n\t{comparison_label} {jump_label}\n")
+
+        for instr in if_node.children[1].children:
+            build_components_rec(instr, if_table, current_section)
+
+        current_section["code_section"].append(f"{jump_label}:\n")
+        if if_else:
+            else_st_label = f"else {else_counter}"
+            else_table = englobing_table.symbols[else_st_label]['symbol table']
+            current_section["code_section"].append(f"\t; else section\n")
+            else_node = if_node.father.children[else_child_number]
+            for instr in else_node.children[0].children:
+                build_components_rec(instr, else_table, current_section)
+            if_else = False
+        if_counter += 1
+
+
+    def evaluate_expression(current_node: Tree, current_table: SymbolTable, current_section: Dict, register:str = "rax"):
+        if current_node.data in TokenType.lexicon.keys():
+            if TokenType.lexicon[current_node.data] == "INTEGER":
+                value = current_node.value
+                current_section["code_section"].append(f"\tmov {register}, {lexer.constant_lexicon[value]}\n")
+            if TokenType.lexicon[current_node.data] == "IDENTIFIER":
+                offset = get_variable_address(current_table, current_node.value)
+                current_section["code_section"].append(f"\tmov {register}, [rbp-{offset}]\n")
+                pass
+
 
     def generate_end_of_program(current_section: dict):
         current_section["code_section"].append("\n\n")
@@ -336,25 +426,25 @@ def get_variable_address(symbol_table: SymbolTable, variable_id: int) -> int:
     elif symbol_table.englobing_table == None:
         raise ValueError(f"Variable {variable_id} not found in symbol table.")
     else:
-        return find_symbol(symbol_table.englobing_table, variable_id)
+        return get_variable_address(find_st(symbol_table.englobing_table, variable_id), variable_id)
 
-# def find_symbol(current_st: "SymbolTable", node_value: int) -> Optional[Dict[int, Any]]:
-#     """
-#     Recursively searches for a symbol by its identifier in the current symbol table and its parent scopes.
+def find_st(current_st: "SymbolTable", node_value: int) -> Optional[SymbolTable]:
+    """
+    Recursively searches for a symbol by its identifier in the current symbol table and its parent scopes.
 
-#     Parameters:
-#         current_st (SymbolTable): The symbol table to begin the search from.
-#         node_value (int): The identifier of the symbol to find.
+    Parameters:
+        current_st (SymbolTable): The symbol table to begin the search from.
+        node_value (int): The identifier of the symbol to find.
 
-#     Returns:
-#         Optional[Dict[int, Any]]: The symbol's attributes dictionary if found, otherwise None.
-#     """
-#     if node_value in current_st.symbols.keys():
-#         return current_st.symbols[node_value]
-#     elif current_st.englobing_table == None:
-#         return None
-#     else:
-#         return find_symbol(current_st.englobing_table, node_value)
+    Returns:
+        Optional[Dict[int, Any]]: The symbol's attributes dictionary if found, otherwise None.
+    """
+    if node_value in current_st.symbols.keys():
+        return current_st
+    elif current_st.englobing_table == None:
+        return None
+    else:
+        return find_symbol(current_st.englobing_table, node_value)
 
 
 

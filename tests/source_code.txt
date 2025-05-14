@@ -1,11 +1,11 @@
-a = 5
-b = 7
-l = [1, 2]
-if 5 > 0:
-	a = 5
-	print(5)
-for el in l:
-	a = 4
-def f():
-	r = 10
-	return 5
+l = 5
+a = 6
+b = 2
+c = 4
+if 1 + 1 == 2:
+	a = 1
+	print(a)
+if 1 > 0:
+	print(b)
+else:
+	print(c)

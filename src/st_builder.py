@@ -694,21 +694,21 @@ class SymbolTable:
             if TokenType.lexicon[function_node.data] == "else":
                 new_label = (
                     TokenType.lexicon[function_node.data]
-                    # + " "
+                    + " "
                     + str(self.node_counter_else)
                 )
                 self.node_counter_else += 1
             if TokenType.lexicon[function_node.data] == "if":
                 new_label = (
                     TokenType.lexicon[function_node.data]
-                    # + " "
+                    + " "
                     + str(self.node_counter_if)
                 )
                 self.node_counter_if += 1
             if TokenType.lexicon[function_node.data] == "for":
                 new_label = (
                     TokenType.lexicon[function_node.data]
-                    # + " "
+                    + " "
                     + str(self.node_counter_for)
                 )
                 self.node_counter_for += 1
