@@ -59,7 +59,7 @@ _start:
 	push rax
 	mov rax, 3
 	push rax
-	mov rax, 8
+	mov rax, 4
 	push rax
 
 	; Performing * operation
