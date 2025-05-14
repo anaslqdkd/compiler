@@ -117,7 +117,10 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         generate_expression(node.children[0], englobing_table, current_section)
         generate_expression(node.children[1], englobing_table, current_section)
 
-        operation_type = TokenType.lexicon[operation]
+        if operation in TokenType.lexicon.keys():
+            operation_type = TokenType.lexicon[operation]
+        else:
+            return
 
         current_section["code_section"].append(f"\n\t; Performing {operation_type} operation\n")
 

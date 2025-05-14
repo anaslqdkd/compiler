@@ -7,6 +7,7 @@ section .bss
 
 section .text
 	global _start
+	global f
 
 
 ;	---Print Protocol---
@@ -42,59 +43,21 @@ print_rax:
 
 
 _start:
-	; Allocating space for 1 local variables
+	; Allocating space for 6 local variables
 	push rbp
 	mov rbp, rsp
-	sub rsp, 8
+	sub rsp, 48
 
+	mov rax, 5
+	mov [rbp-8], rax
+	mov rax, 7
+	mov [rbp-16], rax
 	mov rax, 1
 	push rax
 	mov rax, 2
 	push rax
-
-	; Performing - operation
-	pop rbx
 	pop rax
-	sub rax, rbx
-	push rax
-	mov rax, 3
-	push rax
-	mov rax, 8
-	push rax
-
-	; Performing * operation
-	pop rbx
-	pop rax
-	imul rax, rbx
-	push rax
-
-	; Performing + operation
-	pop rbx
-	pop rax
-	add rax, rbx
-	push rax
-	mov rax, 5
-	push rax
-
-	; Performing + operation
-	pop rbx
-	pop rax
-	add rax, rbx
-	push rax
-	mov rax, 6
-	push rax
-
-	; Performing - operation
-	pop rbx
-	pop rax
-	sub rax, rbx
-	push rax
-	pop rax
-	mov [rbp-8], rax
-
-	; print(a)
-	mov rax, [rbp-8]
-	call print_rax
+	mov [rbp-24], rax
 
 
 ;	---End of program---
@@ -102,6 +65,22 @@ _start:
 	xor rdi, rdi 
 	syscall
 ;	--------------------
+
+
+f:
+;	---Protocole d'entree---
+	push rbp
+	mov rbp, rsp
+	sub rsp, 1
+;	------------------------
+
+	mov rax, 10
+	mov [rbp-8], rax
+
+;	---Protocole de sortie---
+	pop rbp
+	ret
+;	------------------------
 
 
 ; EOF

@@ -1,17 +1,11 @@
-def fn():
-    return 6
-def helper(z):
-    return z * 3
-def process_list(a, b, c):
-	l = [1, 2, 3]
-    return l 
-def compute(a, b):
-    f = 5
-    b = [1, 2, 3]
-    p = a + b[1]
-    x = fn()
-    y = p + b
-    z = p + b[2] 
-    processed = process_list(f, x, z)
-    total = 1 + processed[1] 
-    return total
+a = 5
+b = 7
+l = [1, 2]
+if 5 > 0:
+	a = 5
+	print(5)
+for el in l:
+	a = 4
+def f():
+	r = 10
+	return 5

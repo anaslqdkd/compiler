@@ -23,7 +23,9 @@ class STError(Exception):
 
 class SymbolTable:
     _ST_id = 0
-    integer_size = 8  # Assuming every integer will be coded using 4 bytes (8*4 bits) maximum
+    integer_size = (
+        8  # Assuming every integer will be coded using 4 bytes (8*4 bits) maximum
+    )
     character_size = 8  # Assuming every character will respect the UTF-8 norm
     node_counter = 0
     node_counter_else = 0
@@ -34,7 +36,7 @@ class SymbolTable:
         self, name: str, imbrication_level: int, englobing_table: "SymbolTable"
     ):
         self.name: str = name
-        self.symbols: Dict[int, Any] = {}
+        self.symbols: Dict[str, Any] = {}
         self.function_identifiers: Set[int] = (
             englobing_table.function_identifiers
             if englobing_table is not None
@@ -682,35 +684,38 @@ class SymbolTable:
 
         # If the incoming indention corresponds to a for / if / else
         if (
-            node_children[0].value is None
-            and function_node.data in TokenType.lexicon.keys()
+            # node_children[0].value is None
+            function_node.data
+            in TokenType.lexicon.keys()
         ):
+            print("function data", function_node.data)
             new_label = 0
             type_label = TokenType.lexicon[function_node.data]
             if TokenType.lexicon[function_node.data] == "else":
                 new_label = (
                     TokenType.lexicon[function_node.data]
-                    + " "
+                    # + " "
                     + str(self.node_counter_else)
                 )
                 self.node_counter_else += 1
             if TokenType.lexicon[function_node.data] == "if":
                 new_label = (
                     TokenType.lexicon[function_node.data]
-                    + " "
+                    # + " "
                     + str(self.node_counter_if)
                 )
                 self.node_counter_if += 1
             if TokenType.lexicon[function_node.data] == "for":
                 new_label = (
                     TokenType.lexicon[function_node.data]
-                    + " "
+                    # + " "
                     + str(self.node_counter_for)
                 )
                 self.node_counter_for += 1
+            # print("the node is", function_node.data)
 
             newST = SymbolTable(str(new_label), self.imbrication_level + 1, self)
-            self.symbols[new_label] = {"type": type_label, "symbol table": newST}
+            self.symbols[str(new_label)] = {"type": type_label, "symbol table": newST}
             self.node_counter += 1
             return newST
 
@@ -945,13 +950,16 @@ def build_sts(ast: Tree, lexer: Lexer) -> "SymbolTable":
     def build_st_rec(ast: Tree, symbol_table: "SymbolTable"):
         current_st = symbol_table
         # All indented blocks
-        if ast.data in ["if", "else", "function", "for"]:
+        if ast.data in ["function"]:
+            print("AAAA", ast.data)
             current_st = current_st.add_indented_block(ast)
         elif ast.data in TokenType.lexicon.keys() and TokenType.lexicon[ast.data] in [
             "if",
             "else",
+            "for",
         ]:
             current_st = current_st.add_indented_block(ast)
+            print("BBBBB", ast.data)
 
         # When reaching a "return"
         elif (
@@ -960,6 +968,7 @@ def build_sts(ast: Tree, lexer: Lexer) -> "SymbolTable":
         ):
             # TODO: gérer les retours de listes, opérations binaires, fonctions
             return_type: Optional[str]
+            # TODO: check for undefined indentifier
             if TokenType.lexicon[ast.children[0].data] == "IDENTIFIER":
                 # if we do something like return a[0]
                 if len(ast.children[0].children) > 0:
@@ -1065,19 +1074,23 @@ def print_all_symbol_tables(global_table: SymbolTable, lexer: Lexer) -> None:
         # If the table name is not Global, getting the function real name
         table_name = symbol_table.name
         if table_name != "Global":
-            if int(table_name) in lexer.identifier_lexicon.keys():
+            if table_name in lexer.identifier_lexicon.keys():
                 table_name = lexer.identifier_lexicon[int(table_name)]
             else:
-                raise STError(
-                    f"La TdS {table_name} est liée à une fonction non-existante !"
-                )
+                table_name = symbol_table.name
+                # raise STError(
+                #     f"La TdS {table_name} est liée à une fonction non-existante !"
+                # )
 
         print(f"Symbol Table: {table_name} (Level {symbol_table.imbrication_level})")
         print("-" * 40)
 
         # Iterate over the symbols in the symbol table
         for name, attributes in symbol_table.symbols.items():
-            print(f"{lexer.identifier_lexicon[int(name)]}:")
+            if name in lexer.identifier_lexicon.keys():
+                print(f"{lexer.identifier_lexicon[int(name)]}:")
+            else:
+                print(str(name))
             for key, value in attributes.items():
                 # If a value is another symbol table, add it to the queue
                 if key == "symbol table" and isinstance(value, SymbolTable):

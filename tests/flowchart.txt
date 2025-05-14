@@ -8,58 +8,143 @@ style 6 stroke:#caf9fb,stroke-width:2px
 5["IDENTIFIER => 1 (L1)
 father: 51"]
 style 5 stroke:#caf9fb,stroke-width:2px
-41["\- (L1)
+17["INTEGER => -1 (L1)
+father: 51"]
+style 17 stroke:#caf9fb,stroke-width:2px
+30["= (L2)
+father: S1"]
+style 30 stroke:#caf9fb,stroke-width:2px
+29["IDENTIFIER => 2 (L2)
+father: 51"]
+style 29 stroke:#caf9fb,stroke-width:2px
+41["INTEGER => -2 (L2)
 father: 51"]
 style 41 stroke:#caf9fb,stroke-width:2px
-27["\+ (L1)
-father: 41"]
-style 27 stroke:#caf9fb,stroke-width:2px
-19["\+ (L1)
-father: 40"]
-style 19 stroke:#caf9fb,stroke-width:2px
-13["\- (L1)
-father: 40"]
-style 13 stroke:#caf9fb,stroke-width:2px
-17["INTEGER => -1 (L1)
-father: 41"]
-style 17 stroke:#caf9fb,stroke-width:2px
-25["INTEGER => -2 (L1)
-father: 41"]
-style 25 stroke:#caf9fb,stroke-width:2px
-30["\* (L1)
-father: 40"]
-style 30 stroke:#caf9fb,stroke-width:2px
-33["INTEGER => -3 (L1)
-father: 42"]
-style 33 stroke:#caf9fb,stroke-width:2px
-39["INTEGER => -4 (L1)
-father: 42"]
-style 39 stroke:#caf9fb,stroke-width:2px
-55["INTEGER => -6 (L1)
-father: 40"]
-style 55 stroke:#caf9fb,stroke-width:2px
-47["INTEGER => -5 (L1)
-father: 41"]
-style 47 stroke:#caf9fb,stroke-width:2px
-67["print (L2)
+54["= (L3)
 father: S1"]
-style 67 stroke:#caf9fb,stroke-width:2px
-79["IDENTIFIER => 1 (L2)
+style 54 stroke:#caf9fb,stroke-width:2px
+53["IDENTIFIER => 3 (L3)
+father: 51"]
+style 53 stroke:#caf9fb,stroke-width:2px
+63["LIST (L3)
+father: 51"]
+style 63 stroke:#caf9fb,stroke-width:2px
+75["INTEGER => -3 (L3)
+father: LIST"]
+style 75 stroke:#caf9fb,stroke-width:2px
+92["INTEGER => -4 (L3)
+father: LIST"]
+style 92 stroke:#caf9fb,stroke-width:2px
+110["if (L4)
+father: S1"]
+style 110 stroke:#caf9fb,stroke-width:2px
+115["\> (L4)
+father: 20"]
+style 115 stroke:#caf9fb,stroke-width:2px
+130["INTEGER => -5 (L4)
+father: 47"]
+style 130 stroke:#caf9fb,stroke-width:2px
+120["INTEGER => -1 (L4)
+father: 47"]
+style 120 stroke:#caf9fb,stroke-width:2px
+137["Block
+father: 20"]
+143["= (L5)
+father: Block"]
+style 143 stroke:#caf9fb,stroke-width:2px
+142["IDENTIFIER => 1 (L5)
+father: 51"]
+style 142 stroke:#caf9fb,stroke-width:2px
+154["INTEGER => -1 (L5)
+father: 51"]
+style 154 stroke:#caf9fb,stroke-width:2px
+166["print (L6)
+father: Block"]
+style 166 stroke:#caf9fb,stroke-width:2px
+178["INTEGER => -1 (L6)
 father: 30"]
-style 79 stroke:#caf9fb,stroke-width:2px
+style 178 stroke:#caf9fb,stroke-width:2px
+194["for (L7)
+father: S1"]
+style 194 stroke:#caf9fb,stroke-width:2px
+195["IDENTIFIER => 4 (L7)
+father: 31"]
+style 195 stroke:#caf9fb,stroke-width:2px
+206["IDENTIFIER => 3 (L7)
+father: 31"]
+style 206 stroke:#caf9fb,stroke-width:2px
+217["Block
+father: 31"]
+219["= (L8)
+father: Block"]
+style 219 stroke:#caf9fb,stroke-width:2px
+218["IDENTIFIER => 1 (L8)
+father: 51"]
+style 218 stroke:#caf9fb,stroke-width:2px
+230["INTEGER => -6 (L8)
+father: 51"]
+style 230 stroke:#caf9fb,stroke-width:2px
+242["function (L9)
+father: S1"]
+style 242 stroke:#caf9fb,stroke-width:2px
+244["IDENTIFIER => 5 (L9)
+father: function"]
+style 244 stroke:#caf9fb,stroke-width:2px
+300["Parameters (L9)
+father: function"]
+style 300 stroke:#caf9fb,stroke-width:2px
+249["Block
+father: function"]
+255["= (L10)
+father: Block"]
+style 255 stroke:#caf9fb,stroke-width:2px
+254["IDENTIFIER => 6 (L10)
+father: 51"]
+style 254 stroke:#caf9fb,stroke-width:2px
+266["INTEGER => -7 (L10)
+father: 51"]
+style 266 stroke:#caf9fb,stroke-width:2px
+278["return (L11)
+father: Block"]
+style 278 stroke:#caf9fb,stroke-width:2px
+288["INTEGER => -1 (L11)
+father: 29"]
+style 288 stroke:#caf9fb,stroke-width:2px
 0 --> 2
 2 --> 6
 6 --> 5
-6 --> 41
-41 --> 27
-27 --> 19
-19 --> 13
-13 --> 17
-13 --> 25
-19 --> 30
-30 --> 33
-30 --> 39
-27 --> 55
-41 --> 47
-2 --> 67
-67 --> 79
+6 --> 17
+2 --> 30
+30 --> 29
+30 --> 41
+2 --> 54
+54 --> 53
+54 --> 63
+63 --> 75
+63 --> 92
+2 --> 110
+110 --> 115
+115 --> 130
+115 --> 120
+110 --> 137
+137 --> 143
+143 --> 142
+143 --> 154
+137 --> 166
+166 --> 178
+2 --> 194
+194 --> 195
+194 --> 206
+194 --> 217
+217 --> 219
+219 --> 218
+219 --> 230
+2 --> 242
+242 --> 244
+242 --> 300
+242 --> 249
+249 --> 255
+255 --> 254
+255 --> 266
+249 --> 278
+278 --> 288
