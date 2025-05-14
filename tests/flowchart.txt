@@ -8,58 +8,38 @@ style 6 stroke:#caf9fb,stroke-width:2px
 5["IDENTIFIER => 1 (L1)
 father: 51"]
 style 5 stroke:#caf9fb,stroke-width:2px
-41["\- (L1)
-father: 51"]
-style 41 stroke:#caf9fb,stroke-width:2px
-27["\+ (L1)
-father: 41"]
-style 27 stroke:#caf9fb,stroke-width:2px
-19["\+ (L1)
-father: 40"]
-style 19 stroke:#caf9fb,stroke-width:2px
-13["\- (L1)
-father: 40"]
-style 13 stroke:#caf9fb,stroke-width:2px
 17["INTEGER => -1 (L1)
-father: 41"]
+father: 51"]
 style 17 stroke:#caf9fb,stroke-width:2px
-25["INTEGER => -2 (L1)
-father: 41"]
-style 25 stroke:#caf9fb,stroke-width:2px
-30["\* (L1)
-father: 40"]
-style 30 stroke:#caf9fb,stroke-width:2px
-33["INTEGER => -3 (L1)
-father: 42"]
-style 33 stroke:#caf9fb,stroke-width:2px
-39["INTEGER => -4 (L1)
-father: 42"]
-style 39 stroke:#caf9fb,stroke-width:2px
-55["INTEGER => -6 (L1)
-father: 40"]
-style 55 stroke:#caf9fb,stroke-width:2px
-47["INTEGER => -5 (L1)
-father: 41"]
-style 47 stroke:#caf9fb,stroke-width:2px
-67["print (L2)
+30["= (L2)
 father: S1"]
-style 67 stroke:#caf9fb,stroke-width:2px
-79["IDENTIFIER => 1 (L2)
+style 30 stroke:#caf9fb,stroke-width:2px
+29["IDENTIFIER => 2 (L2)
+father: 51"]
+style 29 stroke:#caf9fb,stroke-width:2px
+37["\- (L2)
+father: 51"]
+style 37 stroke:#caf9fb,stroke-width:2px
+49["INTEGER => -2 (L2)
+father: 41"]
+style 49 stroke:#caf9fb,stroke-width:2px
+41["IDENTIFIER => 1 (L2)
+father: 41"]
+style 41 stroke:#caf9fb,stroke-width:2px
+61["print (L3)
+father: S1"]
+style 61 stroke:#caf9fb,stroke-width:2px
+73["IDENTIFIER => 2 (L3)
 father: 30"]
-style 79 stroke:#caf9fb,stroke-width:2px
+style 73 stroke:#caf9fb,stroke-width:2px
 0 --> 2
 2 --> 6
 6 --> 5
-6 --> 41
-41 --> 27
-27 --> 19
-19 --> 13
-13 --> 17
-13 --> 25
-19 --> 30
-30 --> 33
-30 --> 39
-27 --> 55
-41 --> 47
-2 --> 67
-67 --> 79
+6 --> 17
+2 --> 30
+30 --> 29
+30 --> 37
+37 --> 49
+37 --> 41
+2 --> 61
+61 --> 73
