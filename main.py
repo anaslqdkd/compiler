@@ -3,7 +3,6 @@ from src.parser import *
 from src.st_builder import build_sts, print_all_symbol_tables
 from src.asm_generator import generate_asm
 
-
 def main():
     with open("tests/source_code.txt", "r") as file:
         source_code = file.read()
