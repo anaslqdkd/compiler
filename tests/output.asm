@@ -41,4 +41,67 @@ print_rax:
 ;	--------------------
 
 
+_start:
+	; Allocating space for 1 local variables
+	push rbp
+	mov rbp, rsp
+	sub rsp, 8
+
+	mov rax, 1
+	push rax
+	mov rax, 2
+	push rax
+
+	; Performing - operation
+	pop rbx
+	pop rax
+	sub rax, rbx
+	push rax
+	mov rax, 3
+	push rax
+	mov rax, 4
+	push rax
+
+	; Performing * operation
+	pop rbx
+	pop rax
+	imul rax, rbx
+	push rax
+
+	; Performing + operation
+	pop rbx
+	pop rax
+	add rax, rbx
+	push rax
+	mov rax, 5
+	push rax
+
+	; Performing + operation
+	pop rbx
+	pop rax
+	add rax, rbx
+	push rax
+	mov rax, 6
+	push rax
+
+	; Performing - operation
+	pop rbx
+	pop rax
+	sub rax, rbx
+	push rax
+	pop rax
+	mov [rbp-8], rax
+
+	; print(a)
+	mov rax, [rbp-8]
+	call print_rax
+
+
+;	---End of program---
+	mov rax, 60
+	xor rdi, rdi 
+	syscall
+;	--------------------
+
+
 ; EOF
