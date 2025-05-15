@@ -70,6 +70,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         # protocole de sortie
         current_section["end_protocol"].append("\n")
         current_section["end_protocol"].append(";\t---Protocole de sortie---\n")
+        current_section["end_protocol"].append("\tmov rsp, rbp\n") 
         current_section["end_protocol"].append("\tpop rbp\n") # restore base pointer
         current_section["end_protocol"].append("\tret\n") # return to the caller
         current_section["end_protocol"].append(";\t------------------------\n")
@@ -256,9 +257,11 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         sections["_start"]["start_protocol"].append(f"\tsub rsp, {len(global_table.symbols) * 8}\n") 
         current_section = sections["_start"]
         build_components_rec(current_node, current_table, current_section)
-        generate_end_of_program(current_section)
+        generate_end_of_program(sections["_start"])
 
     def build_components_rec(current_node: Tree, current_table:SymbolTable, section:dict) -> None:
+        global if_counter
+        global else_counter
         current_section = section
         if current_node.is_terminal:
             if current_node.data == "function":
@@ -288,7 +291,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         else:
             for child in current_node.children:
                 build_components_rec(child, current_table, current_section)
-            # current_section["cade_section"].append()
 
     def generate_if(if_node: Tree, englobing_table: SymbolTable, current_section: Dict):
         global if_counter
@@ -301,6 +303,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         for i in range(0, len(if_node.father.children)):
             if if_node.father.children[i] == if_node:
                 if_child = i
+        # TODO: bound check
         if if_node.father.children[if_child+1].data in TokenType.lexicon.keys() and TokenType.lexicon[if_node.father.children[if_child+1].data] == "else":
             if_else = True
             else_child_number = if_child+1
@@ -311,18 +314,19 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             case "!=":
                 comparison_label = "je"  
             case ">=":
-                comparison_label = "jge"
+                comparison_label = "jl"
             case ">":
-                comparison_label = "jg"
+                comparison_label = "jle"
             case "<=":
-                comparison_label = "jle" 
+                comparison_label = "jg" 
             case "<":
-                comparison_label = "jl" 
+                comparison_label = "jge" 
             case _:
                 raise error
 
 
         if_table = englobing_table.symbols[if_st_label]['symbol table']
+        # TODO: voir comment recuperer la table si c'est à l'interieur d'une fonction car pour l'instant des if à l'interieur d'une fonction ne fonctionnent pas
 
         left_expr = if_node.children[0].children[0]
         right_expr = if_node.children[0].children[1]
@@ -336,14 +340,16 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         else:
             jump_label = f"end_if_{if_counter}"
 
-        current_section["code_section"].append(f"\n\tcmp rax, rbx")
+        current_section["code_section"].append(f"\n\tcmp rbx, rax")
         current_section["code_section"].append(f"\n\t{comparison_label} {jump_label}\n")
 
         for instr in if_node.children[1].children:
             build_components_rec(instr, if_table, current_section)
 
-        current_section["code_section"].append(f"{jump_label}:\n")
         if if_else:
+            jump_end_label = f"end_if_{if_counter}" 
+            current_section["code_section"].append(f"\tjmp {jump_end_label}\n")
+            current_section["code_section"].append(f"{jump_label}:\n")
             else_st_label = f"else {else_counter}"
             else_table = englobing_table.symbols[else_st_label]['symbol table']
             current_section["code_section"].append(f"\t; else section\n")
@@ -351,10 +357,17 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             for instr in else_node.children[0].children:
                 build_components_rec(instr, else_table, current_section)
             if_else = False
+            else_counter += 1
+            current_section["code_section"].append(f"{jump_end_label}:\n")
+
+        else:
+            current_section["code_section"].append(f"{jump_label}:\n")
+
         if_counter += 1
 
 
     def evaluate_expression(current_node: Tree, current_table: SymbolTable, current_section: Dict, register:str = "rax"):
+        # TODO: faire la même pour des expressions ou des booleen
         if current_node.data in TokenType.lexicon.keys():
             if TokenType.lexicon[current_node.data] == "INTEGER":
                 value = current_node.value
@@ -391,7 +404,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             for line in text_section:
                 output_file.write(line)
             output_file.write("\n\n")
-        for section in sections.items():
+        for section in list(sections.items())[1:]:
             output_file.write(f"{section[0]}:")
             for line in section[1]['start_protocol']:
                 output_file.write(line)
@@ -399,6 +412,15 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 output_file.write(line)
             for line in section[1]['end_protocol']:
                 output_file.write(line)
+        section_start = list(sections.items())[0]
+        output_file.write(f"{section_start[0]}:")
+        for line in section_start[1]['start_protocol']:
+            output_file.write(line)
+        for line in section_start[1]['code_section']:
+            output_file.write(line)
+        for line in section_start[1]['end_protocol']:
+            output_file.write(line)
+
         output_file.write("; EOF")
 
     print(f"\nGenerating ASM code in \"{output_file_path}\"...\n")
@@ -415,6 +437,9 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 def get_local_variables_total_size(symbol_table: SymbolTable) -> int:
     total_size = 0
     for symbol in symbol_table.symbols.items():
+        if symbol[1]["type"] == "if":
+            continue
+        print("symbol", symbol[1])
         symbol_depl = symbol[1]['depl']
         if symbol_depl > 0:
             total_size += symbol_depl

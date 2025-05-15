@@ -714,6 +714,7 @@ class SymbolTable:
                 self.node_counter_for += 1
             # print("the node is", function_node.data)
 
+            print("TTTTTT", self.name)
             newST = SymbolTable(str(new_label), self.imbrication_level + 1, self)
             self.symbols[str(new_label)] = {"type": type_label, "symbol table": newST}
             self.node_counter += 1
