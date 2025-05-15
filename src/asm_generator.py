@@ -92,10 +92,24 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 current_section["code_section"].append(f"\tmov rax, {value}\n")
                 current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
             elif in_st(englobing_table, node.children[1].value):
-                # Right side is an identifier: charger la variable puis la mettre en pile
-                right_side = get_variable_address(englobing_table, node.children[1].value)
-                current_section["code_section"].append(f"\tmov rax, [rbp-{right_side}]\n")
-                current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
+                if node.children[1].children:
+                    # Right-side is an array_access
+                    right_side = get_variable_address(englobing_table, node.children[1].value)
+                    access_id = lexer.constant_lexicon[node.children[1].children[0].value]
+
+                    # Fancy message
+                    left_var_name = lexer.identifier_lexicon[node.children[0].value]
+                    right_var_name = lexer.identifier_lexicon[node.children[1].value]
+                    current_section["code_section"].append(f"\n\t; {left_var_name} = {right_var_name}[{access_id}]\n")
+                    
+                    current_section["code_section"].append(f"\tmov rax, [rbp-{right_side}]\n")
+                    current_section["code_section"].append(f"\tmov rax, [rax + {access_id}*{right_side}]\n")
+                    current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
+                else:
+                    # Right side is an identifier: charger la variable puis la mettre en pile
+                    right_side = get_variable_address(englobing_table, node.children[1].value)
+                    current_section["code_section"].append(f"\tmov rax, [rbp-{right_side}]\n")
+                    current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
             elif not node.children[1].is_terminal:
                 # Right-side is an expression (operation)
                 generate_expression(node.children[1], englobing_table, current_section)
@@ -107,12 +121,14 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
             elif node.children[1].data == "LIST":
                 generate_list(node.children[1], englobing_table, current_section)
+            else:
+                print(f"Unknown assignment type: {node.children[1].data}")
 
         return
     
     def generate_list(node: Tree, englobing_table: SymbolTable, current_section: dict):
         """
-        Génère le code NASM pour une liste de type a = [1, 2, "a"]
+        Génère le code NASM pour une liste de type a = [1, 2, "a", "b"]
         - Alloue la liste dans la section .data (ou .bss si besoin)
         - Stocke les entiers directement, les chaînes comme pointeurs
         - Remplit la variable 'a' avec l'adresse de la liste
@@ -124,19 +140,24 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
         # Préparer la déclaration de la liste dans la section .data
         list_items = []
+        list_items_print = []
         for idx, elem in enumerate(elements):
             if TokenType.lexicon[elem.data] == "INTEGER":
                 value = lexer.constant_lexicon[elem.value]
                 list_items.append(str(value))
+                list_items_print.append(str(value))
             elif TokenType.lexicon[elem.data] == "STRING":
                 str_label = f"{list_label}_str{idx}"
-                str_value = lexer.constant_lexicon[elem.value]
+                str_value = lexer.constant_lexicon[elem.value].replace('"', '')
                 # Ajoute la chaîne dans .data
                 data_section.append(f"\t{str_label} db \"{str_value}\", 0\n")
                 list_items.append(str_label)
+                list_items_print.append(str_value)
             else:
                 # Pour d'autres types, à adapter
                 list_items.append("0")
+
+        current_section["code_section"].append(f"\t; {var_name} = [{', '.join(list_items_print)}]\n")
 
         # Ajoute la liste dans .data (tableau de 64 bits)
         data_section.append(f"\t{list_label} dq {', '.join(list_items)}\n")
@@ -188,7 +209,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 current_section["code_section"].append("\tpop rax\n")
                 current_section["code_section"].append("\tpop rbx\n")
         else:
-            # print('oui', left_node_type, right_node_type)
             current_section["code_section"].append("\tpop rbx\n")  # right operand
             current_section["code_section"].append("\tpop rax\n")  # left operand 
 
@@ -235,6 +255,10 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         """Generate code to print values, including numeric results and strings"""
         to_print = node.children[0]
         node_type = TokenType.lexicon[to_print.data]
+        print(to_print.value)
+
+        value_to_print = lexer.identifier_lexicon[to_print.value] if to_print.value > 0 else lexer.constant_lexicon[to_print.value]
+        current_section["code_section"].append(f"\n\t; print({value_to_print})\n")  # Pop the result to print
 
         if node_type == "INTEGER":
             # Pour une constante entière, charger la valeur dans rax et print_rax
@@ -252,8 +276,8 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             if not str_label:
                 # Si la chaîne n'est pas encore dans la data_section, l'ajouter
                 str_label = f'str_{abs(to_print.value)}'
-                str_value = lexer.constant_lexicon[to_print.value]
-                str_value = str_value.replace('"', '')
+                str_value = lexer.constant_lexicon[to_print.value].replace('"', '')
+                print(str_value)
                 data_section.append(f"\t{str_label} db \"{str_value}\", 0\n")
             # Générer le code pour afficher la chaîne
             current_section["code_section"].append(f"\tmov rax, 1\n")  # syscall write
@@ -262,11 +286,32 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             current_section["code_section"].append(f"\tmov rdx, {len(lexer.constant_lexicon[to_print.value])}\n")
             current_section["code_section"].append(f"\tsyscall\n")
         elif node_type == "IDENTIFIER":
-            # Pour une variable, charger la valeur depuis la pile puis print_rax
-            var_name = lexer.identifier_lexicon[to_print.value]
-            depl = symbol_table.symbols[var_name]['depl']
-            current_section["code_section"].append(f"\tmov rax, [rbp{-depl:+}]\n")
-            current_section["code_section"].append("\tcall print_rax\n")
+            # Pour une variable, vérifier son type avant d'imprimer
+            var_type = symbol_table.symbols[to_print.value]["type"]
+            left_side_address = get_variable_address(symbol_table, to_print.value)
+            
+            # Check if the identifier is a list element (e.g., a[2])
+            if len(to_print.children) > 0 and to_print.children[0].data in TokenType.lexicon.keys() and TokenType.lexicon[to_print.children[0].data] in ["INTEGER"]:
+                # It's a list element access, get the element type
+                list_symbol = find_symbol(symbol_table, to_print.value)
+                if list_symbol and "element_types" in list_symbol:
+                    idx = lexer.constant_lexicon[to_print.children[0].value]
+                    if idx < len(list_symbol["element_types"]):
+                        var_type = list_symbol["element_types"][idx]
+                current_section["code_section"].append(f"\tmov rax, [rbp{-left_side_address:+}]\n")
+                current_section["code_section"].append(f"\tmov rax, [rax + {idx}*8]\n")
+            else:
+                # Regular variable (not a list element)
+                current_section["code_section"].append(f"\tmov rax, [rbp{-left_side_address:+}]\n")
+            
+            if var_type == "STRING":
+                # It's a string, use print_str helper
+                current_section["code_section"].append(f"\t; Printing a string variable\n")
+                current_section["code_section"].append(f"\tmov rsi, rax\n")  # rax contains string address
+                current_section["code_section"].append(f"\tcall print_str\n")
+            else:
+                # It's a numeric value, use print_rax
+                current_section["code_section"].append("\tcall print_rax\n")
         else:
             # Pour les expressions, générer le code puis print_rax
             generate_expression(to_print, symbol_table, current_section)
@@ -274,16 +319,11 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             current_section["code_section"].append("\tcall print_rax\n")
 
     def setup_print_functions():
-        """Add the print_rax function to the text section"""
-        # Add the buffer in the bss section
+        """Add the print_rax and print_str functions to the text section"""
         bss_section = ["section .bss\n"]
         bss_section.append("\tbuffer resb 20\n")  # Buffer for number conversion
-
-        # Add newline in data section
         data_section.append("\tnewline db 0xA")
-        
-        # Add the print_rax function to text section
-        text_section.append("\n\n;\t---Print Protocol---\n")
+        text_section.append("\n\n;\t---print_rax protocol---\n")
         text_section.append("print_rax:\n")
         text_section.append("\tmov rcx, buffer + 20\n")
         text_section.append("\tmov rbx, 10\n")
@@ -310,7 +350,23 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         text_section.append("\tsyscall\n")
         text_section.append("\tret\n")
         text_section.append(";\t--------------------\n")
-        
+        # Add print_str helper
+        text_section.append("\n; ---print_str protocol---\n")
+        text_section.append("print_str:\n")
+        text_section.append("\txor rcx, rcx\n")
+        text_section.append("\n.find_len_str:\n")
+        text_section.append("\tmov al, [rsi + rcx]\n")
+        text_section.append("\ttest al, al\n")
+        text_section.append("\tjz .len_found_str\n")
+        text_section.append("\tinc rcx\n")
+        text_section.append("\tjmp .find_len_str\n")
+        text_section.append("\n.len_found_str:\n")
+        text_section.append("\tmov rdx, rcx\n")
+        text_section.append("\tmov rax, 1\n")
+        text_section.append("\tmov rdi, 1\n")
+        text_section.append("\tsyscall\n")
+        text_section.append("\tret\n")
+        text_section.append(";\t--------------------\n")
         return bss_section
 
     # Recursive function and call -----------------------------------------------------------------
@@ -321,7 +377,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         sections["_start"]["start_protocol"] = []
         sections["_start"]["end_protocol"] = []
 
-        
         sections["_start"]["start_protocol"].append(f"\n\t; Allocating space for {len(global_table.symbols)} local variables")
         sections["_start"]["start_protocol"].append("\n\tpush rbp\n")
         sections["_start"]["start_protocol"].append("\tmov rbp, rsp\n")
@@ -398,6 +453,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
     print(f"\nGenerating ASM code in \"{output_file_path}\"...\n")
     build_components(ast, global_table)
+    # print(ast.children[0].children[1].children[1].children[0].value)
     bss_section = setup_print_functions()
     write_generated_code(sections)
     output_file.close()

@@ -1,13 +1,57 @@
 graph TD
 0["axiome"]
-4["Block
+2["S1
 father: axiome"]
-5["print (L1)
-father: Block"]
+6["= (L1)
+father: S1"]
+style 6 stroke:#caf9fb,stroke-width:2px
+5["IDENTIFIER => 1 (L1)
+father: 51"]
 style 5 stroke:#caf9fb,stroke-width:2px
-17["STRING => -1 (L1)
+15["LIST (L1)
+father: 51"]
+style 15 stroke:#caf9fb,stroke-width:2px
+27["INTEGER => -1 (L1)
+father: LIST"]
+style 27 stroke:#caf9fb,stroke-width:2px
+44["INTEGER => -2 (L1)
+father: LIST"]
+style 44 stroke:#caf9fb,stroke-width:2px
+61["STRING => -3 (L1)
+father: LIST"]
+style 61 stroke:#caf9fb,stroke-width:2px
+78["STRING => -4 (L1)
+father: LIST"]
+style 78 stroke:#caf9fb,stroke-width:2px
+98["= (L2)
+father: S1"]
+style 98 stroke:#caf9fb,stroke-width:2px
+97["IDENTIFIER => 2 (L2)
+father: 51"]
+style 97 stroke:#caf9fb,stroke-width:2px
+100["IDENTIFIER => 1 (L2)
+father: 51"]
+style 100 stroke:#caf9fb,stroke-width:2px
+111["INTEGER => -5 (L2)
+father: 10"]
+style 111 stroke:#caf9fb,stroke-width:2px
+124["print (L3)
+father: S1"]
+style 124 stroke:#caf9fb,stroke-width:2px
+136["IDENTIFIER => 2 (L3)
 father: 30"]
-style 17 stroke:#caf9fb,stroke-width:2px
-0 --> 4
-4 --> 5
-5 --> 17
+style 136 stroke:#caf9fb,stroke-width:2px
+0 --> 2
+2 --> 6
+6 --> 5
+6 --> 15
+15 --> 27
+15 --> 44
+15 --> 61
+15 --> 78
+2 --> 98
+98 --> 97
+98 --> 100
+100 --> 111
+2 --> 124
+124 --> 136
