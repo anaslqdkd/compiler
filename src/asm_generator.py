@@ -8,6 +8,8 @@ UTF8_CharSize = 8  # en bits
 # -------------------------------------------------------------------------------------------------
 
 sections = {}
+numeric_op = {40, 41, 42, 43, 44}
+litteral_op = {'+', '-', '*', '/', '%'}
 
 def sizeof(value):
     if isinstance(value, int):
@@ -123,7 +125,9 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
         left_node_type = TokenType.lexicon[node.children[0].data]
         right_node_type = TokenType.lexicon[node.children[1].data]
-        
+
+        # print(left_node_type, right_node_type)
+
         if left_node_type == "IDENTIFIER" and right_node_type == "IDENTIFIER":
             # If both operands are identifiers, we need to load their values into registers
             left_side_address = get_variable_address(englobing_table, node.children[0].value)
@@ -138,9 +142,14 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             right_side_address = get_variable_address(englobing_table, node.children[1].value)
             current_section["code_section"].append("\tpop rbx\n")
             current_section["code_section"].append(f"\tmov rax, [rbp-{right_side_address}]\n")
+        elif (left_node_type in litteral_op and right_node_type == "INTEGER") or \
+             (left_node_type == "INTEGER" and right_node_type in litteral_op):
+            current_section["code_section"].append("\tpop rax\n")
+            current_section["code_section"].append("\tpop rbx\n")
         else:
+            # print('oui', left_node_type, right_node_type)
             current_section["code_section"].append("\tpop rbx\n")  # right operand
-            current_section["code_section"].append("\tpop rax\n")  # left operand
+            current_section["code_section"].append("\tpop rax\n")  # left operand 
 
         # Générer l'instruction d'opération appropriée
         if operation == 40:      # +
@@ -164,9 +173,13 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         """Generate code for expressions (constants, variables, and operations)"""
         if node.is_terminal:
             node_type = TokenType.lexicon[node.data]
+
+            print(node_type)
+
             if node_type == "INTEGER":
                 # Pour une constante, charger la valeur puis empiler
                 value = lexer.constant_lexicon[node.value]
+                print(value)
                 current_section["code_section"].append(f"\tmov rax, {value}\n")
                 current_section["code_section"].append("\tpush rax\n")
             elif node.data == "IDENTIFIER":
@@ -175,7 +188,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 depl = englobing_table.symbols[var_name]['depl']
                 current_section["code_section"].append(f"\tmov rax, [rbp{-depl:+}]\n")
                 current_section["code_section"].append("\tpush rax\n")
-            elif node.data in [40, 41, 42, 43, 44]:
+            elif node.data in numeric_op:
                 generate_binary_operation(node, englobing_table, current_section)
 
     def generate_print(node: Tree, symbol_table: SymbolTable, current_section: dict):
@@ -317,7 +330,8 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         output_file.write("; EOF")
 
     print(f"\nGenerating ASM code in \"{output_file_path}\"...\n")
-    build_components(ast, global_table)
+    print(lexer.constant_lexicon[ast.children[0].children[0].children[1].children[1].value])
+    # build_components(ast, global_table)
     bss_section = setup_print_functions()
     write_generated_code(sections)
     output_file.close()

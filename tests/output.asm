@@ -41,35 +41,4 @@ print_rax:
 ;	--------------------
 
 
-_start:
-	; Allocating space for 2 local variables
-	push rbp
-	mov rbp, rsp
-	sub rsp, 16
-
-	mov rax, 5
-	mov [rbp-8], rax
-	mov rax, 1
-	push rax
-
-	; Performing - operation
-	pop rbx
-	mov rax, [rbp-8]
-	sub rax, rbx
-	push rax
-	pop rax
-	mov [rbp-16], rax
-
-	; print(b)
-	mov rax, [rbp-16]
-	call print_rax
-
-
-;	---End of program---
-	mov rax, 60
-	xor rdi, rdi 
-	syscall
-;	--------------------
-
-
 ; EOF
