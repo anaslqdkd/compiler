@@ -101,15 +101,51 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 generate_expression(node.children[1], englobing_table, current_section)
                 current_section["code_section"].append("\tpop rax\n")
                 current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
-            else:
-                ## Right-side is a complex expression (e.g. 1 + 2 - 3 * 4 ...)
-                # On génère le code pour l'expression, le résultat sera sur le sommet de la pile
-
+            elif node.children[1].data in numeric_op:
                 generate_binary_operation(node.children[1], englobing_table, current_section)
                 current_section["code_section"].append("\tpop rax\n")
                 current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
+            elif node.children[1].data == "LIST":
+                generate_list(node.children[1], englobing_table, current_section)
 
         return
+    
+    def generate_list(node: Tree, englobing_table: SymbolTable, current_section: dict):
+        """
+        Génère le code NASM pour une liste de type a = [1, 2, "a"]
+        - Alloue la liste dans la section .data (ou .bss si besoin)
+        - Stocke les entiers directement, les chaînes comme pointeurs
+        - Remplit la variable 'a' avec l'adresse de la liste
+        """
+        # Générer un nom unique pour la liste (ex: list_a)
+        var_name = lexer.identifier_lexicon[node.father.children[0].value]  # nom de la variable à gauche de l'affectation
+        list_label = f"list_{var_name}"
+        elements = node.children
+
+        # Préparer la déclaration de la liste dans la section .data
+        list_items = []
+        for idx, elem in enumerate(elements):
+            if TokenType.lexicon[elem.data] == "INTEGER":
+                value = lexer.constant_lexicon[elem.value]
+                list_items.append(str(value))
+            elif TokenType.lexicon[elem.data] == "STRING":
+                str_label = f"{list_label}_str{idx}"
+                str_value = lexer.constant_lexicon[elem.value]
+                # Ajoute la chaîne dans .data
+                data_section.append(f"\t{str_label} db \"{str_value}\", 0\n")
+                list_items.append(str_label)
+            else:
+                # Pour d'autres types, à adapter
+                list_items.append("0")
+
+        # Ajoute la liste dans .data (tableau de 64 bits)
+        data_section.append(f"\t{list_label} dq {', '.join(list_items)}\n")
+
+        # Affecte l'adresse de la liste à la variable (ex: mov [rbp-8], list_a)
+        left_side_address = get_variable_address(englobing_table, node.father.children[0].value)
+        current_section["code_section"].append(f"\tmov rax, {list_label}\n")
+        current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
+
 
     def generate_binary_operation(node: Tree, englobing_table: SymbolTable, current_section: dict):
         """Generate assembly code for binary operations (+, -, *, //, %)"""
@@ -144,8 +180,13 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             current_section["code_section"].append(f"\tmov rax, [rbp-{right_side_address}]\n")
         elif (left_node_type in litteral_op and right_node_type == "INTEGER") or \
              (left_node_type == "INTEGER" and right_node_type in litteral_op):
-            current_section["code_section"].append("\tpop rax\n")
-            current_section["code_section"].append("\tpop rbx\n")
+            if operation in [41, 43]:
+                # If the operation is - or //, we need to pop the right operand first
+                current_section["code_section"].append("\tpop rbx\n")
+                current_section["code_section"].append("\tpop rax\n")
+            else:
+                current_section["code_section"].append("\tpop rax\n")
+                current_section["code_section"].append("\tpop rbx\n")
         else:
             # print('oui', left_node_type, right_node_type)
             current_section["code_section"].append("\tpop rbx\n")  # right operand
@@ -174,12 +215,11 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         if node.is_terminal:
             node_type = TokenType.lexicon[node.data]
 
-            print(node_type)
+            # print(node_type)
 
             if node_type == "INTEGER":
                 # Pour une constante, charger la valeur puis empiler
                 value = lexer.constant_lexicon[node.value]
-                print(value)
                 current_section["code_section"].append(f"\tmov rax, {value}\n")
                 current_section["code_section"].append("\tpush rax\n")
             elif node.data == "IDENTIFIER":
@@ -192,20 +232,47 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 generate_binary_operation(node, englobing_table, current_section)
 
     def generate_print(node: Tree, symbol_table: SymbolTable, current_section: dict):
-        """Generate code to print values, including numeric results"""
+        """Generate code to print values, including numeric results and strings"""
         to_print = node.children[0]
-        
-        # Generate code to get the value to print into rax
-        generate_expression(to_print, symbol_table, current_section)
+        node_type = TokenType.lexicon[to_print.data]
 
-        current_section["code_section"].append(f"\n\t; print({lexer.identifier_lexicon[to_print.value]})\n")  # Pop the result to print
+        if node_type == "INTEGER":
+            # Pour une constante entière, charger la valeur dans rax et print_rax
+            value = lexer.constant_lexicon[to_print.value]
+            current_section["code_section"].append(f"\tmov rax, {value}\n")
+            current_section["code_section"].append("\tcall print_rax\n")
+        elif node_type == "STRING":
+            # Pour une constante chaîne, charger l'adresse et print (syscall write)
+            str_label = None
+            # Chercher le label de la chaîne dans la data_section
+            for line in data_section:
+                if f'db "' in line and lexer.constant_lexicon[to_print.value] in line:
+                    str_label = line.split()[0]
+                    break
+            if not str_label:
+                # Si la chaîne n'est pas encore dans la data_section, l'ajouter
+                str_label = f'str_{abs(to_print.value)}'
+                str_value = lexer.constant_lexicon[to_print.value]
+                str_value = str_value.replace('"', '')
+                data_section.append(f"\t{str_label} db \"{str_value}\", 0\n")
+            # Générer le code pour afficher la chaîne
+            current_section["code_section"].append(f"\tmov rax, 1\n")  # syscall write
+            current_section["code_section"].append(f"\tmov rdi, 1\n")  # stdout
+            current_section["code_section"].append(f"\tmov rsi, {str_label}\n")
+            current_section["code_section"].append(f"\tmov rdx, {len(lexer.constant_lexicon[to_print.value])}\n")
+            current_section["code_section"].append(f"\tsyscall\n")
+        elif node_type == "IDENTIFIER":
+            # Pour une variable, charger la valeur depuis la pile puis print_rax
+            var_name = lexer.identifier_lexicon[to_print.value]
+            depl = symbol_table.symbols[var_name]['depl']
+            current_section["code_section"].append(f"\tmov rax, [rbp{-depl:+}]\n")
+            current_section["code_section"].append("\tcall print_rax\n")
+        else:
+            # Pour les expressions, générer le code puis print_rax
+            generate_expression(to_print, symbol_table, current_section)
+            current_section["code_section"].append("\tpop rax\n")
+            current_section["code_section"].append("\tcall print_rax\n")
 
-        left_side_address = get_variable_address(symbol_table, node.children[0].value)
-        current_section["code_section"].append(f"\tmov rax, [rbp-{left_side_address}]\n")
-        
-        # Call the print_rax function which handles numeric printing
-        current_section["code_section"].append("\tcall print_rax\n")
-    
     def setup_print_functions():
         """Add the print_rax function to the text section"""
         # Add the buffer in the bss section
@@ -330,8 +397,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         output_file.write("; EOF")
 
     print(f"\nGenerating ASM code in \"{output_file_path}\"...\n")
-    print(lexer.constant_lexicon[ast.children[0].children[0].children[1].children[1].value])
-    # build_components(ast, global_table)
+    build_components(ast, global_table)
     bss_section = setup_print_functions()
     write_generated_code(sections)
     output_file.close()
