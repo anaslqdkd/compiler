@@ -1,20 +1,7 @@
-def fn(x):
-	if x < 0:
-		a = 5
-		print(a)
-	else:
-		if 2 > 1:
-			b = 3
-			print(b)
-		if 1 > 2:
-			f = 0
-			print(f)
-		else:
-			r = 1
-			print(r)
-		a = 6
-		print(a)
-if 4 < 5:
-	f = 13
-	print(f)
-fn(2+1)
+b = 5
+def g(a, c):
+	d = a + 1
+	d = c + d
+	return d
+A = g(b, 17)
+print(A)
