@@ -7,6 +7,7 @@ section .bss
 
 section .text
 	global _start
+	global g
 
 
 ;	---Print Protocol---
@@ -42,58 +43,24 @@ print_rax:
 
 
 _start:
-	; Allocating space for 1 local variables
+	; Allocating space for 3 local variables
 	push rbp
 	mov rbp, rsp
-	sub rsp, 8
+	sub rsp, 24
 
-	mov rax, 1
-	push rax
-	mov rax, 2
-	push rax
-
-	; Performing - operation
-	pop rbx
-	pop rax
-	sub rax, rbx
-	push rax
-	mov rax, 3
-	push rax
-	mov rax, 4
-	push rax
-
-	; Performing * operation
-	pop rbx
-	pop rax
-	imul rax, rbx
-	push rax
-
-	; Performing + operation
-	pop rbx
-	pop rax
-	add rax, rbx
-	push rax
 	mov rax, 5
-	push rax
-
-	; Performing + operation
-	pop rbx
-	pop rax
-	add rax, rbx
-	push rax
-	mov rax, 6
-	push rax
-
-	; Performing - operation
-	pop rbx
-	pop rax
-	sub rax, rbx
-	push rax
-	pop rax
 	mov [rbp-8], rax
 
-	; print(a)
-	mov rax, [rbp-8]
+;	---Entering function---
+	mov rax, [8]
+	push rax
+	mov rax, 17
+	push rax
+	call g
+	mov [rbp-16], rax
+
+	; print(A)
+	mov rax, [rbp-16]
 	call print_rax
 
 
@@ -102,6 +69,33 @@ _start:
 	xor rdi, rdi 
 	syscall
 ;	--------------------
+
+
+g:
+;	---Protocole d'entree---
+	push rbp
+	mov rbp, rsp
+;	------------------------
+
+
+	; Performing + operation
+	mov rax, [rbp--8]
+	mov rbx, [rbp-{'type': 'INTEGER', 'depl': 8}]
+	add rax, rbx
+	push rax
+
+	; Performing + operation
+	pop rbx
+	pop rax
+	add rax, rbx
+	push rax
+	pop rax
+	mov [rbp--16], rax
+
+;	---Protocole de sortie---
+	pop rbp
+	ret
+;	------------------------
 
 
 ; EOF

@@ -7,6 +7,12 @@ UTF8_CharSize = 8  # en bits
 
 # -------------------------------------------------------------------------------------------------
 
+class AsmGenerationError(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+
+# -------------------------------------------------------------------------------------------------
+
 sections = {}
 
 def sizeof(value):
@@ -16,8 +22,7 @@ def sizeof(value):
         # Convert to bytes and count bits
         return len(value.encode('utf-8')) * UTF8_CharSize
     else:
-        raise TypeError(
-            "Unsupported type. Only integers and strings are supported.")
+        raise AsmGenerationError("Unsupported type. Only integers and strings are supported.")
 
 # -------------------------------------------------------------------------------------------------
 
@@ -71,15 +76,40 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         current_section["end_protocol"].append("\n\n")
         return
 
-    def generate_function_call(node: Tree, englobing_table: SymbolTable, current_section: dict):
-        # TODO: store the parameters
+    def generate_function_call(node: Tree, englobing_table: SymbolTable, current_section: dict, lexer: Lexer) -> None:
         function_name = lexer.identifier_lexicon[node.value]
+
+        current_section["code_section"].append("\n;\t---Entering function---\n")
+        # Push given parameters in the stack
+        for parameter_node in node.children[0].children:
+            # If it's a calculation
+            if parameter_node.value is None:
+                # TODO: add calculation maker
+                print("Parameter (calculation)", parameter_node.data, parameter_node.value)
+            # If it's an identifier
+            elif parameter_node.value > 0:
+                current_value = get_variable_address(englobing_table, parameter_node.value)
+                current_section["code_section"].append(f"\tmov rax, [{current_value}]\n")
+                current_section["code_section"].append("\tpush rax\n")
+            # Elif it's a constant
+            elif parameter_node.value < 0:
+                if parameter_node.value in lexer.constant_lexicon.keys():
+                    current_section["code_section"].append(f"\tmov rax, {lexer.constant_lexicon[parameter_node.value]}\n")
+                    current_section["code_section"].append("\tpush rax\n")
+            else:
+                raise AsmGenerationError(f"The node {parameter_node.data} has a wrong value ({parameter_node.value})")
+
+        # Call the actual code
         current_section["code_section"].append(f"\tcall {function_name}\n")
+
+        for i in range(len(node.children[0].children)):
+            # TODO: remove parameters from stack
+            print(f"{i+1}-th parameter unstacked")
+        pass
 
     def generate_assignment(node: Tree, englobing_table: SymbolTable, current_section: dict, has_function_call: bool = False):
         if len(node.children) > 1:
             left_side_address = get_variable_address(englobing_table, node.children[0].value)
-
 
             if has_function_call:
                 # Right-side is a function call (=> return value is stored in "rax")
@@ -232,7 +262,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         sections["_start"]["code_section"] = ["\n"]
         sections["_start"]["start_protocol"] = []
         sections["_start"]["end_protocol"] = []
-
         
         sections["_start"]["start_protocol"].append(f"\n\t; Allocating space for {len(global_table.symbols)} local variables")
         sections["_start"]["start_protocol"].append("\n\tpush rbp\n")
@@ -258,7 +287,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "=":
                 # Affectation
                 if current_node.children[1].value != None and current_node.children[1].value in current_table.function_return.keys():
-                    generate_function_call(current_node.children[1], current_table, current_section)
+                    generate_function_call(current_node.children[1], current_table, current_section, lexer)
                     generate_assignment(current_node, current_table, current_section, True)
                 else:
                     generate_assignment(current_node, current_table, current_section)
@@ -331,7 +360,7 @@ def get_variable_address(symbol_table: SymbolTable, variable_id: int) -> int:
     if variable_id in symbol_table.symbols.keys():
         return symbol_table.symbols[variable_id]['depl']
     elif symbol_table.englobing_table == None:
-        raise ValueError(f"Variable {variable_id} not found in symbol table.")
+        raise AsmGenerationError(f"Variable {variable_id} not found in symbol table.")
     else:
         return find_symbol(symbol_table.englobing_table, variable_id)
 

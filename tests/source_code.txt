@@ -1,2 +1,6 @@
-a = 1 - 2 + 3 * 4 + 5 - 6
-print(a)
+b = 5
+def g(a, c):
+    c = a + b + c
+    return c
+A = g(b, 17)
+print(A)
