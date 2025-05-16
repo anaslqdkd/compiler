@@ -152,7 +152,8 @@ _start:
 	call print_rax
 end_if_3_17:
 
-;	---Entering function---
+;	---Stacking parameters---
+;	---1-th parameter---
 	mov rax, 2
 	push rax
 	mov rax, 1
@@ -163,7 +164,12 @@ end_if_3_17:
 	pop rax
 	add rax, rbx
 	push rax
+
+;	---Calling the function---
 	call fn
+;	---Popping parameters---
+	pop rax
+;	--------------------
 
 
 ;	---End of program---

@@ -87,9 +87,11 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
     def generate_function_call(node: Tree, englobing_table: SymbolTable, current_section: dict, lexer: Lexer) -> None:
         function_name = lexer.identifier_lexicon[node.value]
 
-        current_section["code_section"].append("\n;\t---Entering function---\n")
+        current_section["code_section"].append("\n;\t---Stacking parameters---\n")
         # Push given parameters in the stack
-        for parameter_node in node.children[0].children:
+        for i in range(len(node.children[0].children)):
+            parameter_node = node.children[0].children[i]
+            current_section["code_section"].append(f";\t---{i+1}-th parameter---\n")
             # If it's a calculation
             if parameter_node.value is None:
                 generate_binary_operation(parameter_node, englobing_table, current_section)
@@ -107,11 +109,14 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 raise AsmGenerationError(f"The node {parameter_node.data} has a wrong value ({parameter_node.value})")
 
         # Call the actual code
+        current_section["code_section"].append("\n;\t---Calling the function---\n")
         current_section["code_section"].append(f"\tcall {function_name}\n")
 
+        # Popping all parameters
+        current_section["code_section"].append(";\t---Popping parameters---\n")
         for i in range(len(node.children[0].children)):
-            # TODO: remove parameters from stack
-            print(f"{i+1}-th parameter unstacked")
+            current_section["code_section"].append("\tpop rax\n")
+        current_section["code_section"].append(";\t--------------------\n")
         pass
 
     def generate_assignment(node: Tree, englobing_table: SymbolTable, current_section: dict, has_function_call: bool = False):
