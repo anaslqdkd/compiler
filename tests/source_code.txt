@@ -1,5 +1,5 @@
-def fn():
-	if 1 < 0:
+def fn(x):
+	if x < 0:
 		a = 5
 		print(a)
 	else:
@@ -17,4 +17,4 @@ def fn():
 if 4 < 5:
 	f = 13
 	print(f)
-fn()
+fn(2+1)

@@ -92,8 +92,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         for parameter_node in node.children[0].children:
             # If it's a calculation
             if parameter_node.value is None:
-                # TODO: add calculation maker
-                print("Parameter (calculation)", parameter_node.data, parameter_node.value)
+                generate_binary_operation(parameter_node, englobing_table, current_section)
             # If it's an identifier
             elif parameter_node.value > 0:
                 current_value = get_variable_address(englobing_table, parameter_node.value)
@@ -159,10 +158,10 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             elif node.children[1].data == "LIST":
                 generate_list(node.children[1], englobing_table, current_section)
             else:
-                print(f"Unknown assignment type: {node.children[1].data}")
+                raise AsmGenerationError(f"Unknown assignment type: {node.children[1].data}")
 
         return
-    
+
     def generate_list(node: Tree, englobing_table: SymbolTable, current_section: dict):
         """
         Génère le code NASM pour une liste de type a = [1, 2, "a", "b"]
@@ -275,8 +274,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         if node.is_terminal:
             node_type = TokenType.lexicon[node.data]
 
-            # print(node_type)
-
             if node_type == "INTEGER":
                 # Pour une constante, charger la valeur puis empiler
                 value = lexer.constant_lexicon[node.value]
@@ -295,7 +292,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         """Generate code to print values, including numeric results and strings"""
         to_print = node.children[0]
         node_type = TokenType.lexicon[to_print.data]
-        print(to_print.value)
 
         value_to_print = lexer.identifier_lexicon[to_print.value] if to_print.value > 0 else lexer.constant_lexicon[to_print.value]
         current_section["code_section"].append(f"\n\t; print({value_to_print})\n")  # Pop the result to print
@@ -317,7 +313,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 # Si la chaîne n'est pas encore dans la data_section, l'ajouter
                 str_label = f'str_{abs(to_print.value)}'
                 str_value = lexer.constant_lexicon[to_print.value].replace('"', '')
-                print(str_value)
                 data_section.append(f"\t{str_label} db \"{str_value}\", 0\n")
             # Générer le code pour afficher la chaîne
             current_section["code_section"].append(f"\tmov rax, 1\n")  # syscall write
@@ -443,7 +438,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 generate_code_for_function_declarations(current_node, current_table, current_section)
             elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "=":
                 # Affectation
-                # print(current_table)
                 if current_node.children[1].value != None and current_node.children[1].value in current_table.function_return.keys():
                     generate_function_call(current_node.children[1], current_table, current_section, lexer)
                     generate_assignment(current_node, current_table, current_section, True)

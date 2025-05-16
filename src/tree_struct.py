@@ -635,9 +635,7 @@ def revert_equal_priority_operators(given_tree: "Tree", relation_priorities: lis
                         considered_nodes.append(child)
                         revert_equal_priority_operators(child, relation_priorities, considered_nodes, priority_group)
                         i += 1
-                        print(f"Child: {TokenType.lexicon[child.data]} ; among {len(considered_nodes)} nodes")
                         if is_initiator:
-                            print(f"Child: {TokenType.lexicon[child.data]} initiated. It will do the reversal.")
                             revert_tree_list(considered_nodes)
                         is_node_considered = True
                         break

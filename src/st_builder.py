@@ -338,11 +338,9 @@ class SymbolTable:
             
             # If it's an identifier
             if TokenType.lexicon[node.data] == 'IDENTIFIER':
-                # print(find_symbol(self, node.value))
                 if len(node.children) > 0 and node.children[0].data in TokenType.lexicon.keys() and TokenType.lexicon[node.children[0].data] in ["INTEGER", "STRING"]:
                     # node is the list variable, node.children[0] is the index
                     list_symbol = find_symbol(self, node.value)
-                    # print(list_symbol)
                     if list_symbol and "element_types" in list_symbol:
                         idx = lexer.constant_lexicon[node.children[0].value]
                         # Defensive: check index bounds
@@ -386,7 +384,7 @@ class SymbolTable:
                     else:
                         return find_type(self, node.value)
                 else:
-                    print(f"L'identifiant \"{lexer.identifier_lexicon[node.value]}\" à la ligne {node.line_index} n'est pas défini !", self, lexer)
+                    raise STError(f"L'identifiant \"{lexer.identifier_lexicon[node.value]}\" à la ligne {node.line_index} n'est pas défini !", self, lexer)
 
                 # If it is a list element access (e.g., a[2])
                 
@@ -742,7 +740,6 @@ class SymbolTable:
                     + str(self.node_counter_for)
                 )
                 self.node_counter_for += 1
-            # print("the node is", function_node.data)
 
             newST = SymbolTable(str(new_label), self.imbrication_level + 1, self)
             self.symbols[str(new_label)] = {"type": type_label, "symbol table": newST}
@@ -996,7 +993,7 @@ def build_sts(ast: Tree, lexer: Lexer) -> "SymbolTable":
         ):
             # TODO: gérer les retours de listes, opérations binaires, fonctions
             return_type: Optional[str]
-            # TODO: check for undefined indentifier
+            # TODO: check for undefined identifier
             if TokenType.lexicon[ast.children[0].data] == "IDENTIFIER":
                 # if we do something like return a[0]
                 if len(ast.children[0].children) > 0:
@@ -1061,6 +1058,12 @@ def build_sts(ast: Tree, lexer: Lexer) -> "SymbolTable":
             # Checking if the function is correctly called
             current_st.get_function_id(ast, lexer)
             symbol_table.check_function_call(ast, lexer)
+
+        elif (
+            ast.data in TokenType.lexicon.keys()
+            and TokenType.lexicon[ast.data] in ["<", ">", "<=", ">=", "==", "!="]
+        ):
+            symbol_table.dfs_type_check(ast, lexer)
 
         # For loop on all children
         for child in ast.children:
