@@ -4,6 +4,8 @@ from sys import maxsize as InfSize
 from src.lexer import TokenType, Lexer
 from src.tree_struct import Tree
 
+node_counter_else = 0
+node_counter_if = 0
 
 class SemanticError(Exception):
     def __init__(self, message, ST: "SymbolTable", lexer: Lexer):
@@ -28,8 +30,8 @@ class SymbolTable:
     )
     character_size = 8  # Assuming every character will respect the UTF-8 norm
     node_counter = 0
-    node_counter_else = 0
-    node_counter_if = 0
+    # node_counter_else = 0
+    # node_counter_if = 0
     node_counter_for = 0
 
     def __init__(
@@ -172,7 +174,6 @@ class SymbolTable:
             - Returns the function's return type if all checks pass.
             - Graceful exception handling (`try/except`) is used to suppress some errors, but this might mask issues—consider improving error handling for production use.
         """
-        print(self.function_return)
         if node.value in self.function_identifiers:
             # If there's just the name of the function
             if len(node.children) == 0 and not node.father.data == "function":
@@ -564,8 +565,6 @@ class SymbolTable:
                     return
 
                 # Getting its type (if it exists)
-                # print(f"the type of {node.father.value} is {type}")
-                print("++++", node.value)
                 type = self.dfs_type_check(node.father, lexer)
 
                 # Calculating its depl
@@ -681,6 +680,8 @@ class SymbolTable:
         """
         node_children = function_node.children
         type_label = function_node.data
+        global node_counter_else
+        global node_counter_if
 
         # If the incoming indention corresponds to a for / if / else
         if (
@@ -688,23 +689,22 @@ class SymbolTable:
             function_node.data
             in TokenType.lexicon.keys()
         ):
-            print("function data", function_node.data)
             new_label = 0
             type_label = TokenType.lexicon[function_node.data]
             if TokenType.lexicon[function_node.data] == "else":
                 new_label = (
                     TokenType.lexicon[function_node.data]
                     + " "
-                    + str(self.node_counter_else)
+                    + str(node_counter_else)
                 )
-                self.node_counter_else += 1
+                node_counter_else += 1
             if TokenType.lexicon[function_node.data] == "if":
                 new_label = (
                     TokenType.lexicon[function_node.data]
                     + " "
-                    + str(self.node_counter_if)
+                    + str(node_counter_if)
                 )
-                self.node_counter_if += 1
+                node_counter_if += 1
             if TokenType.lexicon[function_node.data] == "for":
                 new_label = (
                     TokenType.lexicon[function_node.data]
@@ -714,7 +714,6 @@ class SymbolTable:
                 self.node_counter_for += 1
             # print("the node is", function_node.data)
 
-            print("TTTTTT", self.name)
             newST = SymbolTable(str(new_label), self.imbrication_level + 1, self)
             self.symbols[str(new_label)] = {"type": type_label, "symbol table": newST}
             self.node_counter += 1
@@ -952,7 +951,6 @@ def build_sts(ast: Tree, lexer: Lexer) -> "SymbolTable":
         current_st = symbol_table
         # All indented blocks
         if ast.data in ["function"]:
-            print("AAAA", ast.data)
             current_st = current_st.add_indented_block(ast)
         elif ast.data in TokenType.lexicon.keys() and TokenType.lexicon[ast.data] in [
             "if",
@@ -960,7 +958,6 @@ def build_sts(ast: Tree, lexer: Lexer) -> "SymbolTable":
             "for",
         ]:
             current_st = current_st.add_indented_block(ast)
-            print("BBBBB", ast.data)
 
         # When reaching a "return"
         elif (
@@ -1016,8 +1013,6 @@ def build_sts(ast: Tree, lexer: Lexer) -> "SymbolTable":
                 and ast.father.children[0] is ast
             ):
                 symbol_table.is_list_identifier(ast)
-                print("buuuuuuuuuuu")
-                print(ast.value)
                 current_st.add_value(
                     ast, lexer, is_parameter=symbol_table.is_parameter(ast)
                 )

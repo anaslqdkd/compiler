@@ -295,19 +295,26 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
     def generate_if(if_node: Tree, englobing_table: SymbolTable, current_section: Dict):
         global if_counter
         global else_counter
+
         if_else = False
+
+        # the name of the symbol table for if
         if_st_label = f"if {if_counter}"
         else_child_number = 1 
         if_child = 0
 
+        # get the index of the current if child to check if the next one is an else node
         for i in range(0, len(if_node.father.children)):
             if if_node.father.children[i] == if_node:
                 if_child = i
-        # TODO: bound check
-        if if_node.father.children[if_child+1].data in TokenType.lexicon.keys() and TokenType.lexicon[if_node.father.children[if_child+1].data] == "else":
-            if_else = True
-            else_child_number = if_child+1
 
+        # check if it as an if/else block, true if the next child is an else node
+        if if_child+1 < len(if_node.father.children):
+            if if_node.father.children[if_child+1].data in TokenType.lexicon.keys() and TokenType.lexicon[if_node.father.children[if_child+1].data] == "else":
+                if_else = True
+                else_child_number = if_child+1
+
+        # get the right label to jump to based on the type of comparison, <, ==, etc
         match (TokenType.lexicon[if_node.children[0].data]):
             case "==":
                 comparison_label = "jne"  
@@ -325,8 +332,8 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 raise error
 
 
+        # get the table symbol for the current if
         if_table = englobing_table.symbols[if_st_label]['symbol table']
-        # TODO: voir comment recuperer la table si c'est à l'interieur d'une fonction car pour l'instant des if à l'interieur d'une fonction ne fonctionnent pas
 
         left_expr = if_node.children[0].children[0]
         right_expr = if_node.children[0].children[1]
@@ -334,37 +341,39 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         current_section["code_section"].append(f"\t; if {if_counter}\n")
         evaluate_expression(left_expr, if_table, current_section)
         evaluate_expression(right_expr, if_table, current_section, "rbx")
+        line_number = if_node.line_index
 
         if if_else:
-            jump_label = f"else_{else_counter}"
+            jump_label = f"else_{else_counter}_{line_number}"
         else:
-            jump_label = f"end_if_{if_counter}"
+            jump_label = f"end_if_{if_counter}_{line_number}"
 
         current_section["code_section"].append(f"\n\tcmp rbx, rax")
         current_section["code_section"].append(f"\n\t{comparison_label} {jump_label}\n")
 
+        # build instructions for the if node
+        if_counter += 1
         for instr in if_node.children[1].children:
             build_components_rec(instr, if_table, current_section)
 
+        # build instructions for the else node if it exists
         if if_else:
-            jump_end_label = f"end_if_{if_counter}" 
+            # if there is an else, we add a jump label to avoid executing the else if necessary
+            jump_end_label = f"end_if_{if_counter}_{line_number}" 
             current_section["code_section"].append(f"\tjmp {jump_end_label}\n")
             current_section["code_section"].append(f"{jump_label}:\n")
             else_st_label = f"else {else_counter}"
             else_table = englobing_table.symbols[else_st_label]['symbol table']
             current_section["code_section"].append(f"\t; else section\n")
             else_node = if_node.father.children[else_child_number]
+            else_counter += 1
             for instr in else_node.children[0].children:
                 build_components_rec(instr, else_table, current_section)
             if_else = False
-            else_counter += 1
             current_section["code_section"].append(f"{jump_end_label}:\n")
 
         else:
             current_section["code_section"].append(f"{jump_label}:\n")
-
-        if_counter += 1
-
 
     def evaluate_expression(current_node: Tree, current_table: SymbolTable, current_section: Dict, register:str = "rax"):
         # TODO: faire la même pour des expressions ou des booleen
@@ -437,7 +446,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 def get_local_variables_total_size(symbol_table: SymbolTable) -> int:
     total_size = 0
     for symbol in symbol_table.symbols.items():
-        if symbol[1]["type"] == "if":
+        if symbol[1]["type"] in ["if", "else"]:
             continue
         print("symbol", symbol[1])
         symbol_depl = symbol[1]['depl']
