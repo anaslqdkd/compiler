@@ -186,6 +186,7 @@ def revert_tree_list(tree_list: list["Tree"])->None:
         res.append(node)
 
     operands.reverse()
+    operands[0], operands[1] = operands[1], operands[0]
 
     for node_index in range(len(res)):
         node = res[node_index]
@@ -198,6 +199,7 @@ def revert_tree_list(tree_list: list["Tree"])->None:
             node.children.append(res[node_index + 1])
         node.children.reverse()
 
+    # Linking the new ordered branch to the whole tree
     previous_first_index = -1
     for i in range(len(in_tree.children)):
         if in_tree.children[i] is res[-1]:

@@ -125,7 +125,9 @@ class SymbolTable:
                 if symbol["depl"] >= 0:
                     new_depl = max_positive_depl
                     if new_depl != InfSize:
-                        if symbol["type"] in ["INTEGER", "LIST"]:
+                        # Always allocate integer_size bytes for INTEGER, LIST, and STRING variables
+                        # STRING variables need integer_size bytes for the pointer to the string
+                        if symbol["type"] in ["INTEGER", "LIST", "STRING"]:
                             new_depl += SymbolTable.integer_size
                         else:
                             new_depl = InfSize
@@ -133,8 +135,9 @@ class SymbolTable:
                     max_positive_depl = new_depl
                 else:
                     new_depl = max_negative_depl
-                    if new_depl != -InfSize:
-                        if symbol["type"] in ["INTEGER", "LIST"]:
+                    if new_depl != - InfSize:
+                        # Always allocate integer_size bytes for INTEGER, LIST, and STRING variables
+                        if symbol["type"] in ["INTEGER", "LIST", "STRING"]:
                             new_depl -= SymbolTable.integer_size
                         else:
                             new_depl = -InfSize
@@ -319,12 +322,34 @@ class SymbolTable:
         ):
             return TokenType.lexicon[node.data]
         if node.data in ["LIST", "TUPLE"]:
+            # Collect element types for the list/tuple
+            element_types = [self.dfs_type_check(child, lexer) for child in node.children]
+            # Store the element types in the node for later use (AST annotation)
+            node.element_types = element_types
             return node.data
-
+        
         if node.data in TokenType.lexicon.keys():
             # If there's an affectation
             if TokenType.lexicon[node.data] == "=":
                 return self.dfs_type_check(node.children[1], lexer)
+            
+            if TokenType.lexicon[node.data] == "print":
+                return self.dfs_type_check(node.children[0], lexer)
+            
+            # If it's an identifier
+            if TokenType.lexicon[node.data] == 'IDENTIFIER':
+                # print(find_symbol(self, node.value))
+                if len(node.children) > 0 and node.children[0].data in TokenType.lexicon.keys() and TokenType.lexicon[node.children[0].data] in ["INTEGER", "STRING"]:
+                    # node is the list variable, node.children[0] is the index
+                    list_symbol = find_symbol(self, node.value)
+                    # print(list_symbol)
+                    if list_symbol and "element_types" in list_symbol:
+                        idx = lexer.constant_lexicon[node.children[0].value]
+                        # Defensive: check index bounds
+                        if isinstance(idx, int) and 0 <= idx < len(list_symbol["element_types"]):
+                            return list_symbol["element_types"][idx]
+                        else:
+                            return "<unknown list item>"
 
             # If it's an identifier
             if TokenType.lexicon[node.data] == "IDENTIFIER":
@@ -361,11 +386,10 @@ class SymbolTable:
                     else:
                         return find_type(self, node.value)
                 else:
-                    raise SemanticError(
-                        f"L'identifiant \"{lexer.identifier_lexicon[node.value]}\" à la ligne {node.line_index} n'est pas défini !",
-                        self,
-                        lexer,
-                    )
+                    print(f"L'identifiant \"{lexer.identifier_lexicon[node.value]}\" à la ligne {node.line_index} n'est pas défini !", self, lexer)
+
+                # If it is a list element access (e.g., a[2])
+                
 
             # If it's the result of an operation
             if TokenType.lexicon[node.data] in ["+", "-", "*", "//", "%", "<", ">"]:
@@ -569,10 +593,13 @@ class SymbolTable:
 
                 # Calculating its depl
                 depl = InfSize
+                element_types = None
                 if type in ["LIST", "TUPLE"]:
                     depl = self.calculate_depl_compound(
-                        node.father.children[1], is_parameter
-                    )
+                        node.father.children[1], is_parameter)
+                    # Store element types if available
+                    if hasattr(node.father.children[1], "element_types"):
+                        element_types = node.father.children[1].element_types
                 elif type == "STRING":
                     depl = self.calculate_depl_string(
                         node.father.children[1], lexer, is_parameter
@@ -580,7 +607,10 @@ class SymbolTable:
                 elif type is not None:
                     depl = self.calculate_depl(is_parameter)
 
-                self.symbols[node.value] = {"type": type, "depl": depl}
+                entry = { "type": type, "depl": depl }
+                if element_types is not None:
+                    entry["element_types"] = element_types
+                self.symbols[node.value] = entry
 
         # Redefinitions
         elif in_st(self, node.value):

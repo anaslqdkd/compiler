@@ -1,4 +1,7 @@
 section .data
+	list_a_str2 db "a", 0
+	list_a_str3 db "b", 0
+	list_a dq 1, 2, list_a_str2, list_a_str3
 	newline db 0xA
 
 section .bss
@@ -7,10 +10,10 @@ section .bss
 
 section .text
 	global _start
-	global f
+	global g
 
 
-;	---Print Protocol---
+;	---print_rax protocol---
 print_rax:
 	mov rcx, buffer + 20
 	mov rbx, 10
@@ -41,23 +44,46 @@ print_rax:
 	ret
 ;	--------------------
 
+; ---print_str protocol---
+print_str:
+	xor rcx, rcx
+
+.find_len_str:
+	mov al, [rsi + rcx]
+	test al, al
+	jz .len_found_str
+	inc rcx
+	jmp .find_len_str
+
+.len_found_str:
+	mov rdx, rcx
+	mov rax, 1
+	mov rdi, 1
+	syscall
+	ret
+;	--------------------
+
 
 _start:
-	; Allocating space for 6 local variables
+	; Allocating space for 2 local variables
 	push rbp
 	mov rbp, rsp
-	sub rsp, 48
+	sub rsp, 16
 
-	mov rax, 5
+	; a = [1, 2, a, b]
+	mov rax, list_a
 	mov [rbp-8], rax
-	mov rax, 7
+
+	; b = a[3]
+	mov rax, [rbp-8]
+	mov rax, [rax + 3*8]
 	mov [rbp-16], rax
-	mov rax, 1
-	push rax
-	mov rax, 2
-	push rax
-	pop rax
-	mov [rbp-24], rax
+
+	; print(b)
+	mov rax, [rbp-16]
+	; Printing a string variable
+	mov rsi, rax
+	call print_str
 
 
 ;	---End of program---
@@ -67,15 +93,26 @@ _start:
 ;	--------------------
 
 
-f:
+g:
 ;	---Protocole d'entree---
 	push rbp
 	mov rbp, rsp
-	sub rsp, 1
 ;	------------------------
 
-	mov rax, 10
-	mov [rbp-8], rax
+
+	; Performing + operation
+	mov rax, [rbp--8]
+	mov rbx, [rbp-{'type': 'INTEGER', 'depl': 8}]
+	add rax, rbx
+	push rax
+
+	; Performing + operation
+	pop rbx
+	pop rax
+	add rax, rbx
+	push rax
+	pop rax
+	mov [rbp--16], rax
 
 ;	---Protocole de sortie---
 	pop rbp
