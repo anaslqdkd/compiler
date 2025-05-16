@@ -393,6 +393,28 @@ class SymbolTable:
             if TokenType.lexicon[node.data] in ["+", "-", "*", "//", "%", "<", ">"]:
                 left_type = self.dfs_type_check(node.children[0], lexer)
                 right_type = self.dfs_type_check(node.children[1], lexer)
+                
+                # Ajoutez ce bloc pour gérer la concaténation de listes
+                if TokenType.lexicon[node.data] == "+" and left_type == "LIST" and right_type == "LIST":
+                    # Collecte les types des éléments de chaque liste
+                    left_element_types = []
+                    right_element_types = []
+                    
+                    if hasattr(node.children[0], 'element_types'):
+                        left_element_types = node.children[0].element_types
+                    
+                    if hasattr(node.children[1], 'element_types'):
+                        right_element_types = node.children[1].element_types
+                    
+                    # Combine les types des éléments
+                    combined_element_types = left_element_types + right_element_types
+                    
+                    # Stocke les types combinés dans le nœud actuel
+                    node.element_types = combined_element_types
+                    
+                    return "LIST"
+                
+                # Reste du code existant pour les autres opérations
                 if left_type != right_type:
 
                     # If one of the operands is undefined, we define it so that there's no error

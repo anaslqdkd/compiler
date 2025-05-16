@@ -152,15 +152,89 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 current_section["code_section"].append("\tpop rax\n")
                 current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
             elif node.children[1].data in numeric_op:
-                generate_binary_operation(node.children[1], englobing_table, current_section)
-                current_section["code_section"].append("\tpop rax\n")
-                current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
+                if node.children[1].children[0].data == "LIST" and node.children[1].children[1].data == "LIST":
+                    # Concaténation de listes
+                    generate_list_concat(node.children[1], englobing_table, current_section)
+                else:
+                    generate_binary_operation(node.children[1], englobing_table, current_section)
+                    current_section["code_section"].append("\tpop rax\n")
+                    current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
             elif node.children[1].data == "LIST":
                 generate_list(node.children[1], englobing_table, current_section)
             else:
                 raise AsmGenerationError(f"Unknown assignment type: {node.children[1].data}")
 
         return
+
+    def generate_list_concat(node: Tree, englobing_table: SymbolTable, current_section: dict):
+        """
+        Génère le code NASM pour la concaténation de listes, ex : a = [1] + [2,3] + [4]
+        Crée une variable .data pour chaque sous-liste et une concat_list pour le résultat.
+        """
+        var_name = lexer.identifier_lexicon[node.father.children[0].value]
+        concat_label = f"concat_list_{var_name}"
+        list_labels = []
+        list_lengths = []
+        list_items_print = []
+        list_items = []
+        list_nodes = []
+
+        # Collect all LIST nodes (récursif)
+        def collect_lists(n):
+            if n.data == "LIST":
+                list_nodes.append(n)
+            elif n.data == 40:  # '+'
+                collect_lists(n.children[0])
+                collect_lists(n.children[1])
+        collect_lists(node)
+
+        # Pour chaque LIST, créer une variable .data
+        for idx, lnode in enumerate(list_nodes):
+            label = f"list{idx+1}_{var_name}"
+            list_labels.append(label)
+            elems = []
+            elems_print = []
+            for elem in lnode.children:
+                if TokenType.lexicon[elem.data] == "INTEGER":
+                    value = lexer.constant_lexicon[elem.value]
+                    elems.append(str(value))
+                    elems_print.append(str(value))
+                elif TokenType.lexicon[elem.data] == "STRING":
+                    str_label = f"{label}_str{len(elems)}"
+                    str_value = lexer.constant_lexicon[elem.value].replace('"', '')
+                    data_section.append(f"\t{str_label} db \"{str_value}\", 0\n")
+                    elems.append(str_label)
+                    elems_print.append(f'"{str_value}"')
+                else:
+                    elems.append("0")
+                    elems_print.append("0")
+            data_section.append(f"\t{label} dq {', '.join(elems)}\n")
+            list_lengths.append(len(elems))
+            list_items_print.extend(elems_print)
+            list_items.extend(elems)
+
+        # Créer la concat_list avec autant de 0 que d'éléments au total
+        data_section.append(f"\t{concat_label} dq {', '.join(['0']*len(list_items))}\t; {len(list_items)} elements for concatenation\n")
+        
+        # Générer le code pour la concaténation des listes
+        current_section["code_section"].append(f"\t; Concatenation : {var_name} = [{', '.join(list_items_print)}]\n")
+        
+        current_offset = 0
+        for idx, (label, length) in enumerate(zip(list_labels, list_lengths)):
+            current_section["code_section"].append(f"\tmov rsi, {label}\n")
+            
+            # Copier chaque élément avec le bon offset
+            for i in range(length):
+                current_section["code_section"].append(f"\tmov rax, [rsi+{i*8}]\n")
+                current_section["code_section"].append(f"\tmov [concat_list_{var_name}+{current_offset*8}], rax\n")
+                current_offset += 1
+            
+            current_section["code_section"].append("\n")  # Séparer les blocs pour la lisibilité
+
+        # Affecter l'adresse de la concaténation à la variable cible
+        left_side_address = get_variable_address(englobing_table, node.father.children[0].value)
+        current_section["code_section"].append(f"\tmov rax, {concat_label}\n")
+        current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
 
     def generate_list(node: Tree, englobing_table: SymbolTable, current_section: dict):
         """
@@ -188,7 +262,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 # Ajoute la chaîne dans .data
                 data_section.append(f"\t{str_label} db \"{str_value}\", 0\n")
                 list_items.append(str_label)
-                list_items_print.append(str_value)
+                list_items_print.append(f'"{str_value}"')
             else:
                 # Pour d'autres types, à adapter
                 list_items.append("0")
@@ -229,7 +303,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             left_side_address = get_variable_address(englobing_table, node.children[0].value)
             right_side_address = get_variable_address(englobing_table, node.children[1].value)
             current_section["code_section"].append(f"\tmov rax, [rbp-{left_side_address}]\n")
-            current_section["code_section"].append(f"\tmov rbx, [rbp-{right_side_address}]\n")
+            current_section["code_section"].append(f"\tmov rbx, [rbp-{right_sideAddress}]\n")
         elif left_node_type == "IDENTIFIER" and right_node_type == "INTEGER":
             left_side_address = get_variable_address(englobing_table, node.children[0].value)
             current_section["code_section"].append("\tpop rax\n")
@@ -271,7 +345,9 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
     def generate_expression(node: Tree, englobing_table: SymbolTable, current_section: dict):
         """Generate code for expressions (constants, variables, and operations)"""
+        print(node.data)
         if node.is_terminal:
+            
             node_type = TokenType.lexicon[node.data]
 
             if node_type == "INTEGER":
@@ -341,7 +417,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             
             if var_type == "STRING":
                 # It's a string, use print_str helper
-                current_section["code_section"].append(f"\t; Printing a string variable\n")
+                current_section["code_section"].append(f"\n\t; Printing a string variable\n")
                 current_section["code_section"].append(f"\tmov rsi, rax\n")  # rax contains string address
                 current_section["code_section"].append(f"\tcall print_str\n")
             else:

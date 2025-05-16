@@ -1,4 +1,8 @@
 section .data
+	list1_a dq 1, 2
+	list2_a_str0 db "abc", 0
+	list2_a dq list2_a_str0, 4
+	concat_list_a dq 0, 0, 0, 0	; 4 elements for concatenation
 	newline db 0xA
 
 section .bss
@@ -7,7 +11,6 @@ section .bss
 
 section .text
 	global _start
-	global fn
 
 
 ;	---print_rax protocol---
@@ -61,109 +64,36 @@ print_str:
 ;	--------------------
 
 
-fn:
-;	---Protocole d'entree---
-	push rbp
-	mov rbp, rsp
-;	------------------------
-
-	; if 0
-	mov rax, [rbp--8]
-	mov rbx, 0
-
-	cmp rax, rbx
-	jge else_0_2
-	mov rax, 5
-	mov [rbp-8], rax
-
-	; print(a)
-	mov rax, [rbp-8]
-	call print_rax
-	jmp end_if_1_2
-else_0_2:
-	; else section
-	; if 1
-	mov rax, 2
-	mov rbx, 1
-
-	cmp rax, rbx
-	jle end_if_1_6
-	mov rax, 3
-	mov [rbp-8], rax
-
-	; print(b)
-	mov rax, [rbp-8]
-	call print_rax
-end_if_1_6:
-	; if 2
-	mov rax, 1
-	mov rbx, 2
-
-	cmp rax, rbx
-	jle else_1_9
-	mov rax, 0
-	mov [rbp-8], rax
-
-	; print(f)
-	mov rax, [rbp-8]
-	call print_rax
-	jmp end_if_3_9
-else_1_9:
-	; else section
-	mov rax, 1
-	mov [rbp-8], rax
-
-	; print(r)
-	mov rax, [rbp-8]
-	call print_rax
-end_if_3_9:
-	mov rax, 6
-	mov [rbp-8], rax
-
-	; print(a)
-	mov rax, [rbp-8]
-	call print_rax
-end_if_1_2:
-
-;	---Protocole de sortie---
-	mov rsp, rbp
-	pop rbp
-	ret
-;	------------------------
-
-
 _start:
 	; Allocating space for 2 local variables
 	push rbp
 	mov rbp, rsp
 	sub rsp, 16
 
-	; if 3
-	mov rax, 4
-	mov rbx, 5
+	; Concatenation : a = [1, 2, "abc", 4]
+	mov rsi, list1_a
+	mov rax, [rsi+0]
+	mov [concat_list_a+0], rax
+	mov rax, [rsi+8]
+	mov [concat_list_a+8], rax
 
-	cmp rax, rbx
-	jge end_if_3_17
-	mov rax, 13
+	mov rsi, list2_a
+	mov rax, [rsi+0]
+	mov [concat_list_a+16], rax
+	mov rax, [rsi+8]
+	mov [concat_list_a+24], rax
+
+	mov rax, concat_list_a
 	mov [rbp-8], rax
 
-	; print(f)
+	; b = a[1]
 	mov rax, [rbp-8]
+	mov rax, [rax + 1*8]
+	mov [rbp-16], rax
+
+	; print(b)
+	mov rax, [rbp-16]
 	call print_rax
-end_if_3_17:
-
-;	---Entering function---
-	mov rax, 2
-	push rax
-	mov rax, 1
-	push rax
-
-	; Performing + operation
-	pop rbx
-	pop rax
-	add rax, rbx
-	push rax
-	call fn
 
 
 ;	---End of program---
