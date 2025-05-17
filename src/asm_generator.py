@@ -169,7 +169,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                         current_section["code_section"].append(f"\tmov rax, rbp\n")
                         current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
                     else:
-                        current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+                        current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
                 else:
                     # Right side is an identifier: charger la variable puis la mettre en pile
                     right_side, has_to_rewind_R = get_variable_address(englobing_table, node.children[1].value)
@@ -182,7 +182,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                         current_section["code_section"].append(f"\tmov rax, rbp\n")
                         current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
                     else:
-                        current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+                        current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
             elif not node.children[1].is_terminal:
                 # Right-side is an expression (operation)
                 generate_expression(node.children[1], englobing_table, current_section)
@@ -191,7 +191,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     current_section["code_section"].append(f"\tmov rax, rbp\n")
                     current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
                 else:
-                    current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+                    current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
             elif node.children[1].data in numeric_op:
                 if node.children[1].children[0].data == "LIST" and node.children[1].children[1].data == "LIST":
                     # Concaténation de listes
@@ -292,7 +292,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             current_section["code_section"].append(f"\tmov rax, rbp\n")
             current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
         else:
-            current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+            current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
 
     def generate_list(node: Tree, englobing_table: SymbolTable, current_section: dict):
         """
@@ -337,7 +337,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             current_section["code_section"].append(f"\tmov rax, rbp\n")
             current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
         else:
-            current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+            current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
 
 
     def generate_binary_operation(node: Tree, englobing_table: SymbolTable, current_section: dict):
@@ -379,7 +379,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 current_section["code_section"].append(f"\tmov rax, rbp\n")
                 current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
             else:
-                current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+                current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
             if has_to_rewind_R:
                 current_section["code_section"].append(f"\tmov rax, rbp\n")
                 current_section["code_section"].append(f"\tmov rax, [rax{right_side_address[3:]}]\n")
@@ -392,7 +392,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 current_section["code_section"].append(f"\tmov rax, rbp\n")
                 current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
             else:
-                current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+                current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
         elif left_node_type == "INTEGER" and right_node_type == "IDENTIFIER":
             right_side_address, has_to_rewind = get_variable_address(englobing_table, node.children[1].value)
             current_section["code_section"].append("\tpop rbx\n")
@@ -538,11 +538,11 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     current_section["code_section"].append(f"\tmov rax, rbp\n")
                     current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
                 else:
-                    current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+                    current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
                 current_section["code_section"].append(f"\tmov rax, [rax + {idx}*8]\n")
             else:
                 # Regular variable (not a list element)
-                current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+                current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
             
             if var_type == "STRING":
                 # It's a string, use print_str helper
