@@ -649,6 +649,7 @@ def revert_equal_priority_operators(given_tree: "Tree", relation_priorities: lis
 # --------------------------------------------------------------------------------------------------------------------------
 
 def reajust_fathers(given_tree:"Tree")->None:
+    # TODO: voir pour les if avec des expr, ex: if 1 + 2 + 4 etc parce que ça fait recursion infinie
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]

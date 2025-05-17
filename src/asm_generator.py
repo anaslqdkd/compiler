@@ -558,23 +558,24 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 if_else = True
                 else_child_number = if_child+1
 
+        comparison_label = "jne"
         # get the right label to jump to based on the type of comparison, <, ==, etc
-        match (TokenType.lexicon[if_node.children[0].data]):
-            case "==":
-                comparison_label = "jne"  
-            case "!=":
-                comparison_label = "je"  
-            case ">=":
-                comparison_label = "jl"
-            case ">":
-                comparison_label = "jle"
-            case "<=":
-                comparison_label = "jg" 
-            case "<":
-                comparison_label = "jge" 
-            case _:
-                raise error
-
+        # match (TokenType.lexicon[if_node.children[0].data]):
+        #     case "==":
+        #         comparison_label = "jne"  
+        #     case "!=":
+        #         comparison_label = "je"  
+        #     case ">=":
+        #         comparison_label = "jl"
+        #     case ">":
+        #         comparison_label = "jle"
+        #     case "<=":
+        #         comparison_label = "jg" 
+        #     case "<":
+        #         comparison_label = "jge" 
+        #     case _:
+        #         raise error
+        #
 
         # get the table symbol for the current if
         if_table = englobing_table.symbols[if_st_label]['symbol table']
@@ -582,9 +583,20 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         left_expr = if_node.children[0].children[0]
         right_expr = if_node.children[0].children[1]
 
-        current_section["code_section"].append(f"\t; if {if_counter}\n")
-        evaluate_expression(left_expr, if_table, current_section)
-        evaluate_expression(right_expr, if_table, current_section, "rbx")
+        # current_section["code_section"].append(f"\t;--------if {if_counter}------\n")
+        # current_section["code_section"].append(f"\t;calculate left side of if:\n")
+        expr = if_node.children[0]
+        evaluate_expression(expr, if_table, current_section)
+        # save the res of the left_expr on the stack
+        # current_section["code_section"].append(f"\tpush rax\n") 
+        # current_section["code_section"].append(f"\t;calculate right side of if:\n")
+        # evaluate_expression(right_expr, if_table, current_section)
+
+        # move the right res to rbx
+        # current_section["code_section"].append(f"\tmov rbx, rax\n") 
+        # get the left res from the stack to rax to compare
+        # current_section["code_section"].append(f"\tpop rax\n") 
+
         line_number = if_node.line_index
 
         if if_else:
@@ -592,11 +604,12 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         else:
             jump_label = f"end_if_{if_counter}_{line_number}"
 
-        current_section["code_section"].append(f"\n\tcmp rax, rbx")
+        current_section["code_section"].append(f"\n\tcmp rax, 1")
         current_section["code_section"].append(f"\n\t{comparison_label} {jump_label}\n")
 
         # build instructions for the if node
         if_counter += 1
+        current_section["code_section"].append(f"\n\t;operations in if\n")
         for instr in if_node.children[1].children:
             build_components_rec(instr, if_table, current_section)
 
@@ -619,16 +632,20 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         else:
             current_section["code_section"].append(f"{jump_label}:\n")
 
-    def evaluate_expression(current_node: Tree, current_table: SymbolTable, current_section: Dict, register:str = "rax"):
+    def evaluate_expression(current_node: Tree, current_table: SymbolTable, current_section: Dict):
         # TODO: faire la même pour des expressions ou des booleen
+        register = "rax"
+        token_type = TokenType.lexicon[current_node.data]
         if current_node.data in TokenType.lexicon.keys():
-            if TokenType.lexicon[current_node.data] == "INTEGER":
+            if token_type == "INTEGER":
                 value = current_node.value
                 current_section["code_section"].append(f"\tmov {register}, {lexer.constant_lexicon[value]}\n")
-            if TokenType.lexicon[current_node.data] == "IDENTIFIER":
+            if token_type == "IDENTIFIER":
                 offset, has_to_rewind = get_variable_address(current_table, current_node.value)
                 current_section["code_section"].append(f"\tmov {register}, [{offset}]\n")
-                pass
+            elif token_type in ["==", ">", "<", "<=", ">=", "!="]:
+                generate_expression(current_node, current_table, current_section)
+
 
 
     def generate_end_of_program(current_section: dict):
