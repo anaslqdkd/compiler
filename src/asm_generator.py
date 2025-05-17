@@ -481,9 +481,26 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         """Add the print_rax and print_str functions to the text section"""
         bss_section = ["section .bss\n"]
         bss_section.append("\tbuffer resb 20\n")  # Buffer for number conversion
-        data_section.append("\tnewline db 0xA")
+        data_section.append("\tnewline db 0xA\n")
+        data_section.append("\tminus_sign db \"-\"")  # Ajout du signe moins
         text_section.append("\n\n;\t---print_rax protocol---\n")
         text_section.append("print_rax:\n")
+        
+        # Vérifier si le nombre est négatif
+        text_section.append("\ttest rax, rax\n")
+        text_section.append("\tjns .positive\n")
+        
+        # Si négatif, afficher le signe moins et convertir en positif
+        text_section.append("\tpush rax\n")          # Sauvegarder rax
+        text_section.append("\tmov rax, 1\n")        # syscall write
+        text_section.append("\tmov rdi, 1\n")        # stdout 
+        text_section.append("\tmov rsi, minus_sign\n") # Pointer vers "-"
+        text_section.append("\tmov rdx, 1\n")        # Longueur 1
+        text_section.append("\tsyscall\n")
+        text_section.append("\tpop rax\n")           # Restaurer rax
+        text_section.append("\tneg rax\n")           # Convertir en positif
+        
+        text_section.append(".positive:\n")
         text_section.append("\tmov rcx, buffer + 20\n")
         text_section.append("\tmov rbx, 10\n")
         text_section.append("\n.convert_loop:\n")

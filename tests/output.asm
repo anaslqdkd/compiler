@@ -1,5 +1,6 @@
 section .data
 	newline db 0xA
+	minus_sign db "-"
 
 section .bss
 	buffer resb 20
@@ -11,6 +12,17 @@ section .text
 
 ;	---print_rax protocol---
 print_rax:
+	test rax, rax
+	jns .positive
+	push rax
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, minus_sign
+	mov rdx, 1
+	syscall
+	pop rax
+	neg rax
+.positive:
 	mov rcx, buffer + 20
 	mov rbx, 10
 
@@ -71,12 +83,10 @@ _start:
 	mov rax, 2
 	push rax
 
-	; Performing == operation
+	; Performing - operation
 	pop rbx
 	pop rax
-	cmp rax, rbx
-	mov rax, 0
-	sete al
+	sub rax, rbx
 	push rax
 	pop rax
 	mov [rbp-8], rax
