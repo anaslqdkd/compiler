@@ -403,7 +403,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 current_section["code_section"].append(f"\tmov rax, [{right_side_address}]\n")
         elif (left_node_type in litteral_op and right_node_type == "INTEGER") or \
              (left_node_type == "INTEGER" and right_node_type in litteral_op):
-            if operation in [41, 43]:
+            if operation in [41, 43, 45, 46, 47, 48, 49, 50]:
                 # If the operation is - or //, we need to pop the right operand first
                 current_section["code_section"].append("\tpop rbx\n")
                 current_section["code_section"].append("\tpop rax\n")

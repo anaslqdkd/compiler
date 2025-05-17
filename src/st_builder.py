@@ -399,7 +399,7 @@ class SymbolTable:
                 return "INTEGER"
 
             # If it's the result of an operation
-            if TokenType.lexicon[node.data] in ["+", "-", "*", "//", "%", "<=", ">=" "<", ">", "!=", "=="]:
+            if TokenType.lexicon[node.data] in ["+", "-", "*", "//", "%", "<=", ">=", "<", ">", "!=", "=="]:
                 if len(node.children) >= 2:
                     left_type = self.dfs_type_check(node.children[0], lexer)
                     right_type = self.dfs_type_check(node.children[1], lexer)

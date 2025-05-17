@@ -78,12 +78,25 @@ _start:
 	mov rbp, rsp
 	sub rsp, 8
 
-
-	; Unary negation
-	mov rax, 1
+	mov rax, 5
 	push rax
+	mov rax, 3
+	push rax
+
+	; Performing + operation
+	pop rbx
 	pop rax
-	neg rax
+	add rax, rbx
+	push rax
+	mov rax, 3
+	push rax
+
+	; Performing < operation
+	pop rbx
+	pop rax
+	cmp rax, rbx
+	mov rax, 0
+	setl al
 	push rax
 	pop rax
 	mov [rbp - 8], rax
