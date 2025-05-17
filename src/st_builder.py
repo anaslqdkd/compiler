@@ -387,71 +387,92 @@ class SymbolTable:
                     raise STError(f"L'identifiant \"{lexer.identifier_lexicon[node.value]}\" à la ligne {node.line_index} n'est pas défini !", self, lexer)
 
                 # If it is a list element access (e.g., a[2])
-                
+            
+            # Handle unary minus operator specifically
+            if TokenType.lexicon[node.data] == "-" and len(node.children) == 1:
+                # For unary minus, evaluate the operand type
+                operand_type = self.dfs_type_check(node.children[0], lexer)
+                # If operand is undefined, set it to INTEGER
+                if operand_type == "<undefined>":
+                    self.set_type(node.children[0], "INTEGER", lexer, True)
+                # Unary minus always returns an INTEGER
+                return "INTEGER"
 
             # If it's the result of an operation
-            if TokenType.lexicon[node.data] in ["+", "-", "*", "//", "%", "<=", ">=" "<", ">", "!=", "=="]:
-                left_type = self.dfs_type_check(node.children[0], lexer)
-                right_type = self.dfs_type_check(node.children[1], lexer)
-                
-                # Ajoutez ce bloc pour gérer la concaténation de listes
-                if TokenType.lexicon[node.data] == "+" and left_type == "LIST" and right_type == "LIST":
-                    # Collecte les types des éléments de chaque liste
-                    left_element_types = []
-                    right_element_types = []
+            if TokenType.lexicon[node.data] in ["+", "-", "*", "//", "%", "<=", ">=", "<", ">", "!=", "=="]:
+                if len(node.children) >= 2:
+                    left_type = self.dfs_type_check(node.children[0], lexer)
+                    right_type = self.dfs_type_check(node.children[1], lexer)
                     
-                    if hasattr(node.children[0], 'element_types'):
-                        left_element_types = node.children[0].element_types
+                    # Ajoutez ce bloc pour gérer la concaténation de listes
+                    if TokenType.lexicon[node.data] == "+" and left_type == "LIST" and right_type == "LIST":
+                        # Collecte les types des éléments de chaque liste
+                        left_element_types = []
+                        right_element_types = []
+                        
+                        if hasattr(node.children[0], 'element_types'):
+                            left_element_types = node.children[0].element_types
+                        
+                        if hasattr(node.children[1], 'element_types'):
+                            right_element_types = node.children[1].element_types
+                        
+                        # Combine les types des éléments
+                        combined_element_types = left_element_types + right_element_types
+                        
+                        # Stocke les types combinés dans le nœud actuel
+                        node.element_types = combined_element_types
+                        
+                        return "LIST"
                     
-                    if hasattr(node.children[1], 'element_types'):
-                        right_element_types = node.children[1].element_types
-                    
-                    # Combine les types des éléments
-                    combined_element_types = left_element_types + right_element_types
-                    
-                    # Stocke les types combinés dans le nœud actuel
-                    node.element_types = combined_element_types
-                    
-                    return "LIST"
-                
-                # Reste du code existant pour les autres opérations
-                if left_type != right_type:
+                    # Reste du code existant pour les autres opérations
+                    if left_type != right_type:
 
-                    # If one of the operands is undefined, we define it so that there's no error
-                    if left_type == "<undefined>" or right_type == "<undefined>":
-                        undefined_child = (
-                            node.children[0]
-                            if left_type == "<undefined>"
-                            else node.children[1]
-                        )
-                        defined_child_type = (
-                            right_type if left_type == "<undefined>" else left_type
-                        )
-                        if defined_child_type != None:
-                            self.set_type(
-                                undefined_child, defined_child_type, lexer, True
+                        # If one of the operands is undefined, we define it so that there's no error
+                        if left_type == "<undefined>" or right_type == "<undefined>":
+                            undefined_child = (
+                                node.children[0]
+                                if left_type == "<undefined>"
+                                else node.children[1]
                             )
-                        return defined_child_type
+                            defined_child_type = (
+                                right_type if left_type == "<undefined>" else left_type
+                            )
+                            if defined_child_type != None:
+                                self.set_type(
+                                    undefined_child, defined_child_type, lexer, True
+                                )
+                            return defined_child_type
 
-                    # Else, if really can't be accepted (i.e. 'True + 1' can be accepted)
-                    elif not (
-                        left_type in ["True", "False", "INTEGER"]
-                        and right_type in ["True", "False", "INTEGER"]
-                    ):
-                        raise SemanticError(
-                            f"À la ligne {node.line_index}, il est impossible de faire l'opération entre {left_type} et {right_type} !",
-                            self,
-                            lexer,
-                        )
+                        # Else, if really can't be accepted (i.e. 'True + 1' can be accepted)
+                        elif not (
+                            left_type in ["True", "False", "INTEGER"]
+                            and right_type in ["True", "False", "INTEGER"]
+                        ):
+                            raise SemanticError(
+                                f"À la ligne {node.line_index}, il est impossible de faire l'opération entre {left_type} et {right_type} !",
+                                self,
+                                lexer,
+                            )
 
-                # Else, get the corresponding type
-                if left_type in ["True", "False", "INTEGER"] and right_type in [
-                    "True",
-                    "False",
-                    "INTEGER",
-                ]:
-                    return "INTEGER"
-                return left_type
+                    # Else, get the corresponding type
+                    if left_type in ["True", "False", "INTEGER"] and right_type in [
+                        "True",
+                        "False",
+                        "INTEGER",
+                    ]:
+                        return "INTEGER"
+                    return left_type
+                else:
+                    # This should not happen as we've already handled unary minus
+                    return "<undefined>"
+        
+            # Dealing with unary -
+            elif TokenType.lexicon[node.data] == "-" and len(node.children) == 1:
+                operand_type = self.dfs_type_check(node.children[0], lexer)
+                if (operand_type == "<undefined>"):
+                    self.set_type(
+                        node.children[0], "INTEGER", lexer, True
+                    )
 
             # If no type has been found, then it's undefined
             return "<undefined>"

@@ -145,7 +145,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     current_section["code_section"].append(f"\tmov rax, [rbp]\n")
                     current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
                 else:
-                    current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+                    current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
             # NOTE: il me semble que ce n'est pas necessaire de vérifier le in_st puisque sinon ça donnerait une erreur semantique ?
             elif in_st(englobing_table, node.children[1].value):
                 if node.children[1].children:
@@ -204,7 +204,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                         current_section["code_section"].append(f"\tmov rax, [rbp]\n")
                         current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
                     else:
-                        current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+                        current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
             elif node.children[1].data == "LIST":
                 generate_list(node.children[1], englobing_table, current_section)
             else:
@@ -344,8 +344,18 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         """Generate assembly code for binary operations (+, -, *, //, %)"""
         operation = node.data
 
+        # Check if it's a unary minus operation
+        if operation == 41 and len(node.children) == 1:  # '-' with one child
+            # Générer le code pour l'expression opérande
+            current_section["code_section"].append(f"\n\t; Unary negation\n")
+            generate_expression(node.children[0], englobing_table, current_section)
+            # Récupérer la valeur et la négation
+            current_section["code_section"].append("\tpop rax\n")
+            current_section["code_section"].append("\tneg rax\n")  # Négation unaire
+            current_section["code_section"].append("\tpush rax\n")
+            return
+
         # Générer le code pour empiler les opérandes (gauche puis droite)
-        # FIXME: consider unary -
         generate_expression(node.children[0], englobing_table, current_section)
         generate_expression(node.children[1], englobing_table, current_section)
 
@@ -393,7 +403,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 current_section["code_section"].append(f"\tmov rax, [{right_side_address}]\n")
         elif (left_node_type in litteral_op and right_node_type == "INTEGER") or \
              (left_node_type == "INTEGER" and right_node_type in litteral_op):
-            if operation in [41, 43]:
+            if operation in [41, 43, 45, 46, 47, 48, 49, 50]:
                 # If the operation is - or //, we need to pop the right operand first
                 current_section["code_section"].append("\tpop rbx\n")
                 current_section["code_section"].append("\tpop rax\n")
@@ -478,6 +488,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             elif node.data in numeric_op:
                 generate_binary_operation(node, englobing_table, current_section)
 
+
     def generate_print(node: Tree, symbol_table: SymbolTable, current_section: dict):
         """Generate code to print values, including numeric results and strings"""
         to_print = node.children[0]
@@ -551,9 +562,26 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         """Add the print_rax and print_str functions to the text section"""
         bss_section = ["section .bss\n"]
         bss_section.append("\tbuffer resb 20\n")  # Buffer for number conversion
-        data_section.append("\tnewline db 0xA")
+        data_section.append("\tnewline db 0xA\n")
+        data_section.append("\tminus_sign db \"-\"")  # Ajout du signe moins
         text_section.append("\n\n;\t---print_rax protocol---\n")
         text_section.append("print_rax:\n")
+        
+        # Vérifier si le nombre est négatif
+        text_section.append("\ttest rax, rax\n")
+        text_section.append("\tjns .positive\n")
+        
+        # Si négatif, afficher le signe moins et convertir en positif
+        text_section.append("\tpush rax\n")          # Sauvegarder rax
+        text_section.append("\tmov rax, 1\n")        # syscall write
+        text_section.append("\tmov rdi, 1\n")        # stdout 
+        text_section.append("\tmov rsi, minus_sign\n") # Pointer vers "-"
+        text_section.append("\tmov rdx, 1\n")        # Longueur 1
+        text_section.append("\tsyscall\n")
+        text_section.append("\tpop rax\n")           # Restaurer rax
+        text_section.append("\tneg rax\n")           # Convertir en positif
+        
+        text_section.append(".positive:\n")
         text_section.append("\tmov rcx, buffer + 20\n")
         text_section.append("\tmov rbx, 10\n")
         text_section.append("\n.convert_loop:\n")
