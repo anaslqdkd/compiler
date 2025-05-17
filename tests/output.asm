@@ -1,8 +1,4 @@
 section .data
-	list1_a dq 1, 2
-	list2_a_str0 db "abc", 0
-	list2_a dq list2_a_str0, 4
-	concat_list_a dq 0, 0, 0, 0	; 4 elements for concatenation
 	newline db 0xA
 
 section .bss
@@ -65,34 +61,26 @@ print_str:
 
 
 _start:
-	; Allocating space for 2 local variables
+	; Allocating space for 1 local variables
 	push rbp
 	mov rbp, rsp
-	sub rsp, 16
+	sub rsp, 8
 
-	; Concatenation : a = [1, 2, "abc", 4]
-	mov rsi, list1_a
-	mov rax, [rsi+0]
-	mov [concat_list_a+0], rax
-	mov rax, [rsi+8]
-	mov [concat_list_a+8], rax
+	mov rax, 1
+	push rax
+	mov rax, 1
+	push rax
 
-	mov rsi, list2_a
-	mov rax, [rsi+0]
-	mov [concat_list_a+16], rax
-	mov rax, [rsi+8]
-	mov [concat_list_a+24], rax
-
-	mov rax, concat_list_a
+	; Performing + operation
+	pop rbx
+	pop rax
+	add rax, rbx
+	push rax
+	pop rax
 	mov [rbp-8], rax
 
-	; b = a[1]
+	; print(a)
 	mov rax, [rbp-8]
-	mov rax, [rax + 1*8]
-	mov [rbp-16], rax
-
-	; print(b)
-	mov rax, [rbp-16]
 	call print_rax
 
 

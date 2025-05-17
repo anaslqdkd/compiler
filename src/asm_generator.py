@@ -225,8 +225,16 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             
             # Copier chaque élément avec le bon offset
             for i in range(length):
-                current_section["code_section"].append(f"\tmov rax, [rsi+{i*8}]\n")
-                current_section["code_section"].append(f"\tmov [concat_list_{var_name}+{current_offset*8}], rax\n")
+                if i > 0:
+                    current_section["code_section"].append(f"\tmov rax, [rsi+{i*8}]\n")
+                else:
+                    current_section["code_section"].append(f"\tmov rax, [rsi]\n")
+
+                if current_offset > 0:
+                    current_section["code_section"].append(f"\tmov [concat_list_{var_name}+{current_offset*8}], rax\n")
+                else:
+                    current_section["code_section"].append(f"\tmov [concat_list_{var_name}], rax\n")
+                
                 current_offset += 1
             
             current_section["code_section"].append("\n")  # Séparer les blocs pour la lisibilité
@@ -360,6 +368,14 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 var_name = lexer.identifier_lexicon[node.value]
                 depl = englobing_table.symbols[var_name]['depl']
                 current_section["code_section"].append(f"\tmov rax, [rbp{-depl:+}]\n")
+                current_section["code_section"].append("\tpush rax\n")
+            elif node_type == "True":
+                # Pour le booléen True, charger 1 puis empiler
+                current_section["code_section"].append(f"\tmov rax, 1\n")
+                current_section["code_section"].append("\tpush rax\n")
+            elif node_type == "False":
+                # Pour le booléen False, charger 0 puis empiler
+                current_section["code_section"].append(f"\tmov rax, 0\n")
                 current_section["code_section"].append("\tpush rax\n")
             elif node.data in numeric_op:
                 generate_binary_operation(node, englobing_table, current_section)
