@@ -171,41 +171,44 @@ class Tree:
             file.write(graph)
 
 def revert_tree_list(tree_list: list["Tree"])->None:
-    if len(tree_list) == 0: return
+    # if len(tree_list) == 0: return
 
-    in_tree = tree_list[0].father
+    # in_tree = tree_list[0].father
 
-    res = []
-    operands = []
-    while len(tree_list) > 0:
-        node = tree_list.pop()
-        for c in node.children:
-            if not (c in tree_list or c in res):
-                operands.insert(0, c)
-        node.children = []
-        res.append(node)
+    # res = []
+    # operands = []
+    # while len(tree_list) > 0:
+    #     node = tree_list.pop()
+    #     for c in node.children:
+    #         if not (c in tree_list or c in res):
+    #             operands.insert(0, c)
+    #     node.children = []
+    #     res.append(node)
 
-    operands.reverse()
-    operands[0], operands[1] = operands[1], operands[0]
+    # operands.reverse()
+    # print(operands)
+    # for node in operands:
+    #     print(node.value)
+    # operands[0], operands[1] = operands[1], operands[0]
 
-    for node_index in range(len(res)):
-        node = res[node_index]
-        op = operands.pop(0)
-        node.children.append(op)
-        if node_index == len(res) - 1:
-            op = operands.pop(0)
-            node.children.append(op)
-        else:
-            node.children.append(res[node_index + 1])
-        node.children.reverse()
+    # for node_index in range(len(res)):
+    #     node = res[node_index]
+    #     op = operands.pop(0)
+    #     node.children.append(op)
+    #     if node_index == len(res) - 1:
+    #         op = operands.pop(0)
+    #         node.children.append(op)
+    #     else:
+    #         node.children.append(res[node_index + 1])
+    #     node.children.reverse()
 
-    # Linking the new ordered branch to the whole tree
-    previous_first_index = -1
-    for i in range(len(in_tree.children)):
-        if in_tree.children[i] is res[-1]:
-            previous_first_index = i
-            break
-    in_tree.children[previous_first_index] = res[0]
+    # # Linking the new ordered branch to the whole tree
+    # previous_first_index = -1
+    # for i in range(len(in_tree.children)):
+    #     if in_tree.children[i] is res[-1]:
+    #         previous_first_index = i
+    #         break
+    # in_tree.children[previous_first_index] = res[0]
     pass
 
 # -------------------------------------------------------------------------------------------------
@@ -291,6 +294,7 @@ def manage_relations(given_tree: "Tree", relation_symbols: list[str]) -> None:
         if (
             child.data in TokenType.lexicon.keys()
             and TokenType.lexicon[child.data] in relation_symbols
+            and given_tree.data != "E_un"
         ):
             grandfather = given_tree.father
             grandfather.data = child.data

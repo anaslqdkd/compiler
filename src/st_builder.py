@@ -452,6 +452,14 @@ class SymbolTable:
                 ]:
                     return "INTEGER"
                 return left_type
+        
+            # Dealing with unary -
+            elif TokenType.lexicon[node.data] == "-" and len(node.children) == 1:
+                operand_type = self.dfs_type_check(node.children[0], lexer)
+                if (operand_type == "<undefined>"):
+                    self.set_type(
+                        node.children[0], "INTEGER", lexer, True
+                    )
 
             # If no type has been found, then it's undefined
             return "<undefined>"
