@@ -329,6 +329,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         operation = node.data
 
         # Générer le code pour empiler les opérandes (gauche puis droite)
+        # FIXME: consider unary -
         generate_expression(node.children[0], englobing_table, current_section)
         generate_expression(node.children[1], englobing_table, current_section)
 
