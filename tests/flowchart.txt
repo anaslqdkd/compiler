@@ -8,58 +8,54 @@ style 6 stroke:#caf9fb,stroke-width:2px
 5["IDENTIFIER => 1 (L1)
 father: 51"]
 style 5 stroke:#caf9fb,stroke-width:2px
-13["\+ (L1)
+17["INTEGER => -1 (L1)
 father: 51"]
-style 13 stroke:#caf9fb,stroke-width:2px
-15["LIST (L1)
-father: 40"]
-style 15 stroke:#caf9fb,stroke-width:2px
-27["INTEGER => -1 (L1)
-father: LIST"]
-style 27 stroke:#caf9fb,stroke-width:2px
-44["INTEGER => -2 (L1)
-father: LIST"]
-style 44 stroke:#caf9fb,stroke-width:2px
-57["LIST (L1)
-father: 40"]
-style 57 stroke:#caf9fb,stroke-width:2px
-69["STRING => -3 (L1)
-father: LIST"]
-style 69 stroke:#caf9fb,stroke-width:2px
-86["INTEGER => -4 (L1)
-father: LIST"]
-style 86 stroke:#caf9fb,stroke-width:2px
-106["= (L2)
+style 17 stroke:#caf9fb,stroke-width:2px
+30["= (L2)
 father: S1"]
-style 106 stroke:#caf9fb,stroke-width:2px
-105["IDENTIFIER => 2 (L2)
+style 30 stroke:#caf9fb,stroke-width:2px
+29["IDENTIFIER => 2 (L2)
 father: 51"]
-style 105 stroke:#caf9fb,stroke-width:2px
-108["IDENTIFIER => 1 (L2)
+style 29 stroke:#caf9fb,stroke-width:2px
+39["\- (L2)
 father: 51"]
-style 108 stroke:#caf9fb,stroke-width:2px
-119["INTEGER => -1 (L2)
-father: 10"]
-style 119 stroke:#caf9fb,stroke-width:2px
-132["print (L3)
+style 39 stroke:#caf9fb,stroke-width:2px
+43["IDENTIFIER => 1 (L2)
+father: 41"]
+style 43 stroke:#caf9fb,stroke-width:2px
+56["= (L3)
 father: S1"]
-style 132 stroke:#caf9fb,stroke-width:2px
-144["IDENTIFIER => 2 (L3)
+style 56 stroke:#caf9fb,stroke-width:2px
+55["IDENTIFIER => 3 (L3)
+father: 51"]
+style 55 stroke:#caf9fb,stroke-width:2px
+63["\+ (L3)
+father: 51"]
+style 63 stroke:#caf9fb,stroke-width:2px
+67["IDENTIFIER => 2 (L3)
+father: 40"]
+style 67 stroke:#caf9fb,stroke-width:2px
+75["IDENTIFIER => 1 (L3)
+father: 40"]
+style 75 stroke:#caf9fb,stroke-width:2px
+87["print (L4)
+father: S1"]
+style 87 stroke:#caf9fb,stroke-width:2px
+99["IDENTIFIER => 2 (L4)
 father: 30"]
-style 144 stroke:#caf9fb,stroke-width:2px
+style 99 stroke:#caf9fb,stroke-width:2px
 0 --> 2
 2 --> 6
 6 --> 5
-6 --> 13
-13 --> 15
-15 --> 27
-15 --> 44
-13 --> 57
-57 --> 69
-57 --> 86
-2 --> 106
-106 --> 105
-106 --> 108
-108 --> 119
-2 --> 132
-132 --> 144
+6 --> 17
+2 --> 30
+30 --> 29
+30 --> 39
+39 --> 43
+2 --> 56
+56 --> 55
+56 --> 63
+63 --> 67
+63 --> 75
+2 --> 87
+87 --> 99
