@@ -204,7 +204,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                         current_section["code_section"].append(f"\tmov rax, [rbp]\n")
                         current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
                     else:
-                        current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+                        current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
             elif node.children[1].data == "LIST":
                 generate_list(node.children[1], englobing_table, current_section)
             else:
@@ -344,8 +344,18 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         """Generate assembly code for binary operations (+, -, *, //, %)"""
         operation = node.data
 
+        # Check if it's a unary minus operation
+        if operation == 41 and len(node.children) == 1:  # '-' with one child
+            # Générer le code pour l'expression opérande
+            current_section["code_section"].append(f"\n\t; Unary negation\n")
+            generate_expression(node.children[0], englobing_table, current_section)
+            # Récupérer la valeur et la négation
+            current_section["code_section"].append("\tpop rax\n")
+            current_section["code_section"].append("\tneg rax\n")  # Négation unaire
+            current_section["code_section"].append("\tpush rax\n")
+            return
+
         # Générer le code pour empiler les opérandes (gauche puis droite)
-        # FIXME: consider unary -
         generate_expression(node.children[0], englobing_table, current_section)
         generate_expression(node.children[1], englobing_table, current_section)
 
@@ -477,6 +487,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 current_section["code_section"].append("\tpush rax\n")
             elif node.data in numeric_op:
                 generate_binary_operation(node, englobing_table, current_section)
+
 
     def generate_print(node: Tree, symbol_table: SymbolTable, current_section: dict):
         """Generate code to print values, including numeric results and strings"""
