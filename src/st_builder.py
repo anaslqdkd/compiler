@@ -125,9 +125,9 @@ class SymbolTable:
                 if symbol["depl"] >= 0:
                     new_depl = max_positive_depl
                     if new_depl != InfSize:
-                        # Always allocate integer_size bytes for INTEGER, LIST, and STRING variables
+                        # Always allocate integer_size bytes for INTEGER, LIST, STRING, True and False variables
                         # STRING variables need integer_size bytes for the pointer to the string
-                        if symbol["type"] in ["INTEGER", "LIST", "STRING"]:
+                        if symbol["type"] in ["INTEGER", "LIST", "STRING", "True", "False"]:
                             new_depl += SymbolTable.integer_size
                         else:
                             new_depl = InfSize
@@ -136,8 +136,8 @@ class SymbolTable:
                 else:
                     new_depl = max_negative_depl
                     if new_depl != - InfSize:
-                        # Always allocate integer_size bytes for INTEGER, LIST, and STRING variables
-                        if symbol["type"] in ["INTEGER", "LIST", "STRING"]:
+                        # Always allocate integer_size bytes for INTEGER, LIST, STRING, True and False variables
+                        if symbol["type"] in ["INTEGER", "LIST", "STRING", "True", "False"]:
                             new_depl -= SymbolTable.integer_size
                         else:
                             new_depl = -InfSize

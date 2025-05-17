@@ -66,7 +66,15 @@ _start:
 	mov rbp, rsp
 	sub rsp, 8
 
+	mov rax, 0
+	push rax
 	mov rax, 1
+	push rax
+
+	; Performing + operation
+	pop rbx
+	pop rax
+	add rax, rbx
 	push rax
 	mov rax, 1
 	push rax

@@ -121,9 +121,16 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             if has_function_call:
                 # Right-side is a function call (=> return value is stored in "rax")
                 current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
-            elif node.children[1].value in lexer.constant_lexicon.keys():
+            elif node.children[1].value in lexer.constant_lexicon.keys() or node.children[1].value in ["True", "False"]:
                 # Right-side is a constant: mettre la constante dans la registre
-                value = lexer.constant_lexicon[node.children[1].value]
+                if node.children[1].value in ["True", "False"]:
+                    # Boolean value
+                    if node.children[1].value == "True":
+                        value = 1
+                    else:
+                        value = 0
+                else:
+                    value = lexer.constant_lexicon[node.children[1].value]
                 current_section["code_section"].append(f"\tmov rax, {value}\n")
                 current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
             # NOTE: il me semble que ce n'est pas necessaire de vérifier le in_st puisque sinon ça donnerait une erreur semantique ?
@@ -156,6 +163,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     # Concaténation de listes
                     generate_list_concat(node.children[1], englobing_table, current_section)
                 else:
+                    print("a", node.children[1].data)
                     generate_binary_operation(node.children[1], englobing_table, current_section)
                     current_section["code_section"].append("\tpop rax\n")
                     current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
