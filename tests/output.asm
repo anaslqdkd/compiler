@@ -73,16 +73,18 @@ print_str:
 
 
 _start:
-	; Allocating space for 1 local variables
+	; Allocating space for 2 local variables
 	push rbp
 	mov rbp, rsp
-	sub rsp, 8
+	sub rsp, 16
 
-	mov rax, 1
+	mov rax, 7
 	mov [rbp - 8], rax
-
-	; print(a)
 	mov rax, [rbp - 8]
+	mov [rbp - 16], rax
+
+	; print(b)
+	mov [rbp - 16], rax
 	call print_rax
 
 
