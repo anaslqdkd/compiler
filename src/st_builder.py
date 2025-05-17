@@ -125,9 +125,9 @@ class SymbolTable:
                 if symbol["depl"] >= 0:
                     new_depl = max_positive_depl
                     if new_depl != InfSize:
-                        # Always allocate integer_size bytes for INTEGER, LIST, and STRING variables
+                        # Always allocate integer_size bytes for INTEGER, LIST, STRING, True and False variables
                         # STRING variables need integer_size bytes for the pointer to the string
-                        if symbol["type"] in ["INTEGER", "LIST", "STRING"]:
+                        if symbol["type"] in ["INTEGER", "LIST", "STRING", "True", "False"]:
                             new_depl += SymbolTable.integer_size
                         else:
                             new_depl = InfSize
@@ -136,8 +136,8 @@ class SymbolTable:
                 else:
                     new_depl = max_negative_depl
                     if new_depl != - InfSize:
-                        # Always allocate integer_size bytes for INTEGER, LIST, and STRING variables
-                        if symbol["type"] in ["INTEGER", "LIST", "STRING"]:
+                        # Always allocate integer_size bytes for INTEGER, LIST, STRING, True and False variables
+                        if symbol["type"] in ["INTEGER", "LIST", "STRING", "True", "False"]:
                             new_depl -= SymbolTable.integer_size
                         else:
                             new_depl = -InfSize
@@ -390,7 +390,7 @@ class SymbolTable:
                 
 
             # If it's the result of an operation
-            if TokenType.lexicon[node.data] in ["+", "*", "//", "%", "<", ">"] or (TokenType.lexicon[node.data] == "-" and len(node.children)>1):
+            if TokenType.lexicon[node.data] in ["+", "-", "*", "//", "%", "<=", ">=" "<", ">", "!=", "=="]:
                 left_type = self.dfs_type_check(node.children[0], lexer)
                 right_type = self.dfs_type_check(node.children[1], lexer)
                 
@@ -452,14 +452,6 @@ class SymbolTable:
                 ]:
                     return "INTEGER"
                 return left_type
-        
-            # Dealing with unary -
-            elif TokenType.lexicon[node.data] == "-" and len(node.children) == 1:
-                operand_type = self.dfs_type_check(node.children[0], lexer)
-                if (operand_type == "<undefined>"):
-                    self.set_type(
-                        node.children[0], "INTEGER", lexer, True
-                    )
 
             # If no type has been found, then it's undefined
             return "<undefined>"

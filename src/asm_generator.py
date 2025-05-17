@@ -19,8 +19,8 @@ class AsmGenerationError(Exception):
 sections = {}
 if_counter: int = 0
 else_counter: int = 0
-numeric_op = {40, 41, 42, 43, 44}
-litteral_op = {'+', '-', '*', '/', '%'}
+numeric_op = {40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50} # +, -, *, //, %, <=, >=, <, >, !=, ==
+litteral_op = {'+', '-', '*', '/', '%', '<=', '>=', '<', '>', '!=', '=='}
 
 def sizeof(value):
     if isinstance(value, int):
@@ -129,10 +129,17 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
             if has_function_call:
                 # Right-side is a function call (=> return value is stored in "rax")
-                current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
-            elif node.children[1].value in lexer.constant_lexicon.keys():
+                current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
+            elif node.children[1].value in lexer.constant_lexicon.keys() or node.children[1].value in ["True", "False"]:
                 # Right-side is a constant: mettre la constante dans la registre
-                value = lexer.constant_lexicon[node.children[1].value]
+                if node.children[1].value in ["True", "False"]:
+                    # Boolean value
+                    if node.children[1].value == "True":
+                        value = 1
+                    else:
+                        value = 0
+                else:
+                    value = lexer.constant_lexicon[node.children[1].value]
                 current_section["code_section"].append(f"\tmov rax, {value}\n")
                 if has_to_rewind_L:
                     current_section["code_section"].append(f"\tmov rax, [rbp]\n")
@@ -190,6 +197,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     # Concaténation de listes
                     generate_list_concat(node.children[1], englobing_table, current_section)
                 else:
+                    print("a", node.children[1].data)
                     generate_binary_operation(node.children[1], englobing_table, current_section)
                     current_section["code_section"].append("\tpop rax\n")
                     if has_to_rewind_L:
@@ -263,8 +271,16 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             
             # Copier chaque élément avec le bon offset
             for i in range(length):
-                current_section["code_section"].append(f"\tmov rax, [rsi+{i*8}]\n")
-                current_section["code_section"].append(f"\tmov [concat_list_{var_name}+{current_offset*8}], rax\n")
+                if i > 0:
+                    current_section["code_section"].append(f"\tmov rax, [rsi+{i*8}]\n")
+                else:
+                    current_section["code_section"].append(f"\tmov rax, [rsi]\n")
+
+                if current_offset > 0:
+                    current_section["code_section"].append(f"\tmov [concat_list_{var_name}+{current_offset*8}], rax\n")
+                else:
+                    current_section["code_section"].append(f"\tmov [concat_list_{var_name}], rax\n")
+                
                 current_offset += 1
             
             current_section["code_section"].append("\n")  # Séparer les blocs pour la lisibilité
@@ -402,6 +418,30 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             current_section["code_section"].append("\txor rdx, rdx\n")
             current_section["code_section"].append("\tdiv rbx\n")
             current_section["code_section"].append("\tmov rax, rdx\n")  # Modulo result is in rdx
+        elif operation == 45:    # <=
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")     # Default to 0 (false)
+            current_section["code_section"].append("\tsetle al\n")       # Set al to 1 if less than or equal
+        elif operation == 46:    # >=
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsetge al\n")       # Set al to 1 if greater than or equal
+        elif operation == 47:    # >
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsetg al\n")        # Set al to 1 if greater than
+        elif operation == 48:    # <
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsetl al\n")        # Set al to 1 if less than
+        elif operation == 49:    # !=
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsetne al\n")       # Set al to 1 if not equal
+        elif operation == 50:    # ==
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsete al\n")        # Set al to 1 if equal
 
         # Remettre le résultat sur la pile
         current_section["code_section"].append("\tpush rax\n")
@@ -426,6 +466,14 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     current_section["code_section"].append(f"\tmov rax, [rax{id_address[3:]}]\n")
                 else:
                     current_section["code_section"].append(f"\tmov rax, [{id_address}]\n")
+                current_section["code_section"].append("\tpush rax\n")
+            elif node_type == "True":
+                # Pour le booléen True, charger 1 puis empiler
+                current_section["code_section"].append(f"\tmov rax, 1\n")
+                current_section["code_section"].append("\tpush rax\n")
+            elif node_type == "False":
+                # Pour le booléen False, charger 0 puis empiler
+                current_section["code_section"].append(f"\tmov rax, 0\n")
                 current_section["code_section"].append("\tpush rax\n")
             elif node.data in numeric_op:
                 generate_binary_operation(node, englobing_table, current_section)
@@ -706,19 +754,16 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 current_section["code_section"].append(f"\tmov {register}, {lexer.constant_lexicon[value]}\n")
             if token_type == "IDENTIFIER":
                 offset, has_to_rewind = get_variable_address(current_table, current_node.value)
-<<<<<<< HEAD
                 current_section["code_section"].append(f"\tmov {register}, [{offset}]\n")
             elif token_type in ["==", ">", "<", "<=", ">=", "!="]:
                 generate_expression(current_node, current_table, current_section)
 
-=======
                 if has_to_rewind:
                     current_section["code_section"].append(f"\tmov rax, [rbp]\n")
                     current_section["code_section"].append(f"\tmov rax, [rax{offset[3:]}]\n")
                 else:
                     current_section["code_section"].append(f"\tmov rax, [{offset}]\n")
                 pass
->>>>>>> antoine
 
     def generate_end_of_program(current_section: dict):
         current_section["code_section"].append("\n\n")
