@@ -78,27 +78,7 @@ _start:
 	mov rbp, rsp
 	sub rsp, 8
 
-	mov rax, 5
-	push rax
-	mov rax, 3
-	push rax
-
-	; Performing + operation
-	pop rbx
-	pop rax
-	add rax, rbx
-	push rax
-	mov rax, 3
-	push rax
-
-	; Performing < operation
-	pop rbx
-	pop rax
-	cmp rax, rbx
-	mov rax, 0
-	setl al
-	push rax
-	pop rax
+	mov rax, 1
 	mov [rbp - 8], rax
 
 	; print(a)

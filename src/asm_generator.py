@@ -145,7 +145,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     current_section["code_section"].append(f"\tmov rax, [rbp]\n")
                     current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
                 else:
-                    current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+                    current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
             # NOTE: il me semble que ce n'est pas necessaire de vérifier le in_st puisque sinon ça donnerait une erreur semantique ?
             elif in_st(englobing_table, node.children[1].value):
                 if node.children[1].children:
