@@ -19,8 +19,8 @@ class AsmGenerationError(Exception):
 sections = {}
 if_counter: int = 0
 else_counter: int = 0
-numeric_op = {40, 41, 42, 43, 44}
-litteral_op = {'+', '-', '*', '/', '%'}
+numeric_op = {40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50} # +, -, *, //, %, <=, >=, <, >, !=, ==
+litteral_op = {'+', '-', '*', '/', '%', '<=', '>=', '<', '>', '!=', '=='}
 
 def sizeof(value):
     if isinstance(value, int):
@@ -355,6 +355,30 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             current_section["code_section"].append("\txor rdx, rdx\n")
             current_section["code_section"].append("\tdiv rbx\n")
             current_section["code_section"].append("\tmov rax, rdx\n")  # Modulo result is in rdx
+        elif operation == 45:    # <=
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")     # Default to 0 (false)
+            current_section["code_section"].append("\tsetle al\n")       # Set al to 1 if less than or equal
+        elif operation == 46:    # >=
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsetge al\n")       # Set al to 1 if greater than or equal
+        elif operation == 47:    # >
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsetg al\n")        # Set al to 1 if greater than
+        elif operation == 48:    # <
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsetl al\n")        # Set al to 1 if less than
+        elif operation == 49:    # !=
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsetne al\n")       # Set al to 1 if not equal
+        elif operation == 50:    # ==
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsete al\n")        # Set al to 1 if equal
 
         # Remettre le résultat sur la pile
         current_section["code_section"].append("\tpush rax\n")
