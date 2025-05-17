@@ -89,7 +89,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
         current_section["code_section"].append("\n;\t---Stacking parameters---\n")
         # Push given parameters in the stack
-        for i in range(len(node.children[0].children)):
+        for i in range(len(node.children[0].children)-1, -1, -1):
             parameter_node = node.children[0].children[i]
             current_section["code_section"].append(f";\t---{i+1}-th parameter---\n")
             # If it's a calculation
@@ -419,9 +419,12 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 current_section["code_section"].append("\tpush rax\n")
             elif node.data == "IDENTIFIER":
                 # Pour une variable, charger la valeur depuis la pile puis empiler
-                var_name = lexer.identifier_lexicon[node.value]
-                depl = englobing_table.symbols[var_name]['depl']
-                current_section["code_section"].append(f"\tmov rax, [rbp{-depl:+}]\n")
+                id_address, has_to_rewind = get_variable_address(englobing_table, node.value)
+                if has_to_rewind:
+                    current_section["code_section"].append(f"\tmov rax, [rbp]\n")
+                    current_section["code_section"].append(f"\tmov rax, [rax{id_address[3:]}]\n")
+                else:
+                    current_section["code_section"].append(f"\tmov rax, [{id_address}]\n")
                 current_section["code_section"].append("\tpush rax\n")
             elif node.data in numeric_op:
                 generate_binary_operation(node, englobing_table, current_section)
@@ -694,7 +697,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     current_section["code_section"].append(f"\tmov rax, [{offset}]\n")
                 pass
 
-
     def generate_end_of_program(current_section: dict):
         current_section["code_section"].append("\n\n")
         current_section["code_section"].append(";\t---End of program---\n")
@@ -761,15 +763,16 @@ def get_local_variables_total_size(symbol_table: SymbolTable) -> int:
         symbol_depl = symbol[1]['depl']
         if symbol_depl > 0:
             total_size += symbol_depl
-    return total_size // 8
+    return total_size
 
+# FIXME: this won't work with imbricated ifs
 def get_variable_address(symbol_table: SymbolTable, variable_id: int, needs_to_rewind: bool = False) -> Tuple[str, bool]:
     if variable_id in symbol_table.symbols.keys():
         depl = symbol_table.symbols[variable_id]['depl']
         if depl > 0:
             return (f"rbp - {depl}", needs_to_rewind)
         else:
-            return (f"rbp + 8 + {-depl}", needs_to_rewind) # rpb + 8 points at the return address...
+            return (f"rbp + 8 + {-depl}", needs_to_rewind) # rbp + 8 points at the return address...
     elif symbol_table.englobing_table == None:
         raise AsmGenerationError(f"Variable {variable_id} not found in symbol table.")
     else:
