@@ -1,170 +1,134 @@
-section .data
-	list1_a dq 1, 2
-	list2_a_str0 db "abc", 0
-	list2_a dq list2_a_str0, 4
-	concat_list_a dq 0, 0, 0, 0	; 4 elements for concatenation
-	newline db 0xA
+	section .data
+		newline db 0xA
 
-section .bss
-	buffer resb 20
+	section .bss
+		buffer resb 20
 
 
-section .text
-	global _start
-<<<<<<< HEAD
-	global g
-=======
->>>>>>> origin/amine
+	section .text
+		global _start
+		global g
 
 
-;	---print_rax protocol---
-print_rax:
-	mov rcx, buffer + 20
-	mov rbx, 10
+	;	---print_rax protocol---
+	print_rax:
+		mov rcx, buffer + 20
+		mov rbx, 10
 
-.convert_loop:
-	xor rdx, rdx
-	div rbx
-	add dl, '0'
-	dec rcx
-	mov [rcx], dl
-	test rax, rax
-	jnz .convert_loop
+	.convert_loop:
+		xor rdx, rdx
+		div rbx
+		add dl, '0'
+		dec rcx
+		mov [rcx], dl
+		test rax, rax
+		jnz .convert_loop
 
-	; write result
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, rcx
-	mov rdx, buffer + 20
-	sub rdx, rcx
-	syscall
+		; write result
+		mov rax, 1
+		mov rdi, 1
+		mov rsi, rcx
+		mov rdx, buffer + 20
+		sub rdx, rcx
+		syscall
 
-	; newline
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, newline
-	mov rdx, 1
-	syscall
-	ret
-;	--------------------
+		; newline
+		mov rax, 1
+		mov rdi, 1
+		mov rsi, newline
+		mov rdx, 1
+		syscall
+		ret
+	;	--------------------
 
-; ---print_str protocol---
-print_str:
-	xor rcx, rcx
+	; ---print_str protocol---
+	print_str:
+		xor rcx, rcx
 
-.find_len_str:
-	mov al, [rsi + rcx]
-	test al, al
-	jz .len_found_str
-	inc rcx
-	jmp .find_len_str
+	.find_len_str:
+		mov al, [rsi + rcx]
+		test al, al
+		jz .len_found_str
+		inc rcx
+		jmp .find_len_str
 
-.len_found_str:
-	mov rdx, rcx
-	mov rax, 1
-	mov rdi, 1
-	syscall
-	ret
-;	--------------------
-
-
-<<<<<<< HEAD
-g:
-;	---Protocole d'entree---
-	push rbp
-	mov rbp, rsp
-	sub rsp, 1
-;	------------------------
-
-	mov rax, 1
-	push rax
-
-	; Performing + operation
-	pop rax
-	mov rbx, [rbp + 8 + 8]
-	add rax, rbx
-	push rax
-	pop rax
-	mov [rbp - 8], rax
-
-	; Performing + operation
-	mov rax, [rbp + 8 + 16]
-	mov rbx, [rbp - 8]
-	add rax, rbx
-	push rax
-	pop rax
-	mov [rbp - 8], rax
-
-;	---Protocole de sortie---
-	mov rsp, rbp
-	pop rbp
-	ret
-;	------------------------
+	.len_found_str:
+		mov rdx, rcx
+		mov rax, 1
+		mov rdi, 1
+		syscall
+		ret
+	;	--------------------
 
 
-=======
->>>>>>> origin/amine
-_start:
-	; Allocating space for 3 local variables
-	push rbp
-	mov rbp, rsp
-	sub rsp, 24
+	g:
+	;	---Protocole d'entree---
+		push rbp
+		mov rbp, rsp
+		sub rsp, 1
+	;	------------------------
 
-<<<<<<< HEAD
-	mov rax, 5
-	mov [rbp - 8], rax
+		mov rax, 1
+		push rax
 
-;	---Stacking parameters---
-;	---1-th parameter---
-	mov rax, [rbp - 8]
-	push rax
-;	---2-th parameter---
-	mov rax, 17
-	push rax
+		; Performing + operation
+		pop rax
+		mov rax, [rbp + 8 + 8]
+		add rax, rbx
+		push rax
+		pop rax
+		mov rax, [rbp - 8]
 
-;	---Calling the function---
-	call g
-;	---Popping parameters---
-	pop rax
-	pop rax
-;	--------------------
-	mov [rbp - 16], rax
+		; Performing + operation
+		mov rax, [rbp + 8 + 16]
+		mov rax, [rbp - 8]
+		add rax, rbx
+		push rax
+		pop rax
+		mov rax, [rbp - 8]
 
-	; print(A)
-	mov rax, [rbp - 16]
-=======
-	; Concatenation : a = [1, 2, "abc", 4]
-	mov rsi, list1_a
-	mov rax, [rsi+0]
-	mov [concat_list_a+0], rax
-	mov rax, [rsi+8]
-	mov [concat_list_a+8], rax
-
-	mov rsi, list2_a
-	mov rax, [rsi+0]
-	mov [concat_list_a+16], rax
-	mov rax, [rsi+8]
-	mov [concat_list_a+24], rax
-
-	mov rax, concat_list_a
-	mov [rbp-8], rax
-
-	; b = a[1]
-	mov rax, [rbp-8]
-	mov rax, [rax + 1*8]
-	mov [rbp-16], rax
-
-	; print(b)
-	mov rax, [rbp-16]
->>>>>>> origin/amine
-	call print_rax
+	;	---Protocole de sortie---
+		mov rsp, rbp
+		pop rbp
+		ret
+	;	------------------------
 
 
-;	---End of program---
-	mov rax, 60
-	xor rdi, rdi 
-	syscall
-;	--------------------
+	_start:
+		; Allocating space for 3 local variables
+		push rbp
+		mov rbp, rsp
+		sub rsp, 24
+
+		mov rax, 5
+		mov rax, [rbp - 8]
+
+	;	---Stacking parameters---
+	;	---1-th parameter---
+		mov rax, [rbp - 8]
+		push rax
+	;	---2-th parameter---
+		mov rax, 17
+		push rax
+
+	;	---Calling the function---
+		call g
+	;	---Popping parameters---
+		pop rax
+		pop rax
+	;	--------------------
+		mov [rbp - 16], rax
+
+		; print(A)
+		mov rax, [rbp - 16]
+		call print_rax
 
 
-; EOF
+	;	---End of program---
+		mov rax, 60
+		xor rdi, rdi 
+		syscall
+	;	--------------------
+
+
+	; EOF
