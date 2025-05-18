@@ -181,11 +181,17 @@ class Tree:
 # Converter
 # -------------------------------------------------------------------------------------------------
 
-def remove_banned_characters(given_tree: "Tree", banned_characters: list[str]) -> None:
+def remove_banned_characters_until(given_tree: "Tree", banned_characters: list[str], until: list[str] = []) -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
         if (
+            child.data in TokenType.lexicon.keys()
+            and TokenType.lexicon[child.data] in until
+        ) or (child.data in until):
+            i += 1
+            continue
+        elif (
             child.data in TokenType.lexicon.keys()
             and TokenType.lexicon[child.data] in banned_characters
         ):
@@ -194,20 +200,25 @@ def remove_banned_characters(given_tree: "Tree", banned_characters: list[str]) -
                 given_tree.children.insert(i, c)
                 c.father = given_tree
         else:
-            remove_banned_characters(child, banned_characters)
+            remove_banned_characters_until(child, banned_characters, until)
             i += 1
 
-def remove_banned_data(given_tree: "Tree", banned_data: list[str]) -> None:
+def remove_banned_data_until(given_tree: "Tree", banned_data: list[str], until: list[str] = []) -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
-        if child.data in banned_data:
+        if (
+            child.data in TokenType.lexicon.keys()
+            and TokenType.lexicon[child.data] in until
+        ) or (child.data in until):
+            i += 1
+            continue
+        elif child.data in banned_data:
             given_tree.children.pop(i)
             for c in reversed(child.children):
                 given_tree.children.insert(i, c)
-                c.father = given_tree
         else:
-            remove_banned_characters(child, banned_data)
+            remove_banned_data_until(child, banned_data, until)
             i += 1
 
 def remove_n(given_tree: "Tree") -> None:
@@ -320,21 +331,12 @@ def manage_prints(given_tree: "Tree") -> None:
         if (
             child.data in TokenType.lexicon.keys()
             and TokenType.lexicon[child.data] == "print"
+            and len(child.children) == 0
         ):
-            count = 0
-            while not (
-                given_tree.children[i + 2 + count].data in TokenType.lexicon.keys()
-                and TokenType.lexicon[given_tree.children[i + 2 + count].data] == ")"
-            ):
-                count += 1
-            
-            for k in range(count):
-                child.children.append(given_tree.children[i + 2])
-                given_tree.children.pop(i + 2)
-
+            content = given_tree.children[i + 1]
+            content.data = "Parameters"
+            child.children.append(content)
             given_tree.children.pop(i + 1)
-            given_tree.children.pop(i + 1)
-
             i += 1
         else:
             manage_prints(child)
@@ -350,7 +352,6 @@ def manage_returns(given_tree: "Tree") -> None:
         ):
             while i + 1 < len(given_tree.children):
                 returned_value = given_tree.children[i+1]
-                print(returned_value.data, returned_value.line_index)
                 child.children.append(returned_value)
                 returned_value.father = child
                 given_tree.children.pop(i + 1)
@@ -511,6 +512,7 @@ def manage_parentheses(given_tree: "Tree")->None:
             child.is_terminal = True
             while not (given_tree.children[i+1].data in TokenType.lexicon and TokenType.lexicon[given_tree.children[i+1].data] == ")"):
                 content_node = given_tree.children[i+1]
+                manage_parentheses(content_node)
                 child.children.append(content_node)
                 given_tree.children.pop(i + 1)
             given_tree.children.pop(i + 1)
@@ -528,6 +530,7 @@ def manage_brackets(given_tree: "Tree")->None:
             child.is_terminal = True
             while not (given_tree.children[i+1].data in TokenType.lexicon and TokenType.lexicon[given_tree.children[i+1].data] == "]"):
                 content_node = given_tree.children[i+1]
+                manage_brackets(content_node)
                 child.children.append(content_node)
                 given_tree.children.pop(i + 1)
             given_tree.children.pop(i + 1)
@@ -541,7 +544,7 @@ def manage_function_calls(given_tree:"Tree")->None:
         # This will get the nearest (left) identifier
         def get_nearest_identifier_rec(node:"Tree")->"Tree":
             for i in range(len(node.children) - 1, -1, -1):
-                if node.children[i].data in TokenType.lexicon.keys() and TokenType.lexicon[node.children[i].data] == "IDENTIFIER":
+                if node.children[i].data in TokenType.lexicon.keys() and TokenType.lexicon[node.children[i].data] in ["IDENTIFIER", "print"]:
                     return node.children[i]
             if node.father is None:
                 raise ASTPruningError(node, f"Failed to find a function call at line {node.line_index}.")
@@ -554,7 +557,7 @@ def manage_function_calls(given_tree:"Tree")->None:
                 index = i
         
         for i in range(index, -1, -1):
-            if father.children[i].data in TokenType.lexicon.keys() and TokenType.lexicon[father.children[i].data] == "IDENTIFIER":
+            if father.children[i].data in TokenType.lexicon.keys() and TokenType.lexicon[father.children[i].data] in ["IDENTIFIER", "print"]:
                 return father.children[i]
         return get_nearest_identifier_rec(father.father)
     i = 0
@@ -565,8 +568,7 @@ def manage_function_calls(given_tree:"Tree")->None:
             caller = get_nearest_identifier(child)
             given_tree.children.pop(i)
             caller.children.append(child)
-        else:
-            manage_function_calls(child)
+        manage_function_calls(child)
         i += 1
 
 # --------------------------------------------------------------------------------------------------------------------------
@@ -586,11 +588,9 @@ def manage_parameters(given_tree: "Tree")->None:
         if child.data == "Parentheses":
             if has_comma(child):
                 child.data = "Parameters"
-                remove_banned_characters(child, [','])
-            i += 1
-        else:
-            manage_parameters(child)
-            i += 1
+                remove_banned_characters_until(child, [","], ["Parentheses", "Parameters", "Brackets", "LIST"])
+        manage_parameters(child)
+        i += 1
 
 def manage_lists(given_tree: "Tree")->None:
     def has_comma(node: "Tree")->bool:
@@ -607,7 +607,7 @@ def manage_lists(given_tree: "Tree")->None:
         if child.data == "Brackets":
             if has_comma(child):
                 child.data = "LIST"
-                remove_banned_characters(child, [','])
+                remove_banned_characters_until(child, [","], ["Parentheses", "Parameters", "Brackets", "LIST"])
             i += 1
         else:
             manage_lists(child)
@@ -658,12 +658,13 @@ def reajust_fathers(given_tree:"Tree")->None:
         i += 1
 
 def transform_to_ast(given_tree: "Tree") -> None:
-    remove_banned_characters(given_tree, [":", "in", "NEWLINE", "BEGIN", "END", "EOF"])
+    remove_banned_characters_until(given_tree, [":", "in", "NEWLINE", "BEGIN", "END", "EOF"])
     remove_n(given_tree)
-    remove_banned_data(given_tree, ["N"])
+    remove_banned_data_until(given_tree, ["N"])
     compact_non_terminals_chain(given_tree)
     manage_relations(given_tree, ["+", "-", "*", "//",
                      "%", "<=", ">=", "<", ">", "!=", "=="])
+    remove_childless_non_terminal_trees(given_tree)
     manage_parentheses(given_tree)
     manage_brackets(given_tree)
     manage_parameters(given_tree)
@@ -672,10 +673,9 @@ def transform_to_ast(given_tree: "Tree") -> None:
     manage_E_un(given_tree)
     manage_functions_declaration(given_tree)
     manage_function_calls(given_tree)
-    fuse_chains(given_tree, ["E1", "I", "Parameters", "LIST"])
-    remove_childless_non_terminal_trees(given_tree)
+    manage_prints(given_tree)
     compact_non_terminals_chain(given_tree)
-    remove_banned_data(given_tree, ["E_un"])
+    remove_banned_data_until(given_tree, ["E_un", "E1", "E3", "I"])
     manage_fors(given_tree)
     manage_ifs(given_tree)
 
@@ -690,9 +690,7 @@ def transform_to_ast(given_tree: "Tree") -> None:
     rename_blocks(given_tree)
     fuse_chains(given_tree, ["E_un", "E1"])
     fuse_chains(given_tree, ["LIST", "E1", "E2"])
-    manage_prints(given_tree)
     manage_returns(given_tree)
-    fuse_chains(given_tree, ["Parameters", "I"])
     reajust_fathers(given_tree)
 
 # -------------------------------------------------------------------------------------------------
