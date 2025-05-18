@@ -73,7 +73,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         current_section["start_protocol"].append("\n")
 
         # Processing the function's body
-        for instr in function_node.children[2].children:
+        for instr in function_node.children[1].children:
             build_components_rec(instr, function_symbol_table, current_section)
 
         # protocole de sortie
@@ -496,7 +496,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
     def generate_print(node: Tree, symbol_table: SymbolTable, current_section: dict):
         """Generate code to print values, including numeric results and strings"""
-        to_print = node.children[0]
+        to_print = node.children[0].children[0]
         node_type = TokenType.lexicon[to_print.data]
 
         value_to_print = lexer.identifier_lexicon[to_print.value] if to_print.value > 0 else lexer.constant_lexicon[to_print.value]
@@ -674,7 +674,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "print":
                 # Prints
                 generate_print(current_node, current_table, current_section)
-            elif TokenType.lexicon[current_node.data] == "IDENTIFIER" and len(current_node.children) > 0:
+            elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "IDENTIFIER" and len(current_node.children) > 0:
                 generate_function_call(current_node, current_table, current_section, lexer)
             elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "if":
                 generate_if(current_node, current_table, current_section)
@@ -766,9 +766,12 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
         for_counter += 1
 
-        # Processing the function's body
-        for instr in for_node.children[2].children:
-            build_components_rec(instr, for_symbol_table, current_section)
+        # NOTE: du au fait que le noeud for n'a pas de block
+        if (len(for_node.children[2].children)) == 1:
+            build_components_rec(for_node.children[2], for_symbol_table, current_section)
+        else:
+            for instr in for_node.children[2].children:
+                build_components_rec(instr, for_symbol_table, current_section)
 
         # increment counter
         code.append(f"\t; i++\n")

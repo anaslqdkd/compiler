@@ -246,10 +246,12 @@ class SymbolTable:
                     # If there are parameters, first check their amount, then their type
                     if node.value in self.function_return.keys():
                         parameters_nb = len(node.children[0].children)
+                        print("1111", parameters_nb)
                         if (
                             parameters_nb
                             != self.function_return[node.value]["parameter_nb"]
                         ):
+                            print("here")
                             raise SemanticError(
                                 f"Le nombre de paramètres donnés à la ligne {node.line_index} devrait être {self.function_return[node.value]["parameter_nb"]}, mais est {parameters_nb} !",
                                 self,
@@ -972,7 +974,7 @@ class SymbolTable:
             return None
         elif node.data == "function":
             self.function_return[node.children[0].value]["parameter_nb"] = len(
-                node.children[1].children
+                node.children[0].children[0].children
             )
             i = 0
             for child in node.children[1].children:
@@ -1106,6 +1108,7 @@ def build_sts(ast: Tree, lexer: Lexer) -> "SymbolTable":
 
             # Checking if the function is correctly called
             current_st.get_function_id(ast, lexer)
+            print("+++", symbol_table.function_return)
             symbol_table.check_function_call(ast, lexer)
 
         elif (

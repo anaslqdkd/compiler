@@ -1,18 +1,24 @@
-def ln():
-	l = [1, 2]
-	return l 
 def fn():
-	l = ln()
-	for el in l:
-		list = [1, 2]
-		for f in list:
-			r = [3]
-			for el in r:
-				print(el)
-			print(10)
+	f = 4
+	if 1 < 0:
 		a = 5
-		print(el)
-a = 5
-print(a)
+		print(a)
+	else:
+		if 2 > 1:
+			b = 3
+			print(b)
+		if 1 > 2:
+			f = 0
+			print(f)
+		else:
+			r = 1
+			print(r)
+		a = 6
+		print(a)
+if 4 < 5:
+	f = 13
+	print(f)
 fn()
-
+l = [1, 2]
+for j in l:
+	print(j)
