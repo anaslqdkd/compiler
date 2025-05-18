@@ -1,11 +1,11 @@
+def ln():
+	l = [1, 2]
+	return l 
 def fn():
-	a = True
-	b = 0
-	if a + 0 > 1 == 0:
-		print(10)
-	if 1:
-		print(31)
-	else:
-		a = True
-		print(a)
+	l = ln()
+	for el in l:
+		a = 5
+		print(el)
+a = 5
+print(a)
 fn()

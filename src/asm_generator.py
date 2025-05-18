@@ -5,6 +5,7 @@ from src.lexer import TokenType
 from src.tree_struct import Tree
 from src.st_builder import*
 from src.st_builder import SymbolTable, find_symbol, in_st
+from src.st_builder import print_all_symbol_tables
 
 UTF8_CharSize = 8  # en bits
 
@@ -19,6 +20,7 @@ class AsmGenerationError(Exception):
 sections = {}
 if_counter: int = 0
 else_counter: int = 0
+for_counter: int = 0
 numeric_op = {40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50} # +, -, *, //, %, <=, >=, <, >, !=, ==
 litteral_op = {'+', '-', '*', '/', '%', '<=', '>=', '<', '>', '!=', '=='}
 
@@ -309,6 +311,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         # Préparer la déclaration de la liste dans la section .data
         list_items = []
         list_items_print = []
+        list_length = 0
         for idx, elem in enumerate(elements):
             if TokenType.lexicon[elem.data] == "INTEGER":
                 value = lexer.constant_lexicon[elem.value]
@@ -324,11 +327,13 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             else:
                 # Pour d'autres types, à adapter
                 list_items.append("0")
+            list_length += 1
 
         current_section["code_section"].append(f"\t; {var_name} = [{', '.join(list_items_print)}]\n")
 
         # Ajoute la liste dans .data (tableau de 64 bits)
         data_section.append(f"\t{list_label} dq {', '.join(list_items)}\n")
+        data_section.append(f"\t{list_label}_len dq {list_length}\n")
 
         # Affecte l'adresse de la liste à la variable (ex: mov [rbp-8], list_a)
         left_side_address, has_to_rewind = get_variable_address(englobing_table, node.father.children[0].value)
@@ -542,7 +547,8 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 current_section["code_section"].append(f"\tmov rax, [rax + {idx}*8]\n")
             else:
                 # Regular variable (not a list element)
-                current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
+                # current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
+                current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
             
             if var_type == "STRING":
                 # It's a string, use print_str helper
@@ -672,9 +678,104 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 generate_function_call(current_node, current_table, current_section, lexer)
             elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "if":
                 generate_if(current_node, current_table, current_section)
+            elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "for":
+                generate_for_call(current_node, current_table, current_section)
+                generate_for(current_node, current_table, current_section)
         else:
             for child in current_node.children:
                 build_components_rec(child, current_table, current_section)
+
+
+    def generate_for_call(for_node, englobing_table: SymbolTable, current_section: Dict):
+        global for_counter
+        st_for_label = f"for {for_counter}"
+        for_symbol_table = englobing_table.symbols[st_for_label]['symbol table']
+        for_symbol_table.set_type(for_node.children[0], "INTEGER", lexer, True)
+        var_name = lexer.identifier_lexicon[for_node.children[1].value]  
+        line = for_node.line_index
+        list_len = f"list_{var_name}_len"
+        name_label = f"for_{for_counter}_{line}"
+        code = current_section["code_section"]
+        code.append(f"\n\tmov rax, 0\n")
+        code.append(f"\tpush rax\n")
+        code.append(f"\tcall {name_label}\n")
+
+
+
+    def generate_for(for_node: Tree, englobing_table: SymbolTable, current_section: Dict):
+        global for_counter
+
+        # get the list name
+        var_name = lexer.identifier_lexicon[for_node.children[1].value]  
+        list_name = f"list_{var_name}"
+        # get the len of the list as defined in the .data
+        list_len = f"list_{var_name}_len"
+        line = for_node.line_index
+        st_for_label = f"for {for_counter}"
+        name_label = f"for_{for_counter}_{line}"
+        for_symbol_table = englobing_table.symbols[st_for_label]['symbol table']
+        for_symbol_table.set_type(for_node.children[0], "INTEGER", lexer, True)
+        section_name = name_label
+        sections[section_name] = {}
+        current_section = sections[section_name]
+        current_section["start_protocol"] = []
+        current_section["code_section"] = []
+        code = current_section["code_section"]
+        current_section["end_protocol"] = []
+        size_to_allocate = 8
+        code.append(f"\tmov r8, 0 ;i = 0\n")
+        el_node = for_node.children[0]
+        left_side_address, has_to_rewind = get_variable_address(for_symbol_table, el_node.value)
+
+        # Entrance protocol
+        current_section["start_protocol"].append("\n;\t---Protocole d'entree---\n")
+        current_section["start_protocol"].append("\tpush rbp\n")
+        current_section["start_protocol"].append("\tmov rbp, rsp\n")
+
+        current_section["start_protocol"].append(f"\tsub rsp, {size_to_allocate}\n")
+
+        current_section["start_protocol"].append(";\t------------------------\n")
+        current_section["start_protocol"].append("\n")
+
+        
+        loop_label = f"loop_for_{for_counter}_{line}"
+        code.append(f"{loop_label}:\n")
+
+        # compare the size of the list with the counter
+        code.append(f"\tmov rax, [{list_len}]\n")
+        code.append(f"\tcmp r8, rax\n")
+
+        # jump to the end if counter > list size
+        code.append(f"\tjge {name_label}_end\n")
+
+
+        # update the element list[i], assuming it is a integer for now
+        code.append(f"\tmov rbx, r8\n")
+        code.append(f"\tshl rbx, 3\n")
+        code.append(f"\tmov rax, [{list_name} + rbx]\n")
+        code.append(f"\tmov [{left_side_address}], rax\n")
+
+        # Processing the function's body
+        for instr in for_node.children[2].children:
+            build_components_rec(instr, for_symbol_table, current_section)
+
+        # increment counter
+        code.append(f"\t; i++\n")
+        code.append(f"\tinc r8\n")
+
+        # jump to the beginning of the loop
+        code.append(f"\tjmp {loop_label}\n")
+
+        code.append(f"{name_label}_end:\n")
+
+        # protocole de sortie
+        current_section["end_protocol"].append("\n")
+        current_section["end_protocol"].append(";\t---Protocole de sortie---\n")
+        current_section["end_protocol"].append("\tmov rsp, rbp\n") 
+        current_section["end_protocol"].append("\tpop rbp\n") # restore base pointer
+        current_section["end_protocol"].append("\tret\n") # return to the caller
+        current_section["end_protocol"].append(";\t------------------------\n")
+        current_section["end_protocol"].append("\n\n")
 
     def generate_if(if_node: Tree, englobing_table: SymbolTable, current_section: Dict):
         global if_counter
@@ -803,7 +904,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 def get_local_variables_total_size(symbol_table: SymbolTable) -> int:
     total_size = 0
     for symbol in symbol_table.symbols.items():
-        if symbol[1]["type"] in ["if", "else"]:
+        if symbol[1]["type"] in ["if", "else", "for"]:
             continue
         print("symbol", symbol[1])
         symbol_depl = symbol[1]['depl']

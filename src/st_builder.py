@@ -6,6 +6,7 @@ from src.tree_struct import Tree
 
 node_counter_else = 0
 node_counter_if = 0
+node_counter_for = 0
 
 class SemanticError(Exception):
     def __init__(self, message, ST: "SymbolTable", lexer: Lexer):
@@ -30,9 +31,6 @@ class SymbolTable:
     )
     character_size = 8  # Assuming every character will respect the UTF-8 norm
     node_counter = 0
-    # node_counter_else = 0
-    # node_counter_if = 0
-    node_counter_for = 0
 
     def __init__(
         self, name: str, imbrication_level: int, englobing_table: "SymbolTable"
@@ -384,7 +382,10 @@ class SymbolTable:
                     else:
                         return find_type(self, node.value)
                 else:
-                    raise STError(f"L'identifiant \"{lexer.identifier_lexicon[node.value]}\" à la ligne {node.line_index} n'est pas défini !", self, lexer)
+                    # FIXME: resolution temporaire pour pas qu'on ait des erreurs lorsqu'on fait : for el in l: print(el) mais faudra parcourir recurvivement les parents pour voir si ce n'est pas un for et dans ce cas là on autorise l'id après for
+                    if not TokenType.lexicon[node.father.data] == "for" and not TokenType.lexicon[node.father.data] == "print":
+                        print(node.father.data)
+                        raise STError(f"L'identifiant \"{lexer.identifier_lexicon[node.value]}\" à la ligne {node.line_index} n'est pas défini !", self, lexer)
 
                 # If it is a list element access (e.g., a[2])
             
@@ -753,6 +754,7 @@ class SymbolTable:
         type_label = function_node.data
         global node_counter_else
         global node_counter_if
+        global node_counter_for
 
         # If the incoming indention corresponds to a for / if / else
         if (
@@ -780,11 +782,15 @@ class SymbolTable:
                 new_label = (
                     TokenType.lexicon[function_node.data]
                     + " "
-                    + str(self.node_counter_for)
+                    + str(node_counter_for)
                 )
-                self.node_counter_for += 1
+                node_counter_for += 1
 
             newST = SymbolTable(str(new_label), self.imbrication_level + 1, self)
+            # print(newST.name)
+            # print(str(TokenType.lexicon[function_node.data] + " " + str(node_counter_for)))
+            if newST.name == str(TokenType.lexicon[function_node.data] + " " + str(node_counter_for-1)):
+                newST.symbols[function_node.children[0].value] = {"type": "<undefined>", "depl": -8}
             self.symbols[str(new_label)] = {"type": type_label, "symbol table": newST}
             self.node_counter += 1
             return newST
