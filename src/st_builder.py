@@ -382,7 +382,6 @@ class SymbolTable:
                     else:
                         return find_type(self, node.value)
                 else:
-                    # FIXME: resolution temporaire pour pas qu'on ait des erreurs lorsqu'on fait : for el in l: print(el) mais faudra parcourir recurvivement les parents pour voir si ce n'est pas un for et dans ce cas là on autorise l'id après for
                     if not TokenType.lexicon[node.father.data] == "for" and not TokenType.lexicon[node.father.data] == "print":
                         print(node.father.data)
                         raise STError(f"L'identifiant \"{lexer.identifier_lexicon[node.value]}\" à la ligne {node.line_index} n'est pas défini !", self, lexer)
@@ -791,6 +790,7 @@ class SymbolTable:
             # print(str(TokenType.lexicon[function_node.data] + " " + str(node_counter_for)))
             if newST.name == str(TokenType.lexicon[function_node.data] + " " + str(node_counter_for-1)):
                 newST.symbols[function_node.children[0].value] = {"type": "<undefined>", "depl": -8}
+                newST.symbols[f"{function_node.children[0].value}_i"] = {"type": "<undefined>", "depl": -8}
             self.symbols[str(new_label)] = {"type": type_label, "symbol table": newST}
             self.node_counter += 1
             return newST

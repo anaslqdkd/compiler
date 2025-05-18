@@ -4,8 +4,15 @@ def ln():
 def fn():
 	l = ln()
 	for el in l:
+		list = [1, 2]
+		for f in list:
+			r = [3]
+			for el in r:
+				print(el)
+			print(10)
 		a = 5
 		print(el)
 a = 5
 print(a)
 fn()
+

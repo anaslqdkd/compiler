@@ -131,7 +131,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
             if has_function_call:
                 # Right-side is a function call (=> return value is stored in "rax")
-                current_section["code_section"].append(f"\tmov [rbp-{left_side_address}], rax\n")
+                current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
             elif node.children[1].value in lexer.constant_lexicon.keys() or node.children[1].value in ["True", "False"]:
                 # Right-side is a constant: mettre la constante dans la registre
                 if node.children[1].value in ["True", "False"]:
@@ -715,6 +715,11 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         name_label = f"for_{for_counter}_{line}"
         for_symbol_table = englobing_table.symbols[st_for_label]['symbol table']
         for_symbol_table.set_type(for_node.children[0], "INTEGER", lexer, True)
+        var = for_symbol_table.symbols[f"{for_node.children[0].value}_i"]
+        var['type'] = "INTEGER"
+        
+        for_symbol_table.recalculate_depl()
+        print_all_symbol_tables(for_symbol_table, lexer)
         section_name = name_label
         sections[section_name] = {}
         current_section = sections[section_name]
@@ -722,8 +727,11 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         current_section["code_section"] = []
         code = current_section["code_section"]
         current_section["end_protocol"] = []
-        size_to_allocate = 8
+        size_to_allocate = 16
+
+        # initialize the counter at 0
         code.append(f"\tmov r8, 0 ;i = 0\n")
+        code.append(f"\tmov [rbp + 16], r8 ;i = 0\n")
         el_node = for_node.children[0]
         left_side_address, has_to_rewind = get_variable_address(for_symbol_table, el_node.value)
 
@@ -743,17 +751,20 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
         # compare the size of the list with the counter
         code.append(f"\tmov rax, [{list_len}]\n")
-        code.append(f"\tcmp r8, rax\n")
+        code.append(f"\tmov rbx, [rbp + 16]\n")
+        code.append(f"\tcmp rbx, rax\n")
 
         # jump to the end if counter > list size
         code.append(f"\tjge {name_label}_end\n")
 
 
         # update the element list[i], assuming it is a integer for now
-        code.append(f"\tmov rbx, r8\n")
+        code.append(f"\tmov rbx, [rbp + 16]\n")
         code.append(f"\tshl rbx, 3\n")
         code.append(f"\tmov rax, [{list_name} + rbx]\n")
         code.append(f"\tmov [{left_side_address}], rax\n")
+
+        for_counter += 1
 
         # Processing the function's body
         for instr in for_node.children[2].children:
@@ -761,7 +772,10 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
         # increment counter
         code.append(f"\t; i++\n")
-        code.append(f"\tinc r8\n")
+        # code.append(f"\tinc r8\n")
+        code.append(f"\tmov rax, [rbp - 16]\n")
+        code.append(f"\tinc rax\n")
+        code.append(f"\tmov [rbp - 16], rax\n")
 
         # jump to the beginning of the loop
         code.append(f"\tjmp {loop_label}\n")
