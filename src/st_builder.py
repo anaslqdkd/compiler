@@ -18,7 +18,12 @@ class SemanticError(Exception):
 
 
 class STError(Exception):
-    pass
+    def __init__(self, message, ST: "SymbolTable", lexer: Lexer):
+        GlobalST = ST
+        while GlobalST.englobing_table is not None:
+            GlobalST = GlobalST.englobing_table
+        print_all_symbol_tables(GlobalST, lexer)
+        super().__init__(message)
 
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -31,6 +36,9 @@ class SymbolTable:
     )
     character_size = 8  # Assuming every character will respect the UTF-8 norm
     node_counter = 0
+    # node_counter_else = 0
+    # node_counter_if = 0
+    node_counter_for = 0
 
     def __init__(
         self, name: str, imbrication_level: int, englobing_table: "SymbolTable"
@@ -123,9 +131,9 @@ class SymbolTable:
                 if symbol["depl"] >= 0:
                     new_depl = max_positive_depl
                     if new_depl != InfSize:
-                        # Always allocate integer_size bytes for INTEGER, LIST, STRING, True and False variables
+                        # Always allocate integer_size bytes for INTEGER, LIST, and STRING variables
                         # STRING variables need integer_size bytes for the pointer to the string
-                        if symbol["type"] in ["INTEGER", "LIST", "STRING", "True", "False"]:
+                        if symbol["type"] in ["INTEGER", "LIST", "STRING"]:
                             new_depl += SymbolTable.integer_size
                         else:
                             new_depl = InfSize
@@ -134,8 +142,8 @@ class SymbolTable:
                 else:
                     new_depl = max_negative_depl
                     if new_depl != - InfSize:
-                        # Always allocate integer_size bytes for INTEGER, LIST, STRING, True and False variables
-                        if symbol["type"] in ["INTEGER", "LIST", "STRING", "True", "False"]:
+                        # Always allocate integer_size bytes for INTEGER, LIST, and STRING variables
+                        if symbol["type"] in ["INTEGER", "LIST", "STRING"]:
                             new_depl -= SymbolTable.integer_size
                         else:
                             new_depl = -InfSize
@@ -246,12 +254,10 @@ class SymbolTable:
                     # If there are parameters, first check their amount, then their type
                     if node.value in self.function_return.keys():
                         parameters_nb = len(node.children[0].children)
-                        print("1111", parameters_nb)
                         if (
                             parameters_nb
                             != self.function_return[node.value]["parameter_nb"]
                         ):
-                            print("here")
                             raise SemanticError(
                                 f"Le nombre de paramètres donnés à la ligne {node.line_index} devrait être {self.function_return[node.value]["parameter_nb"]}, mais est {parameters_nb} !",
                                 self,
@@ -321,21 +327,21 @@ class SymbolTable:
             and TokenType.lexicon[node.data] != "IDENTIFIER"
         ):
             return TokenType.lexicon[node.data]
-        if node.data in ["LIST", "TUPLE"]:
-            # Collect element types for the list/tuple
+        if node.data == "LIST":
+            # Collect element types for the list
             element_types = [self.dfs_type_check(child, lexer) for child in node.children]
             # Store the element types in the node for later use (AST annotation)
             node.element_types = element_types
             return node.data
-        
+
         if node.data in TokenType.lexicon.keys():
             # If there's an affectation
             if TokenType.lexicon[node.data] == "=":
                 return self.dfs_type_check(node.children[1], lexer)
-            
+
             if TokenType.lexicon[node.data] == "print":
                 return self.dfs_type_check(node.children[0], lexer)
-            
+
             # If it's an identifier
             if TokenType.lexicon[node.data] == 'IDENTIFIER':
                 if len(node.children) > 0 and node.children[0].data in TokenType.lexicon.keys() and TokenType.lexicon[node.children[0].data] in ["INTEGER", "STRING"]:
@@ -348,15 +354,12 @@ class SymbolTable:
                             return list_symbol["element_types"][idx]
                         else:
                             return "<unknown list item>"
-
-            # If it's an identifier
-            if TokenType.lexicon[node.data] == "IDENTIFIER":
                 # If it has already been defined, we just take its type
                 if node.value in self.function_identifiers:
                     return self.function_return[node.value]["return_type"]
 
                 # Else, we try to find it
-                elif find_type(self, node.value) != None:
+                if find_type(self, node.value) != None:
                     # if the right element is a list lookup ex: a = f[0]
                     if (
                         len(node.children) > 0
@@ -384,97 +387,81 @@ class SymbolTable:
                     else:
                         return find_type(self, node.value)
                 else:
-                    if not TokenType.lexicon[node.father.data] == "for" and not TokenType.lexicon[node.father.data] == "print":
-                        print(node.father.data)
-                        raise STError(f"L'identifiant \"{lexer.identifier_lexicon[node.value]}\" à la ligne {node.line_index} n'est pas défini !", self, lexer)
-
+                    raise STError(f"L'identifiant \"{lexer.identifier_lexicon[node.value]}\" à la ligne {node.line_index} n'est pas défini !", self, lexer)
                 # If it is a list element access (e.g., a[2])
-            
-            # Handle unary minus operator specifically
-            if TokenType.lexicon[node.data] == "-" and len(node.children) == 1:
-                # For unary minus, evaluate the operand type
-                operand_type = self.dfs_type_check(node.children[0], lexer)
-                # If operand is undefined, set it to INTEGER
-                if operand_type == "<undefined>":
-                    self.set_type(node.children[0], "INTEGER", lexer, True)
-                # Unary minus always returns an INTEGER
-                return "INTEGER"
 
             # If it's the result of an operation
-            if TokenType.lexicon[node.data] in ["+", "-", "*", "//", "%", "<=", ">=", "<", ">", "!=", "=="]:
-                if len(node.children) >= 2:
-                    left_type = self.dfs_type_check(node.children[0], lexer)
-                    right_type = self.dfs_type_check(node.children[1], lexer)
+            if TokenType.lexicon[node.data] in ["+", "*", "//", "%", "<", ">", "<=", ">=", "==", "!="] or (TokenType.lexicon[node.data] == "-" and len(node.children)>1):
+                left_type = self.dfs_type_check(node.children[0], lexer)
+                right_type = self.dfs_type_check(node.children[1], lexer)
+                
+                # Ajoutez ce bloc pour gérer la concaténation de listes
+                if TokenType.lexicon[node.data] == "+" and left_type == "LIST" and right_type == "LIST":
+                    # Collecte les types des éléments de chaque liste
+                    left_element_types = []
+                    right_element_types = []
                     
-                    # Ajoutez ce bloc pour gérer la concaténation de listes
-                    if TokenType.lexicon[node.data] == "+" and left_type == "LIST" and right_type == "LIST":
-                        # Collecte les types des éléments de chaque liste
-                        left_element_types = []
-                        right_element_types = []
-                        
-                        if hasattr(node.children[0], 'element_types'):
-                            left_element_types = node.children[0].element_types
-                        
-                        if hasattr(node.children[1], 'element_types'):
-                            right_element_types = node.children[1].element_types
-                        
-                        # Combine les types des éléments
-                        combined_element_types = left_element_types + right_element_types
-                        
-                        # Stocke les types combinés dans le nœud actuel
-                        node.element_types = combined_element_types
-                        
-                        return "LIST"
+                    if hasattr(node.children[0], 'element_types'):
+                        left_element_types = node.children[0].element_types
                     
-                    # Reste du code existant pour les autres opérations
-                    if left_type != right_type:
+                    if hasattr(node.children[1], 'element_types'):
+                        right_element_types = node.children[1].element_types
+                    
+                    # Combine les types des éléments
+                    combined_element_types = left_element_types + right_element_types
+                    
+                    # Stocke les types combinés dans le nœud actuel
+                    node.element_types = combined_element_types
+                    
+                    return "LIST"
+                
+                # Reste du code existant pour les autres opérations
+                if left_type != right_type:
 
-                        # If one of the operands is undefined, we define it so that there's no error
-                        if left_type == "<undefined>" or right_type == "<undefined>":
-                            undefined_child = (
-                                node.children[0]
-                                if left_type == "<undefined>"
-                                else node.children[1]
+                    # If one of the operands is undefined, we define it so that there's no error
+                    if left_type in self.undefined_types or right_type in self.undefined_types:
+                        undefined_child = (
+                            node.children[0]
+                            if left_type in self.undefined_types
+                            else node.children[1]
+                        )
+                        defined_child_type = (
+                            right_type if left_type in self.undefined_types else left_type
+                        )
+                        if defined_child_type != None:
+                            self.set_type(
+                                undefined_child, defined_child_type, lexer, True
                             )
-                            defined_child_type = (
-                                right_type if left_type == "<undefined>" else left_type
-                            )
-                            if defined_child_type != None:
-                                self.set_type(
-                                    undefined_child, defined_child_type, lexer, True
-                                )
-                            return defined_child_type
+                        return defined_child_type
 
-                        # Else, if really can't be accepted (i.e. 'True + 1' can be accepted)
-                        elif not (
-                            left_type in ["True", "False", "INTEGER"]
-                            and right_type in ["True", "False", "INTEGER"]
-                        ):
-                            raise SemanticError(
-                                f"À la ligne {node.line_index}, il est impossible de faire l'opération entre {left_type} et {right_type} !",
-                                self,
-                                lexer,
-                            )
+                    # Else, if really can't be accepted (i.e. 'True + 1' can be accepted)
+                    elif not (
+                        left_type in ["True", "False", "INTEGER"]
+                        and right_type in ["True", "False", "INTEGER"]
+                    ):
+                        raise SemanticError(
+                            f"À la ligne {node.line_index}, il est impossible de faire l'opération entre {left_type} et {right_type} !",
+                            self,
+                            lexer,
+                        )
 
-                    # Else, get the corresponding type
-                    if left_type in ["True", "False", "INTEGER"] and right_type in [
-                        "True",
-                        "False",
-                        "INTEGER",
-                    ]:
-                        return "INTEGER"
-                    return left_type
-                else:
-                    # This should not happen as we've already handled unary minus
-                    return "<undefined>"
+                # Else, get the corresponding type
+                if left_type in ["True", "False", "INTEGER"] and right_type in [
+                    "True",
+                    "False",
+                    "INTEGER",
+                ]:
+                    return "INTEGER"
+                return left_type
         
             # Dealing with unary -
             elif TokenType.lexicon[node.data] == "-" and len(node.children) == 1:
                 operand_type = self.dfs_type_check(node.children[0], lexer)
-                if (operand_type == "<undefined>"):
+                if (operand_type in self.undefined_types):
                     self.set_type(
                         node.children[0], "INTEGER", lexer, True
                     )
+                return operand_type
 
             # If no type has been found, then it's undefined
             return "<undefined>"
@@ -788,8 +775,6 @@ class SymbolTable:
                 node_counter_for += 1
 
             newST = SymbolTable(str(new_label), self.imbrication_level + 1, self)
-            # print(newST.name)
-            # print(str(TokenType.lexicon[function_node.data] + " " + str(node_counter_for)))
             if newST.name == str(TokenType.lexicon[function_node.data] + " " + str(node_counter_for-1)):
                 newST.symbols[function_node.children[0].value] = {"type": "<undefined>", "depl": -8}
                 newST.symbols[f"{function_node.children[0].value}_i"] = {"type": "<undefined>", "depl": -8}
@@ -816,6 +801,7 @@ class SymbolTable:
         raise STError(
             f"Could not add this function to the ST, another one with the same identifier ({node_children[0]}) exists."
         )
+
 
     # -------------------------------------------------------------------------------------------------
 
@@ -1108,7 +1094,6 @@ def build_sts(ast: Tree, lexer: Lexer) -> "SymbolTable":
 
             # Checking if the function is correctly called
             current_st.get_function_id(ast, lexer)
-            print("+++", symbol_table.function_return)
             symbol_table.check_function_call(ast, lexer)
 
         elif (

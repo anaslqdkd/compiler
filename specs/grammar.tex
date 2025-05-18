@@ -22,9 +22,8 @@ $I$ & $\to$ & \textbf{ident} $I_1$\\
 $I_1$ & $\to$ & , \textbf{ident} $I_1 \ | \ \varepsilon$\\
 $B$ & $\to$ & $CN$ | \textbf{Newline} \textbf{Begin} $DB_1$ \textbf{End}\\
 $B_1$ & $\to$ & $DB_1 \ | \ \varepsilon$\\
-$C$ & $\to$ & \textbf{return} $E$ | \textbf{ident} $C_2$ | $EC_1$ | \textbf{print}$(E_1)$\\
-$C_1$ & $\to$ & $[E]=E \ | \ \varepsilon$\\
-$C_2$ & $\to$ & $= E \ | \ =$ \textbf{ident}$[E] \ | \ \varepsilon$\\
+$C$ & $\to$ & \textbf{return} $E$ | \textbf{ident} $C_1$ | \textbf{print}$(E_1)$\\
+$C_1$ & $\to$ & $=E \ | \ [E]=E \ | \ \varepsilon$\\
 $D$ & $\to$ & $CN$ | \textbf{if} $E$ : $BD_1$ | \textbf{for} \textbf{indent} \textbf{in} $E$ : $B$\\
 $D_1$ & $\to$ & \textbf{else :} $B$ | $\varepsilon$\\
 $E$ & $\to$ & $E_\text{or}$\\
@@ -39,9 +38,10 @@ $E_\text{add}$ & $\to$ & $E_\text{mult} E_\text{add\_tail}$\\
 $E_\text{add\_tail}$ & $\to$ & $O_+ E_\text{mult} E_\text{add\_tail} \ | \ \varepsilon$\\
 $E_\text{mult}$ & $\to$ & $E_\text{un}E_\text{mult\_tail}$\\
 $E_\text{mult\_tail}$ & $\to$ & $O_* E_\text{un} E_\text{mult\_tail} \ | \ \varepsilon$\\
-$E_\text{un}$ & $\to$ & $- E_\text{un} \ | \  [E_1] \ | \ (E_1) \ | \ O_\text{un}$ | \textbf{ident}$(E_1)$\\
+$E_\text{un}$ & $\to$ & $- E_\text{un} \ | \  [E_1] \ | \ (E_1) \ | \ O_\text{un}$ | \textbf{ident}$E_3$\\
 $E_1$ & $\to$ & $E E_2 \ | \ \varepsilon$\\
 $E_2$ & $\to$ & $, E E_2 \ | \ \varepsilon$\\
+$E_3$ & $\to$ & $(E_1) \ | \ [E_1]$\\
 $O_r$ & $\to$ & <= | >= | < | > | != | ==\\
 $O_+$ & $\to$ & + | -\\
 $O_*$ & $\to$ & $\times$ | // | \%\\
