@@ -1,5 +1,5 @@
 def f(x, y):
-    c = -x[0]
+    c = x[0]
     x[0] = c + y + x[1]
     return x[0] + c + 3 * y
 liste = [5, 2]

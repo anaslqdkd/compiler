@@ -452,7 +452,7 @@ def manage_E_un(given_tree:"Tree")->None:
             and TokenType.lexicon[child.children[0].data] == "-"
             ):
                 # Then unary -
-                child.data = "-"
+                child.data = child.children[0].data
                 child.line_index = child.children[0].line_index
                 child.is_terminal = True
                 child.children.pop(0)
