@@ -384,28 +384,28 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 current_section["code_section"].append(f"\tmov rax, rbp\n")
                 current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
             else:
-                current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
+                current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
             if has_to_rewind_R:
                 current_section["code_section"].append(f"\tmov rax, rbp\n")
                 current_section["code_section"].append(f"\tmov rax, [rax{right_side_address[3:]}]\n")
             else:
-                current_section["code_section"].append(f"\tmov rax, [{right_side_address}]\n")
+                current_section["code_section"].append(f"\tmov rbx, [{right_side_address}]\n")
         elif left_node_type == "IDENTIFIER" and right_node_type == "INTEGER":
             left_side_address, has_to_rewind = get_variable_address(englobing_table, node.children[0].value)
-            current_section["code_section"].append("\tpop rax\n")
+            current_section["code_section"].append("\tpop rbx\n")
             if has_to_rewind:
                 current_section["code_section"].append(f"\tmov rax, rbp\n")
                 current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
             else:
-                current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
+                current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
         elif left_node_type == "INTEGER" and right_node_type == "IDENTIFIER":
             right_side_address, has_to_rewind = get_variable_address(englobing_table, node.children[1].value)
-            current_section["code_section"].append("\tpop rbx\n")
+            current_section["code_section"].append("\tpop rax\n")
             if has_to_rewind:
                 current_section["code_section"].append(f"\tmov rax, rbp\n")
                 current_section["code_section"].append(f"\tmov rax, [rax{right_side_address[3:]}]\n")
             else:
-                current_section["code_section"].append(f"\tmov rax, [{right_side_address}]\n")
+                current_section["code_section"].append(f"\tmov rbx, [{right_side_address}]\n")
         elif (left_node_type in litteral_op and right_node_type == "INTEGER") or \
              (left_node_type == "INTEGER" and right_node_type in litteral_op):
             if operation in [41, 43, 45, 46, 47, 48, 49, 50]:
