@@ -960,7 +960,8 @@ class SymbolTable:
             return None
         elif node.data == "function":
             self.function_return[node.children[0].value]["parameter_nb"] = len(
-                node.children[0].children[0].children
+                # node.children[0].children[0].children
+                node.children[1].children
             )
             i = 0
             for child in node.children[1].children:

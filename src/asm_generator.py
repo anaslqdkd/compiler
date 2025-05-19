@@ -296,7 +296,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         else:
             current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
 
-    def generate_list(node: Tree, englobing_table: SymbolTable, current_section: dict):
+    def generate_list(node: Tree, englobing_table: SymbolTable, current_section: dict, id_name = None):
         """
         Génère le code NASM pour une liste de type a = [1, 2, "a", "b"]
         - Alloue la liste dans la section .data (ou .bss si besoin)
@@ -304,7 +304,17 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         - Remplit la variable 'a' avec l'adresse de la liste
         """
         # Générer un nom unique pour la liste (ex: list_a)
-        var_name = lexer.identifier_lexicon[node.father.children[0].value]  # nom de la variable à gauche de l'affectation
+        list_in_for = False
+        if id_name == None:
+            list_in_for = False
+            # var_name = lexer.identifier_lexicon[node.father.children[0].value]  # nom de la variable à gauche de l'affectation
+        else:
+            list_in_for = True
+        if list_in_for:
+            var_name = id_name
+        else:
+            var_name = lexer.identifier_lexicon[node.father.children[0].value]  # nom de la variable à gauche de l'affectation
+
         list_label = f"list_{var_name}"
         elements = node.children
 
@@ -331,18 +341,19 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
         current_section["code_section"].append(f"\t; {var_name} = [{', '.join(list_items_print)}]\n")
 
-        # Ajoute la liste dans .data (tableau de 64 bits)
-        data_section.append(f"\t{list_label} dq {', '.join(list_items)}\n")
-        data_section.append(f"\t{list_label}_len dq {list_length}\n")
+        if not list_in_for:
+            # Ajoute la liste dans .data (tableau de 64 bits)
+            data_section.append(f"\t{list_label} dq {', '.join(list_items)}\n")
+            data_section.append(f"\t{list_label}_len dq {list_length}\n")
 
-        # Affecte l'adresse de la liste à la variable (ex: mov [rbp-8], list_a)
-        left_side_address, has_to_rewind = get_variable_address(englobing_table, node.father.children[0].value)
-        current_section["code_section"].append(f"\tmov rax, {list_label}\n")
-        if has_to_rewind:
-            current_section["code_section"].append(f"\tmov rax, rbp\n")
-            current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
-        else:
-            current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
+            # Affecte l'adresse de la liste à la variable (ex: mov [rbp-8], list_a)
+            left_side_address, has_to_rewind = get_variable_address(englobing_table, node.father.children[0].value)
+            current_section["code_section"].append(f"\tmov rax, {list_label}\n")
+            if has_to_rewind:
+                current_section["code_section"].append(f"\tmov rax, rbp\n")
+                current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
+            else:
+                current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
 
 
     def generate_binary_operation(node: Tree, englobing_table: SymbolTable, current_section: dict):
@@ -691,7 +702,12 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         st_for_label = f"for {for_counter}"
         for_symbol_table = englobing_table.symbols[st_for_label]['symbol table']
         for_symbol_table.set_type(for_node.children[0], "INTEGER", lexer, True)
-        var_name = lexer.identifier_lexicon[for_node.children[1].value]  
+        if for_node.children[1].data == "LIST":
+            # TODO: add list to the .data
+            generate_list(for_node.children[1], englobing_table, current_section, "list")
+            var_name = "list"
+        else:
+            var_name = lexer.identifier_lexicon[for_node.children[1].value]  
         line = for_node.line_index
         list_len = f"list_{var_name}_len"
         name_label = f"for_{for_counter}_{line}"
@@ -705,8 +721,13 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
     def generate_for(for_node: Tree, englobing_table: SymbolTable, current_section: Dict):
         global for_counter
 
+        if for_node.children[1].data == "LIST":
+            var_name = "list"
+        else:
+            var_name = lexer.identifier_lexicon[for_node.children[1].value]  
+
+
         # get the list name
-        var_name = lexer.identifier_lexicon[for_node.children[1].value]  
         list_name = f"list_{var_name}"
         # get the len of the list as defined in the .data
         list_len = f"list_{var_name}_len"
@@ -751,7 +772,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
         # compare the size of the list with the counter
         code.append(f"\tmov rax, [{list_len}]\n")
-        code.append(f"\tmov rbx, [rbp + 16]\n")
+        code.append(f"\tmov rbx, [rbp + 16 + 8]\n")
         code.append(f"\tcmp rbx, rax\n")
 
         # jump to the end if counter > list size
@@ -759,7 +780,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
 
         # update the element list[i], assuming it is a integer for now
-        code.append(f"\tmov rbx, [rbp + 16]\n")
+        code.append(f"\tmov rbx, [rbp + 16 + 8]\n")
         code.append(f"\tshl rbx, 3\n")
         code.append(f"\tmov rax, [{list_name} + rbx]\n")
         code.append(f"\tmov [{left_side_address}], rax\n")
@@ -776,9 +797,9 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         # increment counter
         code.append(f"\t; i++\n")
         # code.append(f"\tinc r8\n")
-        code.append(f"\tmov rax, [rbp - 16]\n")
+        code.append(f"\tmov rax, [rbp + 16 + 8]\n")
         code.append(f"\tinc rax\n")
-        code.append(f"\tmov [rbp - 16], rax\n")
+        code.append(f"\tmov [rbp + 16 + 8], rax\n")
 
         # jump to the beginning of the loop
         code.append(f"\tjmp {loop_label}\n")
