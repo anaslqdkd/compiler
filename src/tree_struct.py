@@ -1,16 +1,19 @@
 from src.lexer import TokenType
 
+
 class ASTPruningError(Exception):
-    def __init__(self, node:"Tree", message:str):
+    def __init__(self, node: "Tree", message: str):
         n = node
         while n.father is not None:
             n = n.father
         n.get_flowchart(file_path="tests/flowchart.txt", print_result=False)
         super().__init__(message)
 
+
 # -------------------------------------------------------------------------------------------------
 # Tree
 # -------------------------------------------------------------------------------------------------
+
 
 class Tree:
     _node_id_in_mermaid = 0
@@ -70,7 +73,7 @@ class Tree:
             ),
         )
 
-    def get_child_id(self, child:"Tree") -> int:
+    def get_child_id(self, child: "Tree") -> int:
         for i in range(len(self.children)):
             if self.children[i] is child:
                 return i
@@ -97,15 +100,16 @@ class Tree:
             node_index = fathers_children.index(self)
             n = len(self.children)
             for child_index in range(n):
-                fathers_children.insert(
-                    node_index, self.children[n - child_index - 1])
+                fathers_children.insert(node_index, self.children[n - child_index - 1])
             father.remove_child(self)
             return father
         else:
-            raise ASTPruningError(self, "There are no father to this Node. Can't erase it.")
+            raise ASTPruningError(
+                self, "There are no father to this Node. Can't erase it."
+            )
 
     # ---------------------------------------------------------------------------------------------
-    
+
     def print_node(self) -> None:
         print(
             f"Node: {self.data}, Line Index: {self.line_index}, Terminal: {self.is_terminal}"
@@ -114,7 +118,12 @@ class Tree:
 
     def __eq__(self, other):
         if isinstance(other, Tree):
-            res = self.data == other.data and self.line_index == other.line_index and self.is_terminal == other.is_terminal and len(self.children) == len(other.children)
+            res = (
+                self.data == other.data
+                and self.line_index == other.line_index
+                and self.is_terminal == other.is_terminal
+                and len(self.children) == len(other.children)
+            )
             if res:
                 for child_index in range(len(self.children)):
                     res = self.children[child_index] == other.children[child_index]
@@ -122,12 +131,18 @@ class Tree:
                         return False
             return res
         return False
-    
+
     def __ne__(self, value):
         return not self.__eq__(value)
-    
-    def copy(self)->"Tree":
-        copied_node = Tree(data=self.data, _father=self.father, line_index=self.line_index, is_terminal=self.is_terminal, value=self.value)
+
+    def copy(self) -> "Tree":
+        copied_node = Tree(
+            data=self.data,
+            _father=self.father,
+            line_index=self.line_index,
+            is_terminal=self.is_terminal,
+            value=self.value,
+        )
         for child in self.children:
             copied_node.children.append(child.copy())
         return copied_node
@@ -158,10 +173,8 @@ class Tree:
                 elif data in ["+", "-", "*", "/", ">"]:
                     label = f"[\"\\{data} (L{node.line_index})\nfather: {node.father.data}\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
                 else:
-                    label = (
-                        f"[\"{data} (L{node.line_index})\nfather: {node.father.data}\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
-                    )
-                nodes.append(f'{node_id}{label}')
+                    label = f"[\"{data} (L{node.line_index})\nfather: {node.father.data}\"]{f'\nstyle {node_id} stroke:{color},stroke-width:2px' if node.is_terminal else ''}"
+                nodes.append(f"{node_id}{label}")
                 seen_nodes[node_id] = True
 
             for child in node.children:
@@ -177,11 +190,15 @@ class Tree:
         with open(file_path, "w") as file:
             file.write(graph)
 
+
 # -------------------------------------------------------------------------------------------------
 # Converter
 # -------------------------------------------------------------------------------------------------
 
-def remove_banned_characters_until(given_tree: "Tree", banned_characters: list[str], until: list[str] = []) -> None:
+
+def remove_banned_characters_until(
+    given_tree: "Tree", banned_characters: list[str], until: list[str] = []
+) -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
@@ -203,7 +220,10 @@ def remove_banned_characters_until(given_tree: "Tree", banned_characters: list[s
             remove_banned_characters_until(child, banned_characters, until)
             i += 1
 
-def remove_banned_data_until(given_tree: "Tree", banned_data: list[str], until: list[str] = []) -> None:
+
+def remove_banned_data_until(
+    given_tree: "Tree", banned_data: list[str], until: list[str] = []
+) -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
@@ -221,6 +241,7 @@ def remove_banned_data_until(given_tree: "Tree", banned_data: list[str], until: 
             remove_banned_data_until(child, banned_data, until)
             i += 1
 
+
 def remove_n(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
@@ -233,6 +254,7 @@ def remove_n(given_tree: "Tree") -> None:
         else:
             remove_n(child)
             i += 1
+
 
 def remove_childless_non_terminal_trees(given_tree: "Tree") -> None:
     i = 0
@@ -247,6 +269,7 @@ def remove_childless_non_terminal_trees(given_tree: "Tree") -> None:
             remove_childless_non_terminal_trees(child)
             i += 1
 
+
 def compact_non_terminals_chain(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
@@ -254,7 +277,9 @@ def compact_non_terminals_chain(given_tree: "Tree") -> None:
         if not child.is_terminal and len(child.children) == 1:
             replacing_child = child.children[0]
 
-            while len(replacing_child.children) == 1 and not replacing_child.is_terminal:
+            while (
+                len(replacing_child.children) == 1 and not replacing_child.is_terminal
+            ):
                 replacing_child = replacing_child.children[0]
 
             given_tree.children.pop(i)
@@ -262,6 +287,7 @@ def compact_non_terminals_chain(given_tree: "Tree") -> None:
         else:
             compact_non_terminals_chain(child)
             i += 1
+
 
 def manage_relations(given_tree: "Tree", relation_symbols: list[str]) -> None:
     i = 0
@@ -281,6 +307,7 @@ def manage_relations(given_tree: "Tree", relation_symbols: list[str]) -> None:
             manage_relations(child, relation_symbols)
             i += 1
 
+
 def manage_equalities(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
@@ -297,7 +324,7 @@ def manage_equalities(given_tree: "Tree") -> None:
                     break
             left_side = given_tree.father.children[equal_id - 1]
             given_tree.children.insert(0, left_side)
-            given_tree.father.children.pop(equal_id-1)
+            given_tree.father.children.pop(equal_id - 1)
             given_tree.data = child.data
             given_tree.line_index = child.line_index
             given_tree.is_terminal = True
@@ -305,6 +332,7 @@ def manage_equalities(given_tree: "Tree") -> None:
         else:
             manage_equalities(child)
             i += 1
+
 
 def manage_functions_declaration(given_tree: "Tree") -> None:
     i = 0
@@ -324,6 +352,7 @@ def manage_functions_declaration(given_tree: "Tree") -> None:
             manage_functions_declaration(child)
             i += 1
 
+
 def manage_prints(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
@@ -342,6 +371,7 @@ def manage_prints(given_tree: "Tree") -> None:
             manage_prints(child)
             i += 1
 
+
 def manage_returns(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
@@ -351,7 +381,7 @@ def manage_returns(given_tree: "Tree") -> None:
             and TokenType.lexicon[child.data] == "return"
         ):
             while i + 1 < len(given_tree.children):
-                returned_value = given_tree.children[i+1]
+                returned_value = given_tree.children[i + 1]
                 child.children.append(returned_value)
                 returned_value.father = child
                 given_tree.children.pop(i + 1)
@@ -365,6 +395,7 @@ def manage_returns(given_tree: "Tree") -> None:
             manage_returns(child)
             i += 1
 
+
 def manage_fors(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
@@ -374,7 +405,7 @@ def manage_fors(given_tree: "Tree") -> None:
             and TokenType.lexicon[child.data] == "for"
         ):
             for j in range(3):
-                c = given_tree.children[i+1]
+                c = given_tree.children[i + 1]
                 manage_fors(c)
                 child.children.append(c)
                 c.father = child
@@ -384,6 +415,7 @@ def manage_fors(given_tree: "Tree") -> None:
             manage_fors(child)
             i += 1
 
+
 def manage_ifs(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
@@ -392,8 +424,8 @@ def manage_ifs(given_tree: "Tree") -> None:
             child.data in TokenType.lexicon.keys()
             and TokenType.lexicon[child.data] == "if"
         ):
-            cond_node = given_tree.children[i+1]
-            if_content = given_tree.children[i+2]
+            cond_node = given_tree.children[i + 1]
+            if_content = given_tree.children[i + 2]
 
             manage_ifs(cond_node)
             manage_ifs(if_content)
@@ -407,9 +439,12 @@ def manage_ifs(given_tree: "Tree") -> None:
 
             if (
                 child.father.children.index(child) + 1 < len(child.father.children)
-                and child.father.children[child.father.children.index(child) + 1 ].data == "D1"
+                and child.father.children[child.father.children.index(child) + 1].data
+                == "D1"
             ):
-                new_else_node = child.father.children[child.father.children.index(child) + 1 ]
+                new_else_node = child.father.children[
+                    child.father.children.index(child) + 1
+                ]
                 new_else_node.data = new_else_node.children[0].data
                 new_else_node.is_terminal = True
                 new_else_node.children.pop(0)
@@ -418,6 +453,7 @@ def manage_ifs(given_tree: "Tree") -> None:
         else:
             manage_ifs(child)
             i += 1
+
 
 def fuse_chains(given_tree: "Tree", chaining_nodes: list[str]) -> None:
     i = 0
@@ -442,14 +478,15 @@ def fuse_chains(given_tree: "Tree", chaining_nodes: list[str]) -> None:
             fuse_chains(child, chaining_nodes)
             i += 1
 
-def manage_E_un(given_tree:"Tree")->None:
+
+def manage_E_un(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
         if child.data == "E_un":
             if (
-            child.children[0].data in TokenType.lexicon.keys()
-            and TokenType.lexicon[child.children[0].data] == "-"
+                child.children[0].data in TokenType.lexicon.keys()
+                and TokenType.lexicon[child.children[0].data] == "-"
             ):
                 # Then unary -
                 child.data = child.children[0].data
@@ -458,11 +495,23 @@ def manage_E_un(given_tree:"Tree")->None:
                 child.children.pop(0)
                 i += 1
             elif len(child.children) == 2:
-                if (
-                    child.children[0].data in TokenType.lexicon.keys()
-                    and TokenType.lexicon[child.children[0].data] in ["+", "-", "*", "//",
-                     "%", "<=", ">=", "<", ">", "!=", "=="]
-                ):
+                if child.children[
+                    0
+                ].data in TokenType.lexicon.keys() and TokenType.lexicon[
+                    child.children[0].data
+                ] in [
+                    "+",
+                    "-",
+                    "*",
+                    "//",
+                    "%",
+                    "<=",
+                    ">=",
+                    "<",
+                    ">",
+                    "!=",
+                    "==",
+                ]:
                     child.data = child.children[0].data
                     child.line_index = child.children[0].line_index
                     child.is_terminal = True
@@ -470,11 +519,23 @@ def manage_E_un(given_tree:"Tree")->None:
                         child.children.append(child.children[0].children[0])
                         child.children[0].children.pop(0)
                     child.children.pop(0)
-                elif (
-                    child.children[1].data in TokenType.lexicon.keys()
-                    and TokenType.lexicon[child.children[1].data] in ["+", "-", "*", "//",
-                     "%", "<=", ">=", "<", ">", "!=", "=="]
-                ):
+                elif child.children[
+                    1
+                ].data in TokenType.lexicon.keys() and TokenType.lexicon[
+                    child.children[1].data
+                ] in [
+                    "+",
+                    "-",
+                    "*",
+                    "//",
+                    "%",
+                    "<=",
+                    ">=",
+                    "<",
+                    ">",
+                    "!=",
+                    "==",
+                ]:
                     child.data = child.children[1].data
                     child.line_index = child.children[1].line_index
                     child.is_terminal = True
@@ -490,7 +551,8 @@ def manage_E_un(given_tree:"Tree")->None:
             manage_E_un(child)
             i += 1
 
-def rename_blocks(given_tree:"Tree")->None:
+
+def rename_blocks(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
@@ -503,15 +565,19 @@ def rename_blocks(given_tree:"Tree")->None:
             rename_blocks(child)
             i += 1
 
-def manage_parentheses(given_tree: "Tree")->None:
+
+def manage_parentheses(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
         if child.data in TokenType.lexicon and TokenType.lexicon[child.data] == "(":
             child.data = "Parentheses"
             child.is_terminal = True
-            while not (given_tree.children[i+1].data in TokenType.lexicon and TokenType.lexicon[given_tree.children[i+1].data] == ")"):
-                content_node = given_tree.children[i+1]
+            while not (
+                given_tree.children[i + 1].data in TokenType.lexicon
+                and TokenType.lexicon[given_tree.children[i + 1].data] == ")"
+            ):
+                content_node = given_tree.children[i + 1]
                 manage_parentheses(content_node)
                 child.children.append(content_node)
                 given_tree.children.pop(i + 1)
@@ -521,15 +587,84 @@ def manage_parentheses(given_tree: "Tree")->None:
             manage_parentheses(child)
             i += 1
 
-def manage_brackets(given_tree: "Tree")->None:
+
+def verify_parameters(given_tree: "Tree") -> None:
+    def get_nearest_identifier(node: "Tree") -> "Tree":
+        # This will get the nearest (left) identifier
+        def get_nearest_identifier_rec(node: "Tree") -> "Tree":
+            for i in range(len(node.children) - 1, -1, -1):
+                if node.children[
+                    i
+                ].data in TokenType.lexicon.keys() and TokenType.lexicon[
+                    node.children[i].data
+                ] in [
+                    "IDENTIFIER",
+                    "print",
+                ]:
+                    return node.children[i]
+            if node.father is None:
+                raise ASTPruningError(
+                    node, f"Failed to find a function call at line {node.line_index}."
+                )
+            return get_nearest_identifier_rec(node.father)
+
+        father = node.father
+        index = -1
+        for i in range(len(father.children)):
+            if father.children[i] is node:
+                index = i
+
+        for i in range(index, -1, -1):
+            if father.children[
+                i
+            ].data in TokenType.lexicon.keys() and TokenType.lexicon[
+                father.children[i].data
+            ] in [
+                "IDENTIFIER",
+                "print",
+            ]:
+                return father.children[i]
+        return get_nearest_identifier_rec(father.father)
+
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if child.data == "Parentheses":
+            print("A", child.line_index)
+            if (
+                len(child.children) == 0
+                or len(child.children) == 1
+                and not (
+                    child.children[0].data in TokenType.lexicon
+                    and TokenType.lexicon[child.children[0].data]
+                    in [["+", "-", "*", "//", "%", "<=", ">=", "<", ">", "!=", "=="]]
+                )
+            ):
+                # Then it's a "Parameters" node of a function call
+                caller = get_nearest_identifier(child)
+                given_tree.children.pop(i)
+                caller.children.append(child)
+                verify_parameters(child)
+            else:
+                verify_parameters(child)
+                i += 1
+        else:
+            verify_parameters(child)
+            i += 1
+
+
+def manage_brackets(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
         if child.data in TokenType.lexicon and TokenType.lexicon[child.data] == "[":
             child.data = "Brackets"
             child.is_terminal = True
-            while not (given_tree.children[i+1].data in TokenType.lexicon and TokenType.lexicon[given_tree.children[i+1].data] == "]"):
-                content_node = given_tree.children[i+1]
+            while not (
+                given_tree.children[i + 1].data in TokenType.lexicon
+                and TokenType.lexicon[given_tree.children[i + 1].data] == "]"
+            ):
+                content_node = given_tree.children[i + 1]
                 manage_brackets(content_node)
                 child.children.append(content_node)
                 given_tree.children.pop(i + 1)
@@ -539,15 +674,25 @@ def manage_brackets(given_tree: "Tree")->None:
             manage_brackets(child)
             i += 1
 
-def manage_function_calls(given_tree:"Tree")->None:
-    def get_nearest_identifier(node:"Tree")->"Tree":
+
+def manage_function_calls(given_tree: "Tree") -> None:
+    def get_nearest_identifier(node: "Tree") -> "Tree":
         # This will get the nearest (left) identifier
-        def get_nearest_identifier_rec(node:"Tree")->"Tree":
+        def get_nearest_identifier_rec(node: "Tree") -> "Tree":
             for i in range(len(node.children) - 1, -1, -1):
-                if node.children[i].data in TokenType.lexicon.keys() and TokenType.lexicon[node.children[i].data] in ["IDENTIFIER", "print"]:
+                if node.children[
+                    i
+                ].data in TokenType.lexicon.keys() and TokenType.lexicon[
+                    node.children[i].data
+                ] in [
+                    "IDENTIFIER",
+                    "print",
+                ]:
                     return node.children[i]
             if node.father is None:
-                raise ASTPruningError(node, f"Failed to find a function call at line {node.line_index}.")
+                raise ASTPruningError(
+                    node, f"Failed to find a function call at line {node.line_index}."
+                )
             return get_nearest_identifier_rec(node.father)
 
         father = node.father
@@ -555,11 +700,19 @@ def manage_function_calls(given_tree:"Tree")->None:
         for i in range(len(father.children)):
             if father.children[i] is node:
                 index = i
-        
+
         for i in range(index, -1, -1):
-            if father.children[i].data in TokenType.lexicon.keys() and TokenType.lexicon[father.children[i].data] in ["IDENTIFIER", "print"]:
+            if father.children[
+                i
+            ].data in TokenType.lexicon.keys() and TokenType.lexicon[
+                father.children[i].data
+            ] in [
+                "IDENTIFIER",
+                "print",
+            ]:
                 return father.children[i]
         return get_nearest_identifier_rec(father.father)
+
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
@@ -571,57 +724,72 @@ def manage_function_calls(given_tree:"Tree")->None:
         manage_function_calls(child)
         i += 1
 
+
 # --------------------------------------------------------------------------------------------------------------------------
 
-def manage_parameters(given_tree: "Tree")->None:
-    def has_comma(node: "Tree")->bool:
+
+def manage_parameters(given_tree: "Tree") -> None:
+    def has_comma(node: "Tree") -> bool:
         res = False
         for child in node.children:
-            if (child.data in TokenType.lexicon and TokenType.lexicon[child.data] == ","):
+            if child.data in TokenType.lexicon and TokenType.lexicon[child.data] == ",":
                 res = True
             else:
                 res = res or has_comma(child)
         return res
+
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
         if child.data == "Parentheses":
             if has_comma(child):
                 child.data = "Parameters"
-                remove_banned_characters_until(child, [","], ["Parentheses", "Parameters", "Brackets", "LIST"])
+                remove_banned_characters_until(
+                    child, [","], ["Parentheses", "Parameters", "Brackets", "LIST"]
+                )
         manage_parameters(child)
         i += 1
 
-def manage_lists(given_tree: "Tree")->None:
-    def has_comma(node: "Tree")->bool:
+
+def manage_lists(given_tree: "Tree") -> None:
+    def has_comma(node: "Tree") -> bool:
         res = False
         for child in node.children:
-            if (child.data in TokenType.lexicon and TokenType.lexicon[child.data] == ","):
+            if child.data in TokenType.lexicon and TokenType.lexicon[child.data] == ",":
                 res = True
             else:
                 res = res or has_comma(child)
         return res
+
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
         if child.data == "Brackets":
             if has_comma(child):
                 child.data = "LIST"
-                remove_banned_characters_until(child, [","], ["Parentheses", "Parameters", "Brackets", "LIST"])
+                remove_banned_characters_until(
+                    child, [","], ["Parentheses", "Parameters", "Brackets", "LIST"]
+                )
             i += 1
         else:
             manage_lists(child)
             i += 1
 
-def manage_list_search(given_tree: "Tree")->None:
-    def get_nearest_identifier(node:"Tree")->"Tree":
+
+def manage_list_search(given_tree: "Tree") -> None:
+    def get_nearest_identifier(node: "Tree") -> "Tree":
         # This will get the nearest (left) identifier
-        def get_nearest_identifier_rec(node:"Tree")->"Tree":
+        def get_nearest_identifier_rec(node: "Tree") -> "Tree":
             for i in range(len(node.children) - 1, -1, -1):
-                if node.children[i].data in TokenType.lexicon.keys() and TokenType.lexicon[node.children[i].data] == "IDENTIFIER":
+                if (
+                    node.children[i].data in TokenType.lexicon.keys()
+                    and TokenType.lexicon[node.children[i].data] == "IDENTIFIER"
+                ):
                     return node.children[i]
             if node.father is None:
-                raise ASTPruningError(node, f"Failed to find a list container at line {node.line_index}.")
+                raise ASTPruningError(
+                    node, f"Failed to find a list container at line {node.line_index}."
+                )
             return get_nearest_identifier_rec(node.father)
 
         father = node.father
@@ -629,15 +797,22 @@ def manage_list_search(given_tree: "Tree")->None:
         for i in range(len(father.children)):
             if father.children[i] is node:
                 index = i
-        
+
         for i in range(index, -1, -1):
-            if father.children[i].data in TokenType.lexicon.keys() and TokenType.lexicon[father.children[i].data] == "IDENTIFIER":
+            if (
+                father.children[i].data in TokenType.lexicon.keys()
+                and TokenType.lexicon[father.children[i].data] == "IDENTIFIER"
+            ):
                 return father.children[i]
         return get_nearest_identifier_rec(father.father)
+
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
-        if child.data == "Brackets" and not (given_tree.data in TokenType.lexicon.keys() and TokenType.lexicon[given_tree.data] == "="):
+        if child.data == "Brackets" and not (
+            given_tree.data in TokenType.lexicon.keys()
+            and TokenType.lexicon[given_tree.data] == "="
+        ):
             # Then it's a research in a list
             list = get_nearest_identifier(child)
             given_tree.children.pop(i)
@@ -647,9 +822,11 @@ def manage_list_search(given_tree: "Tree")->None:
             manage_list_search(child)
         i += 1
 
+
 # --------------------------------------------------------------------------------------------------------------------------
 
-def reajust_fathers(given_tree:"Tree")->None:
+
+def reajust_fathers(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
@@ -657,25 +834,31 @@ def reajust_fathers(given_tree:"Tree")->None:
         reajust_fathers(child)
         i += 1
 
+
 def transform_to_ast(given_tree: "Tree") -> None:
-    remove_banned_characters_until(given_tree, [":", "in", "NEWLINE", "BEGIN", "END", "EOF"])
+    remove_banned_characters_until(
+        given_tree, [":", "in", "NEWLINE", "BEGIN", "END", "EOF"]
+    )
     remove_n(given_tree)
     remove_banned_data_until(given_tree, ["N"])
     compact_non_terminals_chain(given_tree)
-    manage_relations(given_tree, ["+", "-", "*", "//",
-                     "%", "<=", ">=", "<", ">", "!=", "=="])
+    manage_relations(
+        given_tree, ["+", "-", "*", "//", "%", "<=", ">=", "<", ">", "!=", "=="]
+    )
     remove_childless_non_terminal_trees(given_tree)
     manage_parentheses(given_tree)
     manage_brackets(given_tree)
     manage_parameters(given_tree)
     manage_lists(given_tree)
     manage_list_search(given_tree)
+    remove_childless_non_terminal_trees(given_tree)
     manage_E_un(given_tree)
     manage_functions_declaration(given_tree)
     manage_function_calls(given_tree)
     manage_prints(given_tree)
     compact_non_terminals_chain(given_tree)
     remove_banned_data_until(given_tree, ["E_un", "E1", "E3", "I"])
+    manage_equalities(given_tree)
     manage_fors(given_tree)
     manage_ifs(given_tree)
 
@@ -686,12 +869,13 @@ def transform_to_ast(given_tree: "Tree") -> None:
         prev_tree = given_tree.copy()
         fuse_chains(given_tree, ["A", "D", "S1", "B", "B1", "C"])
 
-    manage_equalities(given_tree)
     rename_blocks(given_tree)
     fuse_chains(given_tree, ["E_un", "E1"])
     fuse_chains(given_tree, ["LIST", "E1", "E2"])
     manage_returns(given_tree)
+    verify_parameters(given_tree)
     reajust_fathers(given_tree)
+
 
 # -------------------------------------------------------------------------------------------------
 # Sample
@@ -718,9 +902,9 @@ def get_sample_tree() -> "Tree":
     child_b1.add_child(12, line_index=11, is_terminal=True)
     child_b1.children[0].add_child(13, line_index=12, is_terminal=True)
     child_b1.children[0].add_child(14, line_index=13, is_terminal=False)
-    child_b1.children[0].children[1].add_child(
-        15, line_index=14, is_terminal=True)
+    child_b1.children[0].children[1].add_child(15, line_index=14, is_terminal=True)
     return root
+
 
 # -------------------------------------------------------------------------------------------------
 # Tests
@@ -854,3 +1038,4 @@ if __name__ == "__main__":
     test_is_leaf_method()
     test_is_leaf_returns_false_for_non_leaf_node()
     print("End of tests. Tree structure tests successfully passed!\n")
+

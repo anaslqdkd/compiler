@@ -5,6 +5,7 @@ from src.lexer import TokenType
 from src.tree_struct import Tree
 from src.st_builder import*
 from src.st_builder import SymbolTable, find_symbol, in_st
+from src.st_builder import print_all_symbol_tables
 
 UTF8_CharSize = 8  # en bits
 
@@ -19,8 +20,9 @@ class AsmGenerationError(Exception):
 sections = {}
 if_counter: int = 0
 else_counter: int = 0
-numeric_op = {40, 41, 42, 43, 44}
-litteral_op = {'+', '-', '*', '/', '%'}
+for_counter: int = 0
+numeric_op = {40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50} # +, -, *, //, %, <=, >=, <, >, !=, ==
+litteral_op = {'+', '-', '*', '/', '%', '<=', '>=', '<', '>', '!=', '=='}
 
 def sizeof(value):
     if isinstance(value, int):
@@ -71,7 +73,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         current_section["start_protocol"].append("\n")
 
         # Processing the function's body
-        for instr in function_node.children[2].children:
+        for instr in function_node.children[1].children:
             build_components_rec(instr, function_symbol_table, current_section)
 
         # protocole de sortie
@@ -99,7 +101,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             elif parameter_node.value > 0:
                 current_value, has_to_rewind = get_variable_address(englobing_table, parameter_node.value)
                 if has_to_rewind:
-                    current_section["code_section"].append(f"\tmov rax, [rbp]\n")
+                    current_section["code_section"].append(f"\tmov rax, rbp\n")
                     current_section["code_section"].append(f"\tmov rax, [rax{current_value[3:]}]\n")
                 else:
                     current_section["code_section"].append(f"\tmov rax, [{current_value}]\n")
@@ -130,15 +132,22 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             if has_function_call:
                 # Right-side is a function call (=> return value is stored in "rax")
                 current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
-            elif node.children[1].value in lexer.constant_lexicon.keys():
+            elif node.children[1].value in lexer.constant_lexicon.keys() or node.children[1].value in ["True", "False"]:
                 # Right-side is a constant: mettre la constante dans la registre
-                value = lexer.constant_lexicon[node.children[1].value]
+                if node.children[1].value in ["True", "False"]:
+                    # Boolean value
+                    if node.children[1].value == "True":
+                        value = 1
+                    else:
+                        value = 0
+                else:
+                    value = lexer.constant_lexicon[node.children[1].value]
                 current_section["code_section"].append(f"\tmov rax, {value}\n")
                 if has_to_rewind_L:
-                    current_section["code_section"].append(f"\tmov rax, [rbp]\n")
+                    current_section["code_section"].append(f"\tmov rax, rbp\n")
                     current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
                 else:
-                    current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+                    current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
             # NOTE: il me semble que ce n'est pas necessaire de vérifier le in_st puisque sinon ça donnerait une erreur semantique ?
             elif in_st(englobing_table, node.children[1].value):
                 if node.children[1].children:
@@ -152,51 +161,52 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     current_section["code_section"].append(f"\n\t; {left_var_name} = {right_var_name}[{access_id}]\n")
 
                     if has_to_rewind_R:
-                        current_section["code_section"].append(f"\tmov rax, [rbp]\n")
+                        current_section["code_section"].append(f"\tmov rax, rbp\n")
                         current_section["code_section"].append(f"\tmov rax, [rax{right_side[3:]}]\n")
                     else:
                         current_section["code_section"].append(f"\tmov rax, [{right_side}]\n")
                     # FIXME: access_id should be multiplied to the size of one element
                     current_section["code_section"].append(f"\tmov rax, [rax + {access_id}*{right_side}]\n")
                     if has_to_rewind_L:
-                        current_section["code_section"].append(f"\tmov rax, [rbp]\n")
+                        current_section["code_section"].append(f"\tmov rax, rbp\n")
                         current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
                     else:
-                        current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+                        current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
                 else:
                     # Right side is an identifier: charger la variable puis la mettre en pile
                     right_side, has_to_rewind_R = get_variable_address(englobing_table, node.children[1].value)
                     if has_to_rewind_R:
-                        current_section["code_section"].append(f"\tmov rax, [rbp]\n")
+                        current_section["code_section"].append(f"\tmov rax, rbp\n")
                         current_section["code_section"].append(f"\tmov rax, [rax{right_side[3:]}]\n")
                     else:
                         current_section["code_section"].append(f"\tmov rax, [{right_side}]\n")
                     if has_to_rewind_L:
-                        current_section["code_section"].append(f"\tmov rax, [rbp]\n")
+                        current_section["code_section"].append(f"\tmov rax, rbp\n")
                         current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
                     else:
-                        current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+                        current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
             elif not node.children[1].is_terminal:
                 # Right-side is an expression (operation)
                 generate_expression(node.children[1], englobing_table, current_section)
                 current_section["code_section"].append("\tpop rax\n")
                 if has_to_rewind_L:
-                    current_section["code_section"].append(f"\tmov rax, [rbp]\n")
+                    current_section["code_section"].append(f"\tmov rax, rbp\n")
                     current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
                 else:
-                    current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+                    current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
             elif node.children[1].data in numeric_op:
                 if node.children[1].children[0].data == "LIST" and node.children[1].children[1].data == "LIST":
                     # Concaténation de listes
                     generate_list_concat(node.children[1], englobing_table, current_section)
                 else:
+                    print("a", node.children[1].data)
                     generate_binary_operation(node.children[1], englobing_table, current_section)
                     current_section["code_section"].append("\tpop rax\n")
                     if has_to_rewind_L:
-                        current_section["code_section"].append(f"\tmov rax, [rbp]\n")
+                        current_section["code_section"].append(f"\tmov rax, rbp\n")
                         current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
                     else:
-                        current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+                        current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
             elif node.children[1].data == "LIST":
                 generate_list(node.children[1], englobing_table, current_section)
             else:
@@ -263,8 +273,16 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             
             # Copier chaque élément avec le bon offset
             for i in range(length):
-                current_section["code_section"].append(f"\tmov rax, [rsi+{i*8}]\n")
-                current_section["code_section"].append(f"\tmov [concat_list_{var_name}+{current_offset*8}], rax\n")
+                if i > 0:
+                    current_section["code_section"].append(f"\tmov rax, [rsi+{i*8}]\n")
+                else:
+                    current_section["code_section"].append(f"\tmov rax, [rsi]\n")
+
+                if current_offset > 0:
+                    current_section["code_section"].append(f"\tmov [concat_list_{var_name}+{current_offset*8}], rax\n")
+                else:
+                    current_section["code_section"].append(f"\tmov [concat_list_{var_name}], rax\n")
+                
                 current_offset += 1
             
             current_section["code_section"].append("\n")  # Séparer les blocs pour la lisibilité
@@ -273,10 +291,10 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         left_side_address, has_to_rewind = get_variable_address(englobing_table, node.father.children[0].value)
         current_section["code_section"].append(f"\tmov rax, {concat_label}\n")
         if has_to_rewind:
-            current_section["code_section"].append(f"\tmov rax, [rbp]\n")
+            current_section["code_section"].append(f"\tmov rax, rbp\n")
             current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
         else:
-            current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+            current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
 
     def generate_list(node: Tree, englobing_table: SymbolTable, current_section: dict):
         """
@@ -293,6 +311,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         # Préparer la déclaration de la liste dans la section .data
         list_items = []
         list_items_print = []
+        list_length = 0
         for idx, elem in enumerate(elements):
             if TokenType.lexicon[elem.data] == "INTEGER":
                 value = lexer.constant_lexicon[elem.value]
@@ -308,28 +327,40 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             else:
                 # Pour d'autres types, à adapter
                 list_items.append("0")
+            list_length += 1
 
         current_section["code_section"].append(f"\t; {var_name} = [{', '.join(list_items_print)}]\n")
 
         # Ajoute la liste dans .data (tableau de 64 bits)
         data_section.append(f"\t{list_label} dq {', '.join(list_items)}\n")
+        data_section.append(f"\t{list_label}_len dq {list_length}\n")
 
         # Affecte l'adresse de la liste à la variable (ex: mov [rbp-8], list_a)
         left_side_address, has_to_rewind = get_variable_address(englobing_table, node.father.children[0].value)
         current_section["code_section"].append(f"\tmov rax, {list_label}\n")
         if has_to_rewind:
-            current_section["code_section"].append(f"\tmov rax, [rbp]\n")
+            current_section["code_section"].append(f"\tmov rax, rbp\n")
             current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
         else:
-            current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+            current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
 
 
     def generate_binary_operation(node: Tree, englobing_table: SymbolTable, current_section: dict):
         """Generate assembly code for binary operations (+, -, *, //, %)"""
         operation = node.data
 
+        # Check if it's a unary minus operation
+        if operation == 41 and len(node.children) == 1:  # '-' with one child
+            # Générer le code pour l'expression opérande
+            current_section["code_section"].append(f"\n\t; Unary negation\n")
+            generate_expression(node.children[0], englobing_table, current_section)
+            # Récupérer la valeur et la négation
+            current_section["code_section"].append("\tpop rax\n")
+            current_section["code_section"].append("\tneg rax\n")  # Négation unaire
+            current_section["code_section"].append("\tpush rax\n")
+            return
+
         # Générer le code pour empiler les opérandes (gauche puis droite)
-        # FIXME: consider unary -
         generate_expression(node.children[0], englobing_table, current_section)
         generate_expression(node.children[1], englobing_table, current_section)
 
@@ -350,34 +381,34 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             left_side_address, has_to_rewind_L = get_variable_address(englobing_table, node.children[0].value)
             right_side_address, has_to_rewind_R = get_variable_address(englobing_table, node.children[1].value)
             if has_to_rewind_L:
-                current_section["code_section"].append(f"\tmov rax, [rbp]\n")
+                current_section["code_section"].append(f"\tmov rax, rbp\n")
                 current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
             else:
                 current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
             if has_to_rewind_R:
-                current_section["code_section"].append(f"\tmov rax, [rbp]\n")
+                current_section["code_section"].append(f"\tmov rax, rbp\n")
                 current_section["code_section"].append(f"\tmov rax, [rax{right_side_address[3:]}]\n")
             else:
-                current_section["code_section"].append(f"\tmov rax, [{right_side_address}]\n")
+                current_section["code_section"].append(f"\tmov rbx, [{right_side_address}]\n")
         elif left_node_type == "IDENTIFIER" and right_node_type == "INTEGER":
             left_side_address, has_to_rewind = get_variable_address(englobing_table, node.children[0].value)
-            current_section["code_section"].append("\tpop rax\n")
+            current_section["code_section"].append("\tpop rbx\n")
             if has_to_rewind:
-                current_section["code_section"].append(f"\tmov rax, [rbp]\n")
+                current_section["code_section"].append(f"\tmov rax, rbp\n")
                 current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
             else:
                 current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
         elif left_node_type == "INTEGER" and right_node_type == "IDENTIFIER":
             right_side_address, has_to_rewind = get_variable_address(englobing_table, node.children[1].value)
-            current_section["code_section"].append("\tpop rbx\n")
+            current_section["code_section"].append("\tpop rax\n")
             if has_to_rewind:
-                current_section["code_section"].append(f"\tmov rax, [rbp]\n")
+                current_section["code_section"].append(f"\tmov rax, rbp\n")
                 current_section["code_section"].append(f"\tmov rax, [rax{right_side_address[3:]}]\n")
             else:
-                current_section["code_section"].append(f"\tmov rax, [{right_side_address}]\n")
+                current_section["code_section"].append(f"\tmov rbx, [{right_side_address}]\n")
         elif (left_node_type in litteral_op and right_node_type == "INTEGER") or \
              (left_node_type == "INTEGER" and right_node_type in litteral_op):
-            if operation in [41, 43]:
+            if operation in [41, 43, 45, 46, 47, 48, 49, 50]:
                 # If the operation is - or //, we need to pop the right operand first
                 current_section["code_section"].append("\tpop rbx\n")
                 current_section["code_section"].append("\tpop rax\n")
@@ -402,6 +433,30 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             current_section["code_section"].append("\txor rdx, rdx\n")
             current_section["code_section"].append("\tdiv rbx\n")
             current_section["code_section"].append("\tmov rax, rdx\n")  # Modulo result is in rdx
+        elif operation == 45:    # <=
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")     # Default to 0 (false)
+            current_section["code_section"].append("\tsetle al\n")       # Set al to 1 if less than or equal
+        elif operation == 46:    # >=
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsetge al\n")       # Set al to 1 if greater than or equal
+        elif operation == 47:    # >
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsetg al\n")        # Set al to 1 if greater than
+        elif operation == 48:    # <
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsetl al\n")        # Set al to 1 if less than
+        elif operation == 49:    # !=
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsetne al\n")       # Set al to 1 if not equal
+        elif operation == 50:    # ==
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsete al\n")        # Set al to 1 if equal
 
         # Remettre le résultat sur la pile
         current_section["code_section"].append("\tpush rax\n")
@@ -418,21 +473,30 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 value = lexer.constant_lexicon[node.value]
                 current_section["code_section"].append(f"\tmov rax, {value}\n")
                 current_section["code_section"].append("\tpush rax\n")
-            elif node.data == "IDENTIFIER":
+            elif node_type == "IDENTIFIER":
                 # Pour une variable, charger la valeur depuis la pile puis empiler
                 id_address, has_to_rewind = get_variable_address(englobing_table, node.value)
                 if has_to_rewind:
-                    current_section["code_section"].append(f"\tmov rax, [rbp]\n")
+                    current_section["code_section"].append(f"\tmov rax, rbp\n")
                     current_section["code_section"].append(f"\tmov rax, [rax{id_address[3:]}]\n")
                 else:
                     current_section["code_section"].append(f"\tmov rax, [{id_address}]\n")
                 current_section["code_section"].append("\tpush rax\n")
+            elif node_type == "True":
+                # Pour le booléen True, charger 1 puis empiler
+                current_section["code_section"].append(f"\tmov rax, 1\n")
+                current_section["code_section"].append("\tpush rax\n")
+            elif node_type == "False":
+                # Pour le booléen False, charger 0 puis empiler
+                current_section["code_section"].append(f"\tmov rax, 0\n")
+                current_section["code_section"].append("\tpush rax\n")
             elif node.data in numeric_op:
                 generate_binary_operation(node, englobing_table, current_section)
 
+
     def generate_print(node: Tree, symbol_table: SymbolTable, current_section: dict):
         """Generate code to print values, including numeric results and strings"""
-        to_print = node.children[0]
+        to_print = node.children[0].children[0]
         node_type = TokenType.lexicon[to_print.data]
 
         value_to_print = lexer.identifier_lexicon[to_print.value] if to_print.value > 0 else lexer.constant_lexicon[to_print.value]
@@ -476,13 +540,14 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     if idx < len(list_symbol["element_types"]):
                         var_type = list_symbol["element_types"][idx]
                 if has_to_rewind:
-                    current_section["code_section"].append(f"\tmov rax, [rbp]\n")
+                    current_section["code_section"].append(f"\tmov rax, rbp\n")
                     current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
                 else:
-                    current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
+                    current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
                 current_section["code_section"].append(f"\tmov rax, [rax + {idx}*8]\n")
             else:
                 # Regular variable (not a list element)
+                # current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
                 current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
             
             if var_type == "STRING":
@@ -503,9 +568,26 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         """Add the print_rax and print_str functions to the text section"""
         bss_section = ["section .bss\n"]
         bss_section.append("\tbuffer resb 20\n")  # Buffer for number conversion
-        data_section.append("\tnewline db 0xA")
+        data_section.append("\tnewline db 0xA\n")
+        data_section.append("\tminus_sign db \"-\"")  # Ajout du signe moins
         text_section.append("\n\n;\t---print_rax protocol---\n")
         text_section.append("print_rax:\n")
+        
+        # Vérifier si le nombre est négatif
+        text_section.append("\ttest rax, rax\n")
+        text_section.append("\tjns .positive\n")
+        
+        # Si négatif, afficher le signe moins et convertir en positif
+        text_section.append("\tpush rax\n")          # Sauvegarder rax
+        text_section.append("\tmov rax, 1\n")        # syscall write
+        text_section.append("\tmov rdi, 1\n")        # stdout 
+        text_section.append("\tmov rsi, minus_sign\n") # Pointer vers "-"
+        text_section.append("\tmov rdx, 1\n")        # Longueur 1
+        text_section.append("\tsyscall\n")
+        text_section.append("\tpop rax\n")           # Restaurer rax
+        text_section.append("\tneg rax\n")           # Convertir en positif
+        
+        text_section.append(".positive:\n")
         text_section.append("\tmov rcx, buffer + 20\n")
         text_section.append("\tmov rbx, 10\n")
         text_section.append("\n.convert_loop:\n")
@@ -592,13 +674,125 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "print":
                 # Prints
                 generate_print(current_node, current_table, current_section)
-            elif TokenType.lexicon[current_node.data] == "IDENTIFIER" and len(current_node.children) > 0:
+            elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "IDENTIFIER" and len(current_node.children) > 0:
                 generate_function_call(current_node, current_table, current_section, lexer)
             elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "if":
                 generate_if(current_node, current_table, current_section)
+            elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "for":
+                generate_for_call(current_node, current_table, current_section)
+                generate_for(current_node, current_table, current_section)
         else:
             for child in current_node.children:
                 build_components_rec(child, current_table, current_section)
+
+
+    def generate_for_call(for_node, englobing_table: SymbolTable, current_section: Dict):
+        global for_counter
+        st_for_label = f"for {for_counter}"
+        for_symbol_table = englobing_table.symbols[st_for_label]['symbol table']
+        for_symbol_table.set_type(for_node.children[0], "INTEGER", lexer, True)
+        var_name = lexer.identifier_lexicon[for_node.children[1].value]  
+        line = for_node.line_index
+        list_len = f"list_{var_name}_len"
+        name_label = f"for_{for_counter}_{line}"
+        code = current_section["code_section"]
+        code.append(f"\n\tmov rax, 0\n")
+        code.append(f"\tpush rax\n")
+        code.append(f"\tcall {name_label}\n")
+
+
+
+    def generate_for(for_node: Tree, englobing_table: SymbolTable, current_section: Dict):
+        global for_counter
+
+        # get the list name
+        var_name = lexer.identifier_lexicon[for_node.children[1].value]  
+        list_name = f"list_{var_name}"
+        # get the len of the list as defined in the .data
+        list_len = f"list_{var_name}_len"
+        line = for_node.line_index
+        st_for_label = f"for {for_counter}"
+        name_label = f"for_{for_counter}_{line}"
+        for_symbol_table = englobing_table.symbols[st_for_label]['symbol table']
+        for_symbol_table.set_type(for_node.children[0], "INTEGER", lexer, True)
+        var = for_symbol_table.symbols[f"{for_node.children[0].value}_i"]
+        var['type'] = "INTEGER"
+        
+        for_symbol_table.recalculate_depl()
+        print_all_symbol_tables(for_symbol_table, lexer)
+        section_name = name_label
+        sections[section_name] = {}
+        current_section = sections[section_name]
+        current_section["start_protocol"] = []
+        current_section["code_section"] = []
+        code = current_section["code_section"]
+        current_section["end_protocol"] = []
+        size_to_allocate = 16
+
+        # initialize the counter at 0
+        code.append(f"\tmov r8, 0 ;i = 0\n")
+        code.append(f"\tmov [rbp + 16], r8 ;i = 0\n")
+        el_node = for_node.children[0]
+        left_side_address, has_to_rewind = get_variable_address(for_symbol_table, el_node.value)
+
+        # Entrance protocol
+        current_section["start_protocol"].append("\n;\t---Protocole d'entree---\n")
+        current_section["start_protocol"].append("\tpush rbp\n")
+        current_section["start_protocol"].append("\tmov rbp, rsp\n")
+
+        current_section["start_protocol"].append(f"\tsub rsp, {size_to_allocate}\n")
+
+        current_section["start_protocol"].append(";\t------------------------\n")
+        current_section["start_protocol"].append("\n")
+
+        
+        loop_label = f"loop_for_{for_counter}_{line}"
+        code.append(f"{loop_label}:\n")
+
+        # compare the size of the list with the counter
+        code.append(f"\tmov rax, [{list_len}]\n")
+        code.append(f"\tmov rbx, [rbp + 16]\n")
+        code.append(f"\tcmp rbx, rax\n")
+
+        # jump to the end if counter > list size
+        code.append(f"\tjge {name_label}_end\n")
+
+
+        # update the element list[i], assuming it is a integer for now
+        code.append(f"\tmov rbx, [rbp + 16]\n")
+        code.append(f"\tshl rbx, 3\n")
+        code.append(f"\tmov rax, [{list_name} + rbx]\n")
+        code.append(f"\tmov [{left_side_address}], rax\n")
+
+        for_counter += 1
+
+        # NOTE: du au fait que le noeud for n'a pas de block
+        if (len(for_node.children[2].children)) == 1:
+            build_components_rec(for_node.children[2], for_symbol_table, current_section)
+        else:
+            for instr in for_node.children[2].children:
+                build_components_rec(instr, for_symbol_table, current_section)
+
+        # increment counter
+        code.append(f"\t; i++\n")
+        # code.append(f"\tinc r8\n")
+        code.append(f"\tmov rax, [rbp - 16]\n")
+        code.append(f"\tinc rax\n")
+        code.append(f"\tmov [rbp - 16], rax\n")
+
+        # jump to the beginning of the loop
+        code.append(f"\tjmp {loop_label}\n")
+
+        code.append(f"{name_label}_end:\n")
+
+        # protocole de sortie
+        current_section["end_protocol"].append("\n")
+        current_section["end_protocol"].append(";\t---Protocole de sortie---\n")
+        current_section["end_protocol"].append("\tmov rsp, rbp\n") 
+        current_section["end_protocol"].append("\tpop rbp\n") # restore base pointer
+        current_section["end_protocol"].append("\tret\n") # return to the caller
+        current_section["end_protocol"].append(";\t------------------------\n")
+        current_section["end_protocol"].append("\n\n")
 
     def generate_if(if_node: Tree, englobing_table: SymbolTable, current_section: Dict):
         global if_counter
@@ -622,33 +816,16 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 if_else = True
                 else_child_number = if_child+1
 
-        # get the right label to jump to based on the type of comparison, <, ==, etc
-        match (TokenType.lexicon[if_node.children[0].data]):
-            case "==":
-                comparison_label = "jne"  
-            case "!=":
-                comparison_label = "je"  
-            case ">=":
-                comparison_label = "jl"
-            case ">":
-                comparison_label = "jle"
-            case "<=":
-                comparison_label = "jg" 
-            case "<":
-                comparison_label = "jge" 
-            case _:
-                raise error
-
+        comparison_label = "jne"
 
         # get the table symbol for the current if
         if_table = englobing_table.symbols[if_st_label]['symbol table']
 
-        left_expr = if_node.children[0].children[0]
-        right_expr = if_node.children[0].children[1]
 
-        current_section["code_section"].append(f"\t; if {if_counter}\n")
-        evaluate_expression(left_expr, if_table, current_section)
-        evaluate_expression(right_expr, if_table, current_section, "rbx")
+        current_section["code_section"].append(f"\t;--------if {if_counter}------\n")
+        expr = if_node.children[0]
+        generate_expression(expr, if_table, current_section)
+
         line_number = if_node.line_index
 
         if if_else:
@@ -656,11 +833,12 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         else:
             jump_label = f"end_if_{if_counter}_{line_number}"
 
-        current_section["code_section"].append(f"\n\tcmp rax, rbx")
+        current_section["code_section"].append(f"\n\tcmp rax, 1")
         current_section["code_section"].append(f"\n\t{comparison_label} {jump_label}\n")
 
         # build instructions for the if node
         if_counter += 1
+        current_section["code_section"].append(f"\n\t;operations in if\n")
         for instr in if_node.children[1].children:
             build_components_rec(instr, if_table, current_section)
 
@@ -682,21 +860,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
         else:
             current_section["code_section"].append(f"{jump_label}:\n")
-
-    def evaluate_expression(current_node: Tree, current_table: SymbolTable, current_section: Dict, register:str = "rax"):
-        # TODO: faire la même pour des expressions ou des booleen
-        if current_node.data in TokenType.lexicon.keys():
-            if TokenType.lexicon[current_node.data] == "INTEGER":
-                value = current_node.value
-                current_section["code_section"].append(f"\tmov {register}, {lexer.constant_lexicon[value]}\n")
-            if TokenType.lexicon[current_node.data] == "IDENTIFIER":
-                offset, has_to_rewind = get_variable_address(current_table, current_node.value)
-                if has_to_rewind:
-                    current_section["code_section"].append(f"\tmov rax, [rbp]\n")
-                    current_section["code_section"].append(f"\tmov rax, [rax{offset[3:]}]\n")
-                else:
-                    current_section["code_section"].append(f"\tmov rax, [{offset}]\n")
-                pass
 
     def generate_end_of_program(current_section: dict):
         current_section["code_section"].append("\n\n")
@@ -758,7 +921,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 def get_local_variables_total_size(symbol_table: SymbolTable) -> int:
     total_size = 0
     for symbol in symbol_table.symbols.items():
-        if symbol[1]["type"] in ["if", "else"]:
+        if symbol[1]["type"] in ["if", "else", "for"]:
             continue
         print("symbol", symbol[1])
         symbol_depl = symbol[1]['depl']

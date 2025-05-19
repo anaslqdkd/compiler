@@ -6,6 +6,7 @@ from src.tree_struct import Tree
 
 node_counter_else = 0
 node_counter_if = 0
+node_counter_for = 0
 
 class SemanticError(Exception):
     def __init__(self, message, ST: "SymbolTable", lexer: Lexer):
@@ -741,6 +742,7 @@ class SymbolTable:
         type_label = function_node.data
         global node_counter_else
         global node_counter_if
+        global node_counter_for
 
         # If the incoming indention corresponds to a for / if / else
         if (
@@ -768,11 +770,14 @@ class SymbolTable:
                 new_label = (
                     TokenType.lexicon[function_node.data]
                     + " "
-                    + str(self.node_counter_for)
+                    + str(node_counter_for)
                 )
-                self.node_counter_for += 1
+                node_counter_for += 1
 
             newST = SymbolTable(str(new_label), self.imbrication_level + 1, self)
+            if newST.name == str(TokenType.lexicon[function_node.data] + " " + str(node_counter_for-1)):
+                newST.symbols[function_node.children[0].value] = {"type": "<undefined>", "depl": -8}
+                newST.symbols[f"{function_node.children[0].value}_i"] = {"type": "<undefined>", "depl": -8}
             self.symbols[str(new_label)] = {"type": type_label, "symbol table": newST}
             self.node_counter += 1
             return newST
@@ -796,6 +801,7 @@ class SymbolTable:
         raise STError(
             f"Could not add this function to the ST, another one with the same identifier ({node_children[0]}) exists."
         )
+
 
     # -------------------------------------------------------------------------------------------------
 
@@ -954,7 +960,7 @@ class SymbolTable:
             return None
         elif node.data == "function":
             self.function_return[node.children[0].value]["parameter_nb"] = len(
-                node.children[1].children
+                node.children[0].children[0].children
             )
             i = 0
             for child in node.children[1].children:

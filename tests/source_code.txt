@@ -1,10 +1,24 @@
-def f(x, y):
-    c = x[0]
-    x[0] = c + y + x[1]
-    return x[0] + c + 3 * y
-liste = [5, 2]
-a = f(liste, 1) + 5 - 6 * 6 - 3 * 5 // (8 * 9 - 10)
-print(f(liste, 0))
-print(liste[1])
-print(a)
-print()
+def fn():
+	f = 4
+	if 1 < 0:
+		a = 5
+		print(a)
+	else:
+		if 2 > 1:
+			b = 3
+			print(b)
+		if 1 > 2:
+			f = 0
+			print(f)
+		else:
+			r = 1
+			print(r)
+		a = 6
+		print(a)
+if 4 < 5:
+	f = 13
+	print(f)
+fn()
+l = [1, 2]
+for j in l:
+	print(j)
