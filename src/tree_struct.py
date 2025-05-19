@@ -763,6 +763,7 @@ def manage_lists(given_tree: "Tree") -> None:
         if child.data == "Brackets":
             if has_comma(child):
                 child.data = "LIST"
+                manage_lists(child)
                 remove_banned_characters_until(
                     child, [","], ["Parentheses", "Parameters", "Brackets", "LIST"]
                 )
@@ -818,6 +819,30 @@ def manage_list_search(given_tree: "Tree") -> None:
             manage_list_search(child)
         i += 1
 
+def compact_lists(given_tree: "Tree", _first_call: bool = True) -> None:
+    new_children = []
+
+    for child in given_tree.children:
+        if _first_call and child.data == "LIST":
+            # First-level LIST node, recurse normally
+            compact_lists(child, False)
+            new_children.append(child)
+
+        elif not _first_call and child.data in ["E1", "E2"]:
+            # Flatten this node by lifting its children
+            for grandchild in child.children:
+                compact_lists(grandchild, False)
+                grandchild.father = given_tree  # Update father pointer
+                new_children.append(grandchild)
+            # Do not add this E1/E2 node itself
+
+        else:
+            # Recurse normally and keep the child
+            compact_lists(child, False)
+            new_children.append(child)
+
+    given_tree.children = new_children
+
 
 # --------------------------------------------------------------------------------------------------------------------------
 
@@ -866,11 +891,11 @@ def transform_to_ast(given_tree: "Tree") -> None:
 
     rename_blocks(given_tree)
     fuse_chains(given_tree, ["E_un", "E1"])
-    fuse_chains(given_tree, ["LIST", "E1", "E2"])
     manage_returns(given_tree)
     manage_function_calls(given_tree)
     verify_parameters(given_tree)
     verify_function_defs(given_tree)
+    compact_lists(given_tree)
     reajust_fathers(given_tree)
 
 
