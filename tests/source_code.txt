@@ -1,3 +1,5 @@
-l = [1, 2]
-for j in l:
+for j in [1, 2, 3, 5]:
 	print(j)
+for i in [2, 3, 4]:
+	a = 4
+	print(i)

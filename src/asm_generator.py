@@ -307,13 +307,10 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         list_in_for = False
         if id_name == None:
             list_in_for = False
-            # var_name = lexer.identifier_lexicon[node.father.children[0].value]  # nom de la variable à gauche de l'affectation
+            var_name = lexer.identifier_lexicon[node.father.children[0].value]  # nom de la variable à gauche de l'affectation
         else:
             list_in_for = True
-        if list_in_for:
             var_name = id_name
-        else:
-            var_name = lexer.identifier_lexicon[node.father.children[0].value]  # nom de la variable à gauche de l'affectation
 
         list_label = f"list_{var_name}"
         elements = node.children
@@ -341,11 +338,11 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
         current_section["code_section"].append(f"\t; {var_name} = [{', '.join(list_items_print)}]\n")
 
-        if not list_in_for:
-            # Ajoute la liste dans .data (tableau de 64 bits)
-            data_section.append(f"\t{list_label} dq {', '.join(list_items)}\n")
-            data_section.append(f"\t{list_label}_len dq {list_length}\n")
+        # Ajoute la liste dans .data (tableau de 64 bits)
+        data_section.append(f"\t{list_label} dq {', '.join(list_items)}\n")
+        data_section.append(f"\t{list_label}_len dq {list_length}\n")
 
+        if not list_in_for:
             # Affecte l'adresse de la liste à la variable (ex: mov [rbp-8], list_a)
             left_side_address, has_to_rewind = get_variable_address(englobing_table, node.father.children[0].value)
             current_section["code_section"].append(f"\tmov rax, {list_label}\n")
@@ -704,14 +701,16 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         for_symbol_table.set_type(for_node.children[0], "INTEGER", lexer, True)
         if for_node.children[1].data == "LIST":
             # TODO: add list to the .data
-            generate_list(for_node.children[1], englobing_table, current_section, "list")
-            var_name = "list"
+            var_name = f"{for_node.line_index}"
+            generate_list(for_node.children[1], englobing_table, current_section, var_name)
         else:
             var_name = lexer.identifier_lexicon[for_node.children[1].value]  
         line = for_node.line_index
         list_len = f"list_{var_name}_len"
         name_label = f"for_{for_counter}_{line}"
         code = current_section["code_section"]
+        code.append(f"\n\tmov rax, 0\n")
+        code.append(f"\tpush rax\n")
         code.append(f"\n\tmov rax, 0\n")
         code.append(f"\tpush rax\n")
         code.append(f"\tcall {name_label}\n")
@@ -722,7 +721,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         global for_counter
 
         if for_node.children[1].data == "LIST":
-            var_name = "list"
+            var_name = f"{for_node.line_index}"
         else:
             var_name = lexer.identifier_lexicon[for_node.children[1].value]  
 
