@@ -1,0 +1,5 @@
+def fibo(n):
+    return n
+len = 6
+I = [0, 0, 0, 0, 0, 0]
+print()

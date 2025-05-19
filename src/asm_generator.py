@@ -930,17 +930,17 @@ def get_local_variables_total_size(symbol_table: SymbolTable) -> int:
     return total_size
 
 # FIXME: this won't work with imbricated ifs
-def get_variable_address(symbol_table: SymbolTable, variable_id: int, needs_to_rewind: bool = False) -> Tuple[str, bool]:
+def get_variable_address(symbol_table: SymbolTable, variable_id: int, rewind_steps: int = 0) -> Tuple[str, int]:
     if variable_id in symbol_table.symbols.keys():
         depl = symbol_table.symbols[variable_id]['depl']
         if depl > 0:
-            return (f"rbp - {depl}", needs_to_rewind)
+            return (f"rbp - {depl}", rewind_steps)
         else:
-            return (f"rbp + 8 + {-depl}", needs_to_rewind) # rbp + 8 points at the return address...
+            return (f"rbp + 8 + {-depl}", rewind_steps) # rbp + 8 points at the return address...
     elif symbol_table.englobing_table == None:
         raise AsmGenerationError(f"Variable {variable_id} not found in symbol table.")
     else:
-        return get_variable_address(symbol_table.englobing_table, variable_id, True)
+        return get_variable_address(symbol_table.englobing_table, variable_id, rewind_steps + 1)
 
 # -------------------------------------------------------------------------------------------------
 

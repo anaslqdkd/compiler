@@ -1,24 +1,18 @@
-def fn():
-	f = 4
-	if 1 < 0:
-		a = 5
-		print(a)
-	else:
-		if 2 > 1:
-			b = 3
-			print(b)
-		if 1 > 2:
-			f = 0
-			print(f)
+def fibo(list):
+	a = 0
+	b = 1
+	count = 0
+    for _ in list:
+        if count == 0:
+            list[count] = 0
 		else:
-			r = 1
-			print(r)
-		a = 6
-		print(a)
-if 4 < 5:
-	f = 13
-	print(f)
-fn()
-l = [1, 2]
-for j in l:
-	print(j)
+			if count == 1:
+				list[count] = 1
+			else:
+				list[count] = a + b
+				a = b
+				b = list[count]
+        count = count + 1
+I = [0, 0, 0, 0, 0, 0]
+fibo(I)
+print(I)
