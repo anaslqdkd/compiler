@@ -1,4 +1,8 @@
 section .data
+	list_a_str1 db "a", 0
+	list_a_str3 db "abc", 0
+	list_a dq 1, list_a_str1, 234, list_a_str3
+	list_a_len dq 4
 	space_char db " ", 0
 	newline db 0xA
 	minus_sign db "-"
@@ -67,40 +71,18 @@ print_str:
 
 
 _start:
-	; Allocating space for 5 local variables
+	; Allocating space for 1 local variables
 	push rbp
 	mov rbp, rsp
-	sub rsp, 40
+	sub rsp, 8
 
-	mov rax, 1
+	; a = [1, "a", 234, "abc"]
+	mov rax, list_a
 	mov [rbp - 8], rax
-	mov rax, 0
-	mov [rbp - 16], rax
-	mov rax, 0
-	mov [rbp - 24], rax
-	mov rax, 1
-	mov [rbp - 32], rax
-	mov rax, 2
-	mov [rbp - 40], rax
 
 	; print: parameter 1 (a)
 	mov rax, [rbp - 8]
-	call print_rax
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, newline
-	mov rdx, 1
-	syscall
-
-	; print() - empty print statement
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, newline
-	mov rdx, 1
-	syscall
-
-	; print: parameter 1 (b)
-	mov rax, [rbp - 16]
+	mov rax, [rax + 2*8]
 	call print_rax
 	mov rax, 1
 	mov rdi, 1
@@ -108,47 +90,11 @@ _start:
 	mov rdx, 1
 	syscall
 
-	; print: parameter 2 (c)
-	mov rax, [rbp - 24]
-	call print_rax
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, newline
-	mov rdx, 1
-	syscall
-	mov rax, 2
-	push rax
-	mov rax, 5
-	push rax
-
-	; Performing + operation
-	pop rbx
-	pop rax
-	add rax, rbx
-	push rax
-	pop rax
-	call print_rax
-
-	; print: parameter 1 (param_1)
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, newline
-	mov rdx, 1
-	syscall
-	mov rax, [rbp - 32]
-	push rax
-	mov rax, [rbp - 40]
-	push rax
-
-	; Performing + operation
-	mov rax, [rbp - 32]
-	mov rbx, [rbp - 40]
-	add rax, rbx
-	push rax
-	pop rax
-	call print_rax
-
-	; print: parameter 1 (param_1)
+	; print: parameter 2 (a)
+	mov rax, [rbp - 8]
+	mov rax, [rax + 1*8]
+	mov rsi, rax
+	call print_str
 	mov rax, 1
 	mov rdi, 1
 	mov rsi, newline
