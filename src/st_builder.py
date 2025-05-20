@@ -392,6 +392,14 @@ class SymbolTable:
 
             # If it's the result of an operation
             if TokenType.lexicon[node.data] in ["+", "*", "//", "%", "<", ">", "<=", ">=", "==", "!="] or (TokenType.lexicon[node.data] == "-" and len(node.children)>1):
+                # Vérifier que le nœud a bien au moins deux enfants
+                if len(node.children) < 2:
+                    # Si c'est une opération binaire mais qu'il manque un opérande
+                    print(f"Avertissement: opération binaire avec un seul opérande à la ligne {node.line_index}")
+                    if len(node.children) > 0:
+                        return self.dfs_type_check(node.children[0], lexer)
+                    return "<undefined>"
+                
                 left_type = self.dfs_type_check(node.children[0], lexer)
                 right_type = self.dfs_type_check(node.children[1], lexer)
                 
@@ -414,6 +422,22 @@ class SymbolTable:
                     node.element_types = combined_element_types
                     
                     return "LIST"
+
+                # Ajoutez ce bloc pour gérer la multiplication d'une liste par un entier
+                if TokenType.lexicon[node.data] == "*":
+                    # Cas 1: liste * entier
+                    if left_type == "LIST" and right_type in ["INTEGER", "True", "False", "None"]:
+                        # Si les types d'éléments sont disponibles, les répéter
+                        if hasattr(node.children[0], 'element_types'):
+                            node.element_types = node.children[0].element_types
+                        return "LIST"
+                    
+                    # Cas 2: entier * liste
+                    elif right_type == "LIST" and left_type in ["INTEGER", "True", "False", "None"]:
+                        # Si les types d'éléments sont disponibles, les répéter
+                        if hasattr(node.children[1], 'element_types'):
+                            node.element_types = node.children[1].element_types
+                        return "LIST"
                 
                 # Reste du code existant pour les autres opérations
                 if left_type != right_type:
