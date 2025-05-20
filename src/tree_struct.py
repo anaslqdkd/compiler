@@ -394,6 +394,14 @@ def manage_functions_declaration(given_tree: "Tree") -> None:
             given_tree.line_index = child.line_index
             given_tree.is_terminal = True
             given_tree.children.remove(child)
+
+            # Checking for the "Block" node
+            if given_tree.children[2].is_terminal:
+                block_node = Tree("Block", given_tree, given_tree.line_index, False)
+                block_node.children.append(given_tree.children[2])
+                given_tree.pop(2)
+                given_tree.insert(2, block_node)
+
             i += 1
         else:
             manage_functions_declaration(child)
@@ -884,9 +892,9 @@ def transform_to_ast(given_tree: "Tree") -> None:
     manage_list_search(given_tree)
     remove_childless_non_terminal_trees(given_tree)
     manage_E_un(given_tree)
+    compact_non_terminals_chain(given_tree)
     manage_functions_declaration(given_tree)
     manage_prints(given_tree)
-    compact_non_terminals_chain(given_tree)
     remove_banned_data_until(given_tree, ["E_un", "E1", "E3", "I"])
     manage_equalities(given_tree)
     manage_fors(given_tree)
@@ -899,7 +907,7 @@ def transform_to_ast(given_tree: "Tree") -> None:
         prev_tree = given_tree.copy()
         fuse_chains(given_tree, ["A", "D", "S1", "B", "B1", "C"])
 
-    fuse_chains(given_tree, ["E_un", "E1"])
+    fuse_chains(given_tree, ["E_un", "E1", "E2"])
     manage_returns(given_tree)
     manage_function_calls(given_tree)
     verify_parameters(given_tree)
