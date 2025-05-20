@@ -1,6 +1,9 @@
 section .data
+<<<<<<< HEAD
 	list_I dq 0, 0, 0, 0, 0, 0
 	list_I_len dq 6
+=======
+>>>>>>> origin/amine
 	newline db 0xA
 	minus_sign db "-"
 
@@ -10,7 +13,11 @@ section .bss
 
 section .text
 	global _start
+<<<<<<< HEAD
 	global fibo
+=======
+	global f
+>>>>>>> origin/amine
 
 
 ;	---print_rax protocol---
@@ -45,6 +52,7 @@ print_rax:
 	mov rdx, buffer + 20
 	sub rdx, rcx
 	syscall
+<<<<<<< HEAD
 
 	; newline
 	mov rax, 1
@@ -52,6 +60,8 @@ print_rax:
 	mov rsi, newline
 	mov rdx, 1
 	syscall
+=======
+>>>>>>> origin/amine
 	ret
 ;	--------------------
 
@@ -75,6 +85,7 @@ print_str:
 ;	--------------------
 
 
+<<<<<<< HEAD
 fibo:
 ;	---Protocole d'entree---
 	push rbp
@@ -83,6 +94,25 @@ fibo:
 ;	------------------------
 
 
+=======
+f:
+;	---Protocole d'entree---
+	push rbp
+	mov rbp, rsp
+;	------------------------
+
+
+	; print: parameter 1 (a)
+	mov rax, rbp
+	mov rax, [rax - 8]
+	call print_rax
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, newline
+	mov rdx, 1
+	syscall
+
+>>>>>>> origin/amine
 ;	---Protocole de sortie---
 	mov rsp, rbp
 	pop rbp
@@ -91,11 +121,16 @@ fibo:
 
 
 _start:
+<<<<<<< HEAD
 	; Allocating space for 2 local variables
+=======
+	; Allocating space for 1 variable(s) & 1 function(s)
+>>>>>>> origin/amine
 	push rbp
 	mov rbp, rsp
 	sub rsp, 16
 
+<<<<<<< HEAD
 	; I = [0, 0, 0, 0, 0, 0]
 	mov rax, list_I
 	mov [rbp - 8], rax
@@ -115,6 +150,18 @@ _start:
 	mov rax, [rbp - 8]
 	call print_rax
 
+=======
+	mov rax, 5
+	mov [rbp - 8], rax
+
+;	---Stacking parameters---
+
+;	---Calling the function---
+	call f
+;	---Popping parameters---
+;	--------------------
+
+>>>>>>> origin/amine
 
 ;	---End of program---
 	mov rax, 60
