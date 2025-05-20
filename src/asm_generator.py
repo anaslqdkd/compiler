@@ -73,11 +73,11 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         current_section["start_protocol"].append("\n")
 
         # Processing the function's body
-        if TokenType.lexicon[function_node.children[1].data] == "print":
-            build_components_rec(function_node.children[1], function_symbol_table, current_section)
-        else:
-            for instr in function_node.children[1].children:
-                build_components_rec(instr, function_symbol_table, current_section)
+        # if TokenType.lexicon[function_node.children[1].data] == "print":
+        #     build_components_rec(function_node.children[1], function_symbol_table, current_section)
+        # else:
+        for instr in function_node.children[2].children:
+            build_components_rec(instr, function_symbol_table, current_section)
 
         # protocole de sortie
         current_section["end_protocol"].append("\n")
@@ -1122,7 +1122,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         for_symbol_table = englobing_table.symbols[st_for_label]['symbol table']
         for_symbol_table.set_type(for_node.children[0], "INTEGER", lexer, True)
         if for_node.children[1].data == "LIST":
-            # TODO: add list to the .data
             var_name = f"{for_node.line_index}"
             generate_list(for_node.children[1], englobing_table, current_section, var_name)
         else:
@@ -1161,7 +1160,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         var['type'] = "INTEGER"
         
         for_symbol_table.recalculate_depl()
-        print_all_symbol_tables(for_symbol_table, lexer)
         section_name = name_label
         sections[section_name] = {}
         current_section = sections[section_name]
@@ -1208,12 +1206,8 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
         for_counter += 1
 
-        # NOTE: du au fait que le noeud for n'a pas de block
-        if (len(for_node.children[2].children)) == 1:
-            build_components_rec(for_node.children[2], for_symbol_table, current_section)
-        else:
-            for instr in for_node.children[2].children:
-                build_components_rec(instr, for_symbol_table, current_section)
+        for instr in for_node.children[2].children:
+            build_components_rec(instr, for_symbol_table, current_section)
 
         # increment counter
         code.append(f"\t; i++\n")
@@ -1282,11 +1276,8 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         if_counter += 1
         current_section["code_section"].append(f"\n\t;operations in if\n")
         
-        if TokenType.lexicon[if_node.children[1].data] == "print":
-            build_components_rec(if_node.children[1], if_table, current_section)
-        else:
-            for instr in if_node.children[1].children:
-                build_components_rec(instr, if_table, current_section)
+        for instr in if_node.children[1].children:
+            build_components_rec(instr, if_table, current_section)
 
         # build instructions for the else node if it exists
         if if_else:
@@ -1373,7 +1364,7 @@ def get_local_variables_total_size(symbol_table: SymbolTable) -> int:
             total_size += symbol_depl
     return total_size
 
-def get_variable_address(symbol_table: SymbolTable, variable_id: int, needs_to_rewind: bool = False, original_st: SymbolTable = None) -> Tuple[str, bool]:
+def get_variable_address(symbol_table: SymbolTable, variable_id: int, rewind_steps: int = 0, original_st: SymbolTable = None) -> Tuple[str, int]:
     # Pour la première appel, on mémorise la table de symboles d'origine
     if original_st is None:
         original_st = symbol_table
@@ -1419,7 +1410,7 @@ def get_variable_address(symbol_table: SymbolTable, variable_id: int, needs_to_r
         if depl > 0:
             return (f"rbp - {depl}", rewind_steps)
         else:
-            return (f"rbp + 8 + {-depl}", needs_to_rewind) # rbp + 8 points at the return address...
+            return (f"rbp + 8 + {-depl}", rewind_steps) # rbp + 8 points at the return address...
     
     elif symbol_table.englobing_table == None:
         raise AsmGenerationError(f"Variable {variable_id} not found in symbol table.")
