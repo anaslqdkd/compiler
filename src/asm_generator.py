@@ -894,7 +894,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         if_table = englobing_table.symbols[if_st_label]['symbol table']
 
 
-        current_section["code_section"].append(f"\t;--------if {if_counter}------\n")
+        current_section["code_section"].append(f"\n\t;--------if {if_counter}------\n")
         expr = if_node.children[0]
         generate_expression(expr, if_table, current_section)
 
@@ -911,8 +911,13 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         # build instructions for the if node
         if_counter += 1
         current_section["code_section"].append(f"\n\t;operations in if\n")
-        for instr in if_node.children[1].children:
-            build_components_rec(instr, if_table, current_section)
+        print("b", if_node.children[1].data)
+        if TokenType.lexicon[if_node.children[1].data] == "print":
+            build_components_rec(if_node.children[1], if_table, current_section)
+        else:
+            for instr in if_node.children[1].children:
+                print("a", instr.data)
+                build_components_rec(instr, if_table, current_section)
 
         # build instructions for the else node if it exists
         if if_else:

@@ -1,9 +1,4 @@
 section .data
-	list_a_str1 db "a", 0
-	list_a_str3 db "abc", 0
-	list_a dq 1, list_a_str1, 234, list_a_str3
-	list_a_len dq 4
-	space_char db " ", 0
 	newline db 0xA
 	minus_sign db "-"
 
@@ -71,35 +66,43 @@ print_str:
 
 
 _start:
-	; Allocating space for 1 local variables
+	; Allocating space for 2 local variables
 	push rbp
 	mov rbp, rsp
-	sub rsp, 8
+	sub rsp, 16
 
-	; a = [1, "a", 234, "abc"]
-	mov rax, list_a
+	mov rax, 5
 	mov [rbp - 8], rax
 
-	; print: parameter 1 (a)
-	mov rax, [rbp - 8]
-	mov rax, [rax + 2*8]
-	call print_rax
+	;--------if 0------
 	mov rax, 1
-	mov rdi, 1
-	mov rsi, space_char
-	mov rdx, 1
-	syscall
+	push rax
+	mov rax, 2
+	push rax
 
-	; print: parameter 2 (a)
-	mov rax, [rbp - 8]
-	mov rax, [rax + 1*8]
-	mov rsi, rax
-	call print_str
+	; Performing < operation
+	pop rbx
+	pop rax
+	cmp rax, rbx
+	mov rax, 0
+	setl al
+	push rax
+
+	cmp rax, 1
+	jne end_if_0_2
+
+	;operations in if
+
+	; print: parameter 1 (a)
+	mov rax, rbp
+	mov rax, [rax - 8]
+	call print_rax
 	mov rax, 1
 	mov rdi, 1
 	mov rsi, newline
 	mov rdx, 1
 	syscall
+end_if_0_2:
 
 
 ;	---End of program---
