@@ -454,8 +454,13 @@ def manage_fors(given_tree: "Tree") -> None:
             for j in range(3):
                 c = given_tree.children[i + 1]
                 manage_fors(c)
-                child.children.append(c)
-                c.father = child
+
+                if c.is_terminal and j == 2:
+                    block_node = Tree("Block", child, child.line_index, False)
+                    block_node.children.append(c)
+                    child.children.append(block_node)
+                else:
+                    child.children.append(c)
                 given_tree.children.remove(c)
             i += 1
         else:
@@ -478,10 +483,15 @@ def manage_ifs(given_tree: "Tree") -> None:
             manage_ifs(if_content)
 
             child.children.append(cond_node)
-            cond_node.father = child
             given_tree.children.remove(cond_node)
-            child.children.append(if_content)
-            if_content.father = child
+
+            block_node = Tree("Block", child, child.line_index, False)
+            if not if_content.is_terminal:
+                for c in if_content.children:
+                    block_node.children.append(c)
+            else:
+                block_node.children.append(if_content)
+            child.children.append(block_node)
             given_tree.children.remove(if_content)
 
             if (
@@ -603,7 +613,7 @@ def rename_blocks(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
-        if child.data in ["B", "C"]:
+        if child.data in ["B", "C", "D"]:
             child.data = "Block"
             for c in child.children:
                 rename_blocks(c)
@@ -707,11 +717,11 @@ def manage_function_calls(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
-        if child.data in ["Parameters", "Parentheses"] and given_tree.data not in ["function", "print"]:
+        if child.data in ["Parameters", "Parentheses"] and given_tree.data not in ["function", next(key for key, value in TokenType.lexicon.items() if value == "print")]:
             # Then it's a "Parameters" node of a function call
             print(f"Finding function at {child.line_index}")
             child.data = "Parameters"
-            caller = find_closest_previous_node_with_data(child, [next(key for key, value in TokenType.lexicon.items() if value == "IDENTIFIER"), "print"])
+            caller = find_closest_previous_node_with_data(child, [next(key for key, value in TokenType.lexicon.items() if value == "IDENTIFIER"), next(key for key, value in TokenType.lexicon.items() if value == "print")])
             if caller is None:
                 raise ASTPruningError(child, f"Can't find an identifier / print for parentheses at line {child.line_index}")
             given_tree.children.pop(i)
@@ -889,13 +899,13 @@ def transform_to_ast(given_tree: "Tree") -> None:
         prev_tree = given_tree.copy()
         fuse_chains(given_tree, ["A", "D", "S1", "B", "B1", "C"])
 
-    rename_blocks(given_tree)
     fuse_chains(given_tree, ["E_un", "E1"])
     manage_returns(given_tree)
     manage_function_calls(given_tree)
     verify_parameters(given_tree)
     verify_function_defs(given_tree)
     compact_lists(given_tree)
+    rename_blocks(given_tree)
     reajust_fathers(given_tree)
 
 

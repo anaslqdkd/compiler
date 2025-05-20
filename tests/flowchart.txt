@@ -4,293 +4,6 @@ graph TD
 father: axiome"]
 6["= (L1)
 father: S1"]
-<<<<<<< HEAD
-style 3 stroke:#caf9fb,stroke-width:2px
-5["IDENTIFIER => 1 (L1)
-father: function"]
-style 5 stroke:#caf9fb,stroke-width:2px
-6["Parentheses (L1)
-father: function"]
-style 6 stroke:#caf9fb,stroke-width:2px
-8["IDENTIFIER => 2 (L1)
-father: Parentheses"]
-style 8 stroke:#caf9fb,stroke-width:2px
-12["Block
-father: function"]
-18["= (L2)
-father: Block"]
-style 18 stroke:#caf9fb,stroke-width:2px
-17["IDENTIFIER => 3 (L2)
-father: 51"]
-style 17 stroke:#caf9fb,stroke-width:2px
-29["INTEGER => -1 (L2)
-father: 51"]
-style 29 stroke:#caf9fb,stroke-width:2px
-42["= (L3)
-father: Block"]
-style 42 stroke:#caf9fb,stroke-width:2px
-41["IDENTIFIER => 4 (L3)
-father: 51"]
-style 41 stroke:#caf9fb,stroke-width:2px
-53["INTEGER => -2 (L3)
-father: 51"]
-style 53 stroke:#caf9fb,stroke-width:2px
-66["= (L4)
-father: Block"]
-style 66 stroke:#caf9fb,stroke-width:2px
-65["IDENTIFIER => 5 (L4)
-father: 51"]
-style 65 stroke:#caf9fb,stroke-width:2px
-77["INTEGER => -1 (L4)
-father: 51"]
-style 77 stroke:#caf9fb,stroke-width:2px
-88["for (L5)
-father: Block"]
-style 88 stroke:#caf9fb,stroke-width:2px
-89["IDENTIFIER => 6 (L5)
-father: 31"]
-style 89 stroke:#caf9fb,stroke-width:2px
-100["IDENTIFIER => 2 (L5)
-father: 31"]
-style 100 stroke:#caf9fb,stroke-width:2px
-110["D
-father: 31"]
-111["if (L6)
-father: D"]
-style 111 stroke:#caf9fb,stroke-width:2px
-116["== (L6)
-father: 20"]
-style 116 stroke:#caf9fb,stroke-width:2px
-121["IDENTIFIER => 5 (L6)
-father: 50"]
-style 121 stroke:#caf9fb,stroke-width:2px
-131["INTEGER => -1 (L6)
-father: 50"]
-style 131 stroke:#caf9fb,stroke-width:2px
-142["Block
-father: 20"]
-144["= (L7)
-father: Block"]
-style 144 stroke:#caf9fb,stroke-width:2px
-143["IDENTIFIER => 2 (L7)
-father: 51"]
-style 143 stroke:#caf9fb,stroke-width:2px
-155["IDENTIFIER => 5 (L7)
-father: 10"]
-style 155 stroke:#caf9fb,stroke-width:2px
-172["INTEGER => -1 (L7)
-father: 51"]
-style 172 stroke:#caf9fb,stroke-width:2px
-183["else
-father: D"]
-style 183 stroke:#caf9fb,stroke-width:2px
-186["Block
-father: 21"]
-190["if (L9)
-father: Block"]
-style 190 stroke:#caf9fb,stroke-width:2px
-195["== (L9)
-father: 20"]
-style 195 stroke:#caf9fb,stroke-width:2px
-200["IDENTIFIER => 5 (L9)
-father: 50"]
-style 200 stroke:#caf9fb,stroke-width:2px
-210["INTEGER => -2 (L9)
-father: 50"]
-style 210 stroke:#caf9fb,stroke-width:2px
-221["Block
-father: 20"]
-223["= (L10)
-father: Block"]
-style 223 stroke:#caf9fb,stroke-width:2px
-222["IDENTIFIER => 2 (L10)
-father: 51"]
-style 222 stroke:#caf9fb,stroke-width:2px
-234["IDENTIFIER => 5 (L10)
-father: 10"]
-style 234 stroke:#caf9fb,stroke-width:2px
-251["INTEGER => -2 (L10)
-father: 51"]
-style 251 stroke:#caf9fb,stroke-width:2px
-262["else
-father: Block"]
-style 262 stroke:#caf9fb,stroke-width:2px
-265["Block
-father: 21"]
-271["= (L12)
-father: Block"]
-style 271 stroke:#caf9fb,stroke-width:2px
-270["IDENTIFIER => 2 (L12)
-father: 51"]
-style 270 stroke:#caf9fb,stroke-width:2px
-282["IDENTIFIER => 5 (L12)
-father: 10"]
-style 282 stroke:#caf9fb,stroke-width:2px
-295["\+ (L12)
-father: 51"]
-style 295 stroke:#caf9fb,stroke-width:2px
-299["IDENTIFIER => 3 (L12)
-father: 40"]
-style 299 stroke:#caf9fb,stroke-width:2px
-307["IDENTIFIER => 4 (L12)
-father: 40"]
-style 307 stroke:#caf9fb,stroke-width:2px
-320["= (L13)
-father: Block"]
-style 320 stroke:#caf9fb,stroke-width:2px
-319["IDENTIFIER => 3 (L13)
-father: 51"]
-style 319 stroke:#caf9fb,stroke-width:2px
-331["IDENTIFIER => 4 (L13)
-father: 51"]
-style 331 stroke:#caf9fb,stroke-width:2px
-344["= (L14)
-father: Block"]
-style 344 stroke:#caf9fb,stroke-width:2px
-343["IDENTIFIER => 4 (L14)
-father: 51"]
-style 343 stroke:#caf9fb,stroke-width:2px
-354["IDENTIFIER => 2 (L14)
-father: 51"]
-style 354 stroke:#caf9fb,stroke-width:2px
-367["IDENTIFIER => 5 (L14)
-father: 10"]
-style 367 stroke:#caf9fb,stroke-width:2px
-389["= (L15)
-father: Block"]
-style 389 stroke:#caf9fb,stroke-width:2px
-388["IDENTIFIER => 5 (L15)
-father: 51"]
-style 388 stroke:#caf9fb,stroke-width:2px
-396["\+ (L15)
-father: 51"]
-style 396 stroke:#caf9fb,stroke-width:2px
-400["IDENTIFIER => 5 (L15)
-father: 40"]
-style 400 stroke:#caf9fb,stroke-width:2px
-408["INTEGER => -2 (L15)
-father: 40"]
-style 408 stroke:#caf9fb,stroke-width:2px
-427["= (L16)
-father: S1"]
-style 427 stroke:#caf9fb,stroke-width:2px
-426["IDENTIFIER => 7 (L16)
-father: 51"]
-style 426 stroke:#caf9fb,stroke-width:2px
-437["LIST (L16)
-father: 51"]
-style 437 stroke:#caf9fb,stroke-width:2px
-448["INTEGER => -1 (L16)
-father: LIST"]
-style 448 stroke:#caf9fb,stroke-width:2px
-465["INTEGER => -1 (L16)
-father: LIST"]
-style 465 stroke:#caf9fb,stroke-width:2px
-482["INTEGER => -1 (L16)
-father: LIST"]
-style 482 stroke:#caf9fb,stroke-width:2px
-499["INTEGER => -1 (L16)
-father: LIST"]
-style 499 stroke:#caf9fb,stroke-width:2px
-516["INTEGER => -1 (L16)
-father: LIST"]
-style 516 stroke:#caf9fb,stroke-width:2px
-533["INTEGER => -1 (L16)
-father: LIST"]
-style 533 stroke:#caf9fb,stroke-width:2px
-552["IDENTIFIER => 1 (L17)
-father: S1"]
-style 552 stroke:#caf9fb,stroke-width:2px
-558["Parameters (L17)
-father: 10"]
-style 558 stroke:#caf9fb,stroke-width:2px
-569["IDENTIFIER => 7 (L17)
-father: Parameters"]
-style 569 stroke:#caf9fb,stroke-width:2px
-583["print (L18)
-father: S1"]
-style 583 stroke:#caf9fb,stroke-width:2px
-584["Parameters (L18)
-father: 30"]
-style 584 stroke:#caf9fb,stroke-width:2px
-595["IDENTIFIER => 7 (L18)
-father: Parameters"]
-style 595 stroke:#caf9fb,stroke-width:2px
-0 --> 2
-2 --> 3
-3 --> 5
-3 --> 6
-6 --> 8
-3 --> 12
-12 --> 18
-18 --> 17
-18 --> 29
-12 --> 42
-42 --> 41
-42 --> 53
-12 --> 66
-66 --> 65
-66 --> 77
-12 --> 88
-88 --> 89
-88 --> 100
-88 --> 110
-110 --> 111
-111 --> 116
-116 --> 121
-116 --> 131
-111 --> 142
-142 --> 144
-144 --> 143
-143 --> 155
-144 --> 172
-110 --> 183
-183 --> 186
-186 --> 190
-190 --> 195
-195 --> 200
-195 --> 210
-190 --> 221
-221 --> 223
-223 --> 222
-222 --> 234
-223 --> 251
-186 --> 262
-262 --> 265
-265 --> 271
-271 --> 270
-270 --> 282
-271 --> 295
-295 --> 299
-295 --> 307
-265 --> 320
-320 --> 319
-320 --> 331
-265 --> 344
-344 --> 343
-344 --> 354
-354 --> 367
-186 --> 389
-389 --> 388
-389 --> 396
-396 --> 400
-396 --> 408
-2 --> 427
-427 --> 426
-427 --> 437
-437 --> 448
-437 --> 465
-437 --> 482
-437 --> 499
-437 --> 516
-437 --> 533
-2 --> 552
-552 --> 558
-558 --> 569
-2 --> 583
-583 --> 584
-584 --> 595
-=======
 style 6 stroke:#caf9fb,stroke-width:2px
 5["IDENTIFIER => 1 (L1)
 father: 51"]
@@ -305,33 +18,105 @@ style 27 stroke:#caf9fb,stroke-width:2px
 father: function"]
 style 29 stroke:#caf9fb,stroke-width:2px
 30["Parentheses (L2)
-father: 10"]
-style 30 stroke:#caf9fb,stroke-width:2px
-39["print (L3)
 father: function"]
+style 30 stroke:#caf9fb,stroke-width:2px
+34["Block
+father: function"]
+38["for (L3)
+father: Block"]
+style 38 stroke:#caf9fb,stroke-width:2px
+39["IDENTIFIER => 3 (L3)
+father: 31"]
 style 39 stroke:#caf9fb,stroke-width:2px
-40["Parameters (L3)
+49["LIST (L3)
+father: 31"]
+style 49 stroke:#caf9fb,stroke-width:2px
+60["INTEGER => -2 (L3)
+father: LIST"]
+style 60 stroke:#caf9fb,stroke-width:2px
+77["INTEGER => -3 (L3)
+father: LIST"]
+style 77 stroke:#caf9fb,stroke-width:2px
+250["Block (L3)
+father: 31"]
+96["print (L4)
+father: Block"]
+style 96 stroke:#caf9fb,stroke-width:2px
+97["Parameters (L4)
 father: 30"]
-style 40 stroke:#caf9fb,stroke-width:2px
-51["IDENTIFIER => 1 (L3)
+style 97 stroke:#caf9fb,stroke-width:2px
+108["IDENTIFIER => 3 (L4)
 father: Parameters"]
-style 51 stroke:#caf9fb,stroke-width:2px
-67["IDENTIFIER => 2 (L4)
+style 108 stroke:#caf9fb,stroke-width:2px
+123["for (L5)
+father: Block"]
+style 123 stroke:#caf9fb,stroke-width:2px
+124["IDENTIFIER => 3 (L5)
+father: 31"]
+style 124 stroke:#caf9fb,stroke-width:2px
+134["LIST (L5)
+father: 31"]
+style 134 stroke:#caf9fb,stroke-width:2px
+145["INTEGER => -2 (L5)
+father: LIST"]
+style 145 stroke:#caf9fb,stroke-width:2px
+162["INTEGER => -3 (L5)
+father: LIST"]
+style 162 stroke:#caf9fb,stroke-width:2px
+176["Block
+father: 31"]
+181["print (L6)
+father: Block"]
+style 181 stroke:#caf9fb,stroke-width:2px
+182["Parameters (L6)
+father: 30"]
+style 182 stroke:#caf9fb,stroke-width:2px
+193["IDENTIFIER => 3 (L6)
+father: Parameters"]
+style 193 stroke:#caf9fb,stroke-width:2px
+207["print (L7)
+father: Block"]
+style 207 stroke:#caf9fb,stroke-width:2px
+208["Parameters (L7)
+father: 30"]
+style 208 stroke:#caf9fb,stroke-width:2px
+219["IDENTIFIER => 3 (L7)
+father: Parameters"]
+style 219 stroke:#caf9fb,stroke-width:2px
+237["IDENTIFIER => 2 (L8)
 father: S1"]
-style 67 stroke:#caf9fb,stroke-width:2px
-73["Parentheses (L4)
+style 237 stroke:#caf9fb,stroke-width:2px
+243["Parameters (L8)
 father: 10"]
-style 73 stroke:#caf9fb,stroke-width:2px
+style 243 stroke:#caf9fb,stroke-width:2px
 0 --> 2
 2 --> 6
 6 --> 5
 6 --> 17
 2 --> 27
 27 --> 29
-29 --> 30
-27 --> 39
-39 --> 40
-40 --> 51
-2 --> 67
-67 --> 73
->>>>>>> origin/amine
+27 --> 30
+27 --> 34
+34 --> 38
+38 --> 39
+38 --> 49
+49 --> 60
+49 --> 77
+38 --> 250
+250 --> 96
+96 --> 97
+97 --> 108
+34 --> 123
+123 --> 124
+123 --> 134
+134 --> 145
+134 --> 162
+123 --> 176
+176 --> 181
+181 --> 182
+182 --> 193
+176 --> 207
+207 --> 208
+208 --> 219
+2 --> 237
+237 --> 243
