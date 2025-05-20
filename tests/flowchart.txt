@@ -11,35 +11,39 @@ style 5 stroke:#caf9fb,stroke-width:2px
 17["INTEGER => -1 (L1)
 father: 51"]
 style 17 stroke:#caf9fb,stroke-width:2px
-28["if (L2)
+27["function (L2)
 father: S1"]
-style 28 stroke:#caf9fb,stroke-width:2px
-33["< (L2)
-father: 20"]
-style 33 stroke:#caf9fb,stroke-width:2px
-38["INTEGER => -2 (L2)
-father: 48"]
-style 38 stroke:#caf9fb,stroke-width:2px
-48["INTEGER => -3 (L2)
-father: 48"]
-style 48 stroke:#caf9fb,stroke-width:2px
-60["print (L3)
-father: 20"]
-style 60 stroke:#caf9fb,stroke-width:2px
-61["Parameters (L3)
+style 27 stroke:#caf9fb,stroke-width:2px
+29["IDENTIFIER => 2 (L2)
+father: function"]
+style 29 stroke:#caf9fb,stroke-width:2px
+30["Parentheses (L2)
+father: 10"]
+style 30 stroke:#caf9fb,stroke-width:2px
+39["print (L3)
+father: function"]
+style 39 stroke:#caf9fb,stroke-width:2px
+40["Parameters (L3)
 father: 30"]
-style 61 stroke:#caf9fb,stroke-width:2px
-72["IDENTIFIER => 1 (L3)
+style 40 stroke:#caf9fb,stroke-width:2px
+51["IDENTIFIER => 1 (L3)
 father: Parameters"]
-style 72 stroke:#caf9fb,stroke-width:2px
+style 51 stroke:#caf9fb,stroke-width:2px
+67["IDENTIFIER => 2 (L4)
+father: S1"]
+style 67 stroke:#caf9fb,stroke-width:2px
+73["Parentheses (L4)
+father: 10"]
+style 73 stroke:#caf9fb,stroke-width:2px
 0 --> 2
 2 --> 6
 6 --> 5
 6 --> 17
-2 --> 28
-28 --> 33
-33 --> 38
-33 --> 48
-28 --> 60
-60 --> 61
-61 --> 72
+2 --> 27
+27 --> 29
+29 --> 30
+27 --> 39
+39 --> 40
+40 --> 51
+2 --> 67
+67 --> 73

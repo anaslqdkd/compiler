@@ -73,8 +73,11 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         current_section["start_protocol"].append("\n")
 
         # Processing the function's body
-        for instr in function_node.children[1].children:
-            build_components_rec(instr, function_symbol_table, current_section)
+        if TokenType.lexicon[function_node.children[1].data] == "print":
+            build_components_rec(function_node.children[1], function_symbol_table, current_section)
+        else:
+            for instr in function_node.children[1].children:
+                build_components_rec(instr, function_symbol_table, current_section)
 
         # protocole de sortie
         current_section["end_protocol"].append("\n")
@@ -199,7 +202,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     # Concaténation de listes
                     generate_list_concat(node.children[1], englobing_table, current_section)
                 else:
-                    print("a", node.children[1].data)
                     generate_binary_operation(node.children[1], englobing_table, current_section)
                     current_section["code_section"].append("\tpop rax\n")
                     if has_to_rewind_L:
@@ -374,8 +376,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         left_node_type = TokenType.lexicon[node.children[0].data]
         right_node_type = TokenType.lexicon[node.children[1].data]
 
-        # print(left_node_type, right_node_type)
-
         if left_node_type == "IDENTIFIER" and right_node_type == "IDENTIFIER":
             # If both operands are identifiers, we need to load their values into registers
             left_side_address, has_to_rewind_L = get_variable_address(englobing_table, node.children[0].value)
@@ -463,7 +463,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
     def generate_expression(node: Tree, englobing_table: SymbolTable, current_section: dict):
         """Generate code for expressions (constants, variables, and operations)"""
-        print(node.data)
         if node.is_terminal:
             
             node_type = TokenType.lexicon[node.data]
@@ -712,8 +711,17 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         sections["_start"]["start_protocol"] = []
         sections["_start"]["end_protocol"] = []
 
-        sections["_start"]["start_protocol"].append(f"\n\t; Allocating space for {len(global_table.symbols)} local variables")
-        sections["_start"]["start_protocol"].append("\n\tpush rbp\n")
+        # Parcours la table des symboles et compte les variables locales (hors fonctions)
+        vars = 0
+        funcs = 0
+        for sym in global_table.symbols.values():
+            if sym.get("type") == "function":
+                funcs += 1
+            else:
+                vars += 1
+            
+        sections["_start"]["start_protocol"].append(f"\n\t; Allocating space for {vars} variable(s) & {funcs} function(s)\n")
+        sections["_start"]["start_protocol"].append("\tpush rbp\n")
         sections["_start"]["start_protocol"].append("\tmov rbp, rsp\n")
 
         # Set up the stack for local variables
@@ -911,12 +919,11 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         # build instructions for the if node
         if_counter += 1
         current_section["code_section"].append(f"\n\t;operations in if\n")
-        print("b", if_node.children[1].data)
+        
         if TokenType.lexicon[if_node.children[1].data] == "print":
             build_components_rec(if_node.children[1], if_table, current_section)
         else:
             for instr in if_node.children[1].children:
-                print("a", instr.data)
                 build_components_rec(instr, if_table, current_section)
 
         # build instructions for the else node if it exists
@@ -985,7 +992,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
     print(f"\nGenerating ASM code in \"{output_file_path}\"...\n")
     build_components(ast, global_table)
-    # print(ast.children[0].children[1].children[1].children[0].value)
     bss_section = setup_print_functions()
     write_generated_code(sections)
     output_file.close()
@@ -1000,24 +1006,66 @@ def get_local_variables_total_size(symbol_table: SymbolTable) -> int:
     for symbol in symbol_table.symbols.items():
         if symbol[1]["type"] in ["if", "else", "for"]:
             continue
-        print("symbol", symbol[1])
         symbol_depl = symbol[1]['depl']
         if symbol_depl > 0:
             total_size += symbol_depl
     return total_size
 
-# FIXME: this won't work with imbricated ifs
-def get_variable_address(symbol_table: SymbolTable, variable_id: int, needs_to_rewind: bool = False) -> Tuple[str, bool]:
+def get_variable_address(symbol_table: SymbolTable, variable_id: int, needs_to_rewind: bool = False, original_st: SymbolTable = None) -> Tuple[str, bool]:
+    # Pour la première appel, on mémorise la table de symboles d'origine
+    if original_st is None:
+        original_st = symbol_table
+    
     if variable_id in symbol_table.symbols.keys():
         depl = symbol_table.symbols[variable_id]['depl']
+        type = symbol_table.symbols[variable_id]['type']
+        print(depl)
+        
+        if depl == -InfSize:
+            # Si la variable existe dans la table mais avec un déplacement infini
+            # c'est une référence à une variable d'une table englobante
+            if symbol_table.englobing_table is None:
+                raise AsmGenerationError(f"Variable {variable_id} has invalid displacement in symbol table.")
+            else:
+                # Parcours les SymbolTables englobantes pour trouver la variable avec un déplacement réel
+                address, rewind = get_variable_address(symbol_table.englobing_table, variable_id, True, original_st)
+                
+                # Copier les infos dans la table originale si ce n'est pas fait
+                if original_st != symbol_table and variable_id in symbol_table.englobing_table.symbols:
+                    parent_symbol = symbol_table.englobing_table.symbols[variable_id]
+                    if parent_symbol['depl'] != -InfSize:
+                        # Mettre à jour la table d'origine avec les valeurs trouvées
+                        original_st.symbols[variable_id] = {
+                            'type': parent_symbol['type'],
+                            'depl': parent_symbol['depl']
+                        }
+                        # Si d'autres clés existent dans le symbole parent, les copier aussi
+                        for key, value in parent_symbol.items():
+                            if key not in original_st.symbols[variable_id]:
+                                original_st.symbols[variable_id][key] = value
+                
+                return address, rewind
+        
+        # Si on a trouvé une valeur valide dans une table autre que l'originale, mettre à jour
+        if original_st != symbol_table and depl != -InfSize:
+            # Mettre à jour la table d'origine
+            if variable_id not in original_st.symbols:
+                original_st.symbols[variable_id] = symbol_table.symbols[variable_id].copy()
+            else:
+                original_st.symbols[variable_id]['type'] = type
+                original_st.symbols[variable_id]['depl'] = depl
+        
         if depl > 0:
             return (f"rbp - {depl}", needs_to_rewind)
         else:
             return (f"rbp + 8 + {-depl}", needs_to_rewind) # rbp + 8 points at the return address...
+    
     elif symbol_table.englobing_table == None:
         raise AsmGenerationError(f"Variable {variable_id} not found in symbol table.")
     else:
-        return get_variable_address(symbol_table.englobing_table, variable_id, True)
+        # Chercher dans les tables englobantes et mettre à jour la table d'origine
+        address, rewind = get_variable_address(symbol_table.englobing_table, variable_id, True, original_st)
+        return address, rewind
 
 # -------------------------------------------------------------------------------------------------
 

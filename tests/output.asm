@@ -8,6 +8,7 @@ section .bss
 
 section .text
 	global _start
+	global f
 
 
 ;	---print_rax protocol---
@@ -65,33 +66,12 @@ print_str:
 ;	--------------------
 
 
-_start:
-	; Allocating space for 2 local variables
+f:
+;	---Protocole d'entree---
 	push rbp
 	mov rbp, rsp
-	sub rsp, 16
+;	------------------------
 
-	mov rax, 5
-	mov [rbp - 8], rax
-
-	;--------if 0------
-	mov rax, 1
-	push rax
-	mov rax, 2
-	push rax
-
-	; Performing < operation
-	pop rbx
-	pop rax
-	cmp rax, rbx
-	mov rax, 0
-	setl al
-	push rax
-
-	cmp rax, 1
-	jne end_if_0_2
-
-	;operations in if
 
 	; print: parameter 1 (a)
 	mov rax, rbp
@@ -102,7 +82,29 @@ _start:
 	mov rsi, newline
 	mov rdx, 1
 	syscall
-end_if_0_2:
+
+;	---Protocole de sortie---
+	mov rsp, rbp
+	pop rbp
+	ret
+;	------------------------
+
+
+_start:
+	; Allocating space for 1 variable(s) & 1 function(s)
+	push rbp
+	mov rbp, rsp
+	sub rsp, 16
+
+	mov rax, 5
+	mov [rbp - 8], rax
+
+;	---Stacking parameters---
+
+;	---Calling the function---
+	call f
+;	---Popping parameters---
+;	--------------------
 
 
 ;	---End of program---
