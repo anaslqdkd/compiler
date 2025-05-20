@@ -1,11 +1,6 @@
 section .data
-	list1_a dq 1, 2, 3
-	list2_a dq 4, 5
-	concat_list_a dq 0, 0, 0, 0, 0	; 5 elements for concatenation
-	concat_list_a_len dq 5
-	open_bracket_a db "["
-	comma_space db ", "
-	close_bracket_a db "]"
+	mult_list_b dq 1, 2, 3, 1, 2, 3
+	mult_list_b_len dq 6
 	newline db 0xA
 	minus_sign db "-"
 
@@ -78,77 +73,16 @@ _start:
 	mov rbp, rsp
 	sub rsp, 8
 
-	; Concatenation : a = [1, 2, 3, 4, 5]
-	mov rsi, list1_a
-	mov rax, [rsi]
-	mov [concat_list_a], rax
-	mov rax, [rsi+8]
-	mov [concat_list_a+8], rax
-	mov rax, [rsi+16]
-	mov [concat_list_a+16], rax
-
-	mov rsi, list2_a
-	mov rax, [rsi]
-	mov [concat_list_a+24], rax
-	mov rax, [rsi+8]
-	mov [concat_list_a+32], rax
-
-	mov rax, concat_list_a
+	; List multiplication: b = [1, 2, 3] * 2
+	mov rax, mult_list_b
+	mov [rbp - 8], rax
+	pop rax
 	mov [rbp - 8], rax
 
-	; print: parameter 1 (a)
+	; print: parameter 1 (b)
 	mov rax, [rbp - 8]
-
-	; Affichage de la liste a
-	mov rsi, rax
-	mov rcx, [concat_list_a_len]
-	mov rax, 1
-	mov rdi, 1
-	mov rdx, 1
-	push rsi
-	push rcx
-	mov rsi, open_bracket_a
-	syscall
-	pop rcx
-	pop rsi
-
-print_list_a_loop:
-	test rcx, rcx
-	jz print_list_a_end
-	mov rax, [rsi]
-	push rsi
-	push rcx
-	cmp rax, 0x1000000
-	jae print_list_a_loop_string
+	mov rax, [rax + 4*8]
 	call print_rax
-	jmp print_list_a_loop_next
-print_list_a_loop_string:
-	mov rsi, rax
-	call print_str
-print_list_a_loop_next:
-	pop rcx
-	pop rsi
-	dec rcx
-	test rcx, rcx
-	jz print_list_a_loop_advance
-	push rsi
-	push rcx
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, comma_space
-	mov rdx, 2
-	syscall
-	pop rcx
-	pop rsi
-print_list_a_loop_advance:
-	add rsi, 8
-	jmp print_list_a_loop
-print_list_a_end:
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, close_bracket_a
-	mov rdx, 1
-	syscall
 	mov rax, 1
 	mov rdi, 1
 	mov rsi, newline

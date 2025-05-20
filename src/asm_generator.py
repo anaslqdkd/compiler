@@ -299,6 +299,27 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             current_section["code_section"].append(f"\tmov [{left_side_address[3:]}], rax\n")
         else:
             current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
+        
+        # Mettre à jour la table des symboles pour refléter la liste multipliée
+        target_id = node.father.children[0].value
+        if target_id in englobing_table.symbols:
+            # Calculer les nouveaux element_types
+            original_types = []
+            for elem in list_node.children:
+                if TokenType.lexicon[elem.data] == "INTEGER":
+                    original_types.append("INTEGER")
+                elif TokenType.lexicon[elem.data] == "STRING":
+                    original_types.append("STRING")
+        
+                # Répéter les types selon le facteur de multiplication
+        multiplied_types = []
+        for _ in range(factor):
+            multiplied_types.extend(original_types)
+
+        # Mettre à jour le symbole avec les informations de la liste multipliée
+        englobing_table.symbols[target_id]["type"] = "LIST"
+        englobing_table.symbols[target_id]["element_types"] = multiplied_types
+        englobing_table.symbols[target_id]["list_prefix"] = "mult_list"
     
     def generate_string_concat(node: Tree, englobing_table: SymbolTable, current_section: dict):
         """
@@ -783,6 +804,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                         
                         # Déterminer s'il s'agit d'une chaîne ou d'un nombre en vérifiant le type dans la définition du tableau
                         var_name = lexer.identifier_lexicon[param.value]
+                        print(var_name)
                         list_def = f"list_{var_name}"
                         
                         # Vérifier dans le tableau initial pour savoir si cet élément est une chaîne
