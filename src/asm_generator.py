@@ -191,7 +191,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             elif not node.children[1].is_terminal:
                 # Right-side is an expression (operation)
                 generate_expression(node.children[1], englobing_table, current_section)
-                current_section["code_section"].append("\tpop rax\n")
                 if has_to_rewind_L:
                     current_section["code_section"].append(f"\tmov rax, rbp\n")
                     current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
@@ -203,13 +202,14 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     if TokenType.lexicon.get(node.children[1].children[0].data) == "LIST" and TokenType.lexicon.get(node.children[1].children[1].data) == "INTEGER":
                         # Cas: [1,2,3] * 2
                         generate_list_multiplication(node.children[1], englobing_table, current_section, True)
+                        return
                     elif TokenType.lexicon.get(node.children[1].children[0].data) == "INTEGER" and TokenType.lexicon.get(node.children[1].children[1].data) == "LIST":
                         # Cas: 2 * [1,2,3]
                         generate_list_multiplication(node.children[1], englobing_table, current_section, False)
+                        return
                     else:
                         # Multiplication normale
                         generate_binary_operation(node.children[1], englobing_table, current_section)
-                        current_section["code_section"].append("\tpop rax\n")
                         if has_to_rewind_L:
                             current_section["code_section"].append(f"\tmov rax, [rbp]\n")
                             current_section["code_section"].append(f"\tmov [{left_side_address[3:]}], rax\n")
@@ -226,7 +226,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                         generate_string_concat(node.children[1], englobing_table, current_section)
                     else:
                         generate_binary_operation(node.children[1], englobing_table, current_section)
-                        current_section["code_section"].append("\tpop rax\n")
                         if has_to_rewind_L:
                             current_section["code_section"].append(f"\tmov rax, [rbp]\n")
                             current_section["code_section"].append(f"\tmov rax, [{left_side_address[3:]}], rax\n")

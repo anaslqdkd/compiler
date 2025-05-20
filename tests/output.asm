@@ -1,4 +1,12 @@
 section .data
+	mult_list_a dq 1, 2, 3, 1, 2, 3
+	mult_list_a_len dq 6
+	list1_b dq 4, 5
+	list2_b dq 6, 7
+	concat_list_b dq 0, 0, 0, 0	; 4 elements for concatenation
+	concat_list_b_len dq 4
+	str_8 db "Résultat: ", 0
+	space_char db " ", 0
 	newline db 0xA
 	minus_sign db "-"
 
@@ -71,28 +79,84 @@ _start:
 	mov rbp, rsp
 	sub rsp, 24
 
-	mov rax, 1
+	; List multiplication: a = [1, 2, 3] * 2
+	mov rax, mult_list_a
 	mov [rbp - 8], rax
-	mov rax, 2
+	mov [rbp - 8], rax
+
+	; print: parameter 1 (a)
+	mov rax, [rbp - 8]
+	mov rax, [rax + 3*8]
+	call print_rax
+
+
+	; print: end of line
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, newline
+	mov rdx, 1
+	syscall
+	; Concatenation : b = [4, 5, 6, 7]
+	mov rsi, list1_b
+	mov rax, [rsi]
+	mov [concat_list_b], rax
+	mov rax, [rsi+8]
+	mov [concat_list_b+8], rax
+
+	mov rsi, list2_b
+	mov rax, [rsi]
+	mov [concat_list_b+16], rax
+	mov rax, [rsi+8]
+	mov [concat_list_b+24], rax
+
+	mov rax, concat_list_b
 	mov [rbp - 16], rax
+
+	; print: parameter 1 (b)
+	mov rax, [rbp - 16]
+	mov rax, [rax + 2*8]
+	call print_rax
+
+
+	; print: end of line
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, newline
+	mov rdx, 1
+	syscall
+	mov rax, 1
+	push rax
+	mov rax, 2
+	push rax
 	mov rax, 3
 	push rax
 
 	; Performing * operation
 	pop rbx
-	mov rax, [rbp - 16]
+	pop rax
 	imul rax, rbx
 	push rax
 
 	; Performing + operation
-	mov rax, [rbp - 8]
+	pop rax
 	pop rbx
 	add rax, rbx
 	push rax
-	pop rax
 	mov [rbp - 24], rax
 
-	; print: parameter 1 (c)
+	; print: parameter 1 ("Résultat: ")
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, str_8
+	mov rdx, 10
+	syscall
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, space_char
+	mov rdx, 1
+	syscall
+
+	; print: parameter 2 (c)
 	mov rax, [rbp - 24]
 	call print_rax
 
