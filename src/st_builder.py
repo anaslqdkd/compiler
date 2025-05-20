@@ -131,9 +131,9 @@ class SymbolTable:
                 if symbol["depl"] >= 0:
                     new_depl = max_positive_depl
                     if new_depl != InfSize:
-                        # Always allocate integer_size bytes for INTEGER, LIST, and STRING variables
+                        # Always allocate integer_size bytes for INTEGER, LIST, STRING, "True", "False" and "None" variables
                         # STRING variables need integer_size bytes for the pointer to the string
-                        if symbol["type"] in ["INTEGER", "LIST", "STRING"]:
+                        if symbol["type"] in ["INTEGER", "LIST", "STRING", "True", "False", "None"]:
                             new_depl += SymbolTable.integer_size
                         else:
                             new_depl = InfSize
@@ -142,8 +142,8 @@ class SymbolTable:
                 else:
                     new_depl = max_negative_depl
                     if new_depl != - InfSize:
-                        # Always allocate integer_size bytes for INTEGER, LIST, and STRING variables
-                        if symbol["type"] in ["INTEGER", "LIST", "STRING"]:
+                        # Always allocate integer_size bytes for INTEGER, LIST, STRING, "True", "False" and "None" variables
+                        if symbol["type"] in ["INTEGER", "LIST", "STRING", "True", "False", "None"]:
                             new_depl -= SymbolTable.integer_size
                         else:
                             new_depl = -InfSize
@@ -317,7 +317,7 @@ class SymbolTable:
 
         Notes:
             - Type inference is attempted for undefined identifiers during operations.
-            - Types like "True" and "False" are treated as "INTEGER"-compatible.
+            - Types like "True", "False" and "None" are treated as "INTEGER"-compatible.
             - Function calls are not directly handled here; they are assumed to have been processed beforehand.
         """
         # If the node is a constant or a list / tuple
@@ -392,6 +392,14 @@ class SymbolTable:
 
             # If it's the result of an operation
             if TokenType.lexicon[node.data] in ["+", "*", "//", "%", "<", ">", "<=", ">=", "==", "!="] or (TokenType.lexicon[node.data] == "-" and len(node.children)>1):
+                # Vérifier que le nœud a bien au moins deux enfants
+                if len(node.children) < 2:
+                    # Si c'est une opération binaire mais qu'il manque un opérande
+                    print(f"Avertissement: opération binaire avec un seul opérande à la ligne {node.line_index}")
+                    if len(node.children) > 0:
+                        return self.dfs_type_check(node.children[0], lexer)
+                    return "<undefined>"
+                
                 left_type = self.dfs_type_check(node.children[0], lexer)
                 right_type = self.dfs_type_check(node.children[1], lexer)
                 
@@ -414,6 +422,22 @@ class SymbolTable:
                     node.element_types = combined_element_types
                     
                     return "LIST"
+
+                # Ajoutez ce bloc pour gérer la multiplication d'une liste par un entier
+                if TokenType.lexicon[node.data] == "*":
+                    # Cas 1: liste * entier
+                    if left_type == "LIST" and right_type in ["INTEGER", "True", "False", "None"]:
+                        # Si les types d'éléments sont disponibles, les répéter
+                        if hasattr(node.children[0], 'element_types'):
+                            node.element_types = node.children[0].element_types
+                        return "LIST"
+                    
+                    # Cas 2: entier * liste
+                    elif right_type == "LIST" and left_type in ["INTEGER", "True", "False", "None"]:
+                        # Si les types d'éléments sont disponibles, les répéter
+                        if hasattr(node.children[1], 'element_types'):
+                            node.element_types = node.children[1].element_types
+                        return "LIST"
                 
                 # Reste du code existant pour les autres opérations
                 if left_type != right_type:
@@ -436,8 +460,8 @@ class SymbolTable:
 
                     # Else, if really can't be accepted (i.e. 'True + 1' can be accepted)
                     elif not (
-                        left_type in ["True", "False", "INTEGER"]
-                        and right_type in ["True", "False", "INTEGER"]
+                        left_type in ["True", "False", "None", "INTEGER"]
+                        and right_type in ["True", "False", "None", "INTEGER"]
                     ):
                         raise SemanticError(
                             f"À la ligne {node.line_index}, il est impossible de faire l'opération entre {left_type} et {right_type} !",
@@ -446,9 +470,10 @@ class SymbolTable:
                         )
 
                 # Else, get the corresponding type
-                if left_type in ["True", "False", "INTEGER"] and right_type in [
+                if left_type in ["True", "False", "None", "INTEGER"] and right_type in [
                     "True",
                     "False",
+                    "None",
                     "INTEGER",
                 ]:
                     return "INTEGER"
@@ -634,6 +659,8 @@ class SymbolTable:
                     depl = self.calculate_depl_string(
                         node.father.children[1], lexer, is_parameter
                     )
+                elif type in ["INTEGER", "True", "False", "None"]:
+                    depl = self.calculate_depl(is_parameter)
                 elif type is not None:
                     depl = self.calculate_depl(is_parameter)
 
