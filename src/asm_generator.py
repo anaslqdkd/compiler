@@ -1417,7 +1417,7 @@ def get_variable_address(symbol_table: SymbolTable, variable_id: int, needs_to_r
                 original_st.symbols[variable_id]['depl'] = depl
         
         if depl > 0:
-            return (f"rbp - {depl}", needs_to_rewind)
+            return (f"rbp - {depl}", rewind_steps)
         else:
             return (f"rbp + 8 + {-depl}", needs_to_rewind) # rbp + 8 points at the return address...
     

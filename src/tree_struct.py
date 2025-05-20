@@ -1,3 +1,4 @@
+from typing import List, Optional
 from src.lexer import TokenType
 
 
@@ -190,6 +191,52 @@ class Tree:
         with open(file_path, "w") as file:
             file.write(graph)
 
+def find_closest_previous_node_with_data(start_node: Tree, target_datas: List[int]) -> Optional[Tree]:
+    current = start_node
+    
+    # Continue until we reach the root
+    while current.father is not None:
+        # Get the parent
+        parent = current.father
+        
+        # Find the index of the current node in its parent's children
+        current_index = parent.get_child_id(current)
+        
+        # Check siblings to the left (earlier in the parent's children list)
+        for i in range(current_index - 1, -1, -1):
+            sibling = parent.children[i]
+            
+            # Check if this sibling has the target data
+            if sibling.data in target_datas:
+                return sibling
+            
+            # Check descendants of this sibling, from right to left
+            result = _search_descendants_right_to_left(sibling, target_datas)
+            if result is not None:
+                return result
+        
+        # If we haven't found a match, move up to the parent
+        if parent.data in target_datas:
+            return parent
+        current = parent
+    
+    # If we reach here, we've searched up to the root without finding a match
+    return None
+
+def _search_descendants_right_to_left(node: Tree, target_datas: List[int]) -> Optional[Tree]:
+    # Check children from right to left
+    for child in reversed(node.children):
+        # Check if this child has the target data
+        if child.data in target_datas:
+            return child
+        
+        # Recursively check descendants
+        result = _search_descendants_right_to_left(child, target_datas)
+        if result is not None:
+            return result
+            
+    # If we reach here, no match was found in this subtree
+    return None
 
 # -------------------------------------------------------------------------------------------------
 # Converter
@@ -407,8 +454,13 @@ def manage_fors(given_tree: "Tree") -> None:
             for j in range(3):
                 c = given_tree.children[i + 1]
                 manage_fors(c)
-                child.children.append(c)
-                c.father = child
+
+                if c.is_terminal and j == 2:
+                    block_node = Tree("Block", child, child.line_index, False)
+                    block_node.children.append(c)
+                    child.children.append(block_node)
+                else:
+                    child.children.append(c)
                 given_tree.children.remove(c)
             i += 1
         else:
@@ -431,10 +483,15 @@ def manage_ifs(given_tree: "Tree") -> None:
             manage_ifs(if_content)
 
             child.children.append(cond_node)
-            cond_node.father = child
             given_tree.children.remove(cond_node)
-            child.children.append(if_content)
-            if_content.father = child
+
+            block_node = Tree("Block", child, child.line_index, False)
+            if not if_content.is_terminal:
+                for c in if_content.children:
+                    block_node.children.append(c)
+            else:
+                block_node.children.append(if_content)
+            child.children.append(block_node)
             given_tree.children.remove(if_content)
 
             if (
@@ -556,7 +613,7 @@ def rename_blocks(given_tree: "Tree") -> None:
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
-        if child.data in ["B", "C"]:
+        if child.data in ["B", "C", "D"]:
             child.data = "Block"
             for c in child.children:
                 rename_blocks(c)
@@ -589,43 +646,6 @@ def manage_parentheses(given_tree: "Tree") -> None:
 
 
 def verify_parameters(given_tree: "Tree") -> None:
-    def get_nearest_identifier(node: "Tree") -> "Tree":
-        # This will get the nearest (left) identifier
-        def get_nearest_identifier_rec(node: "Tree") -> "Tree":
-            for i in range(len(node.children) - 1, -1, -1):
-                if node.children[
-                    i
-                ].data in TokenType.lexicon.keys() and TokenType.lexicon[
-                    node.children[i].data
-                ] in [
-                    "IDENTIFIER",
-                    "print",
-                ]:
-                    return node.children[i]
-            if node.father is None:
-                raise ASTPruningError(
-                    node, f"Failed to find a function call at line {node.line_index}."
-                )
-            return get_nearest_identifier_rec(node.father)
-
-        father = node.father
-        index = -1
-        for i in range(len(father.children)):
-            if father.children[i] is node:
-                index = i
-
-        for i in range(index, -1, -1):
-            if father.children[
-                i
-            ].data in TokenType.lexicon.keys() and TokenType.lexicon[
-                father.children[i].data
-            ] in [
-                "IDENTIFIER",
-                "print",
-            ]:
-                return father.children[i]
-        return get_nearest_identifier_rec(father.father)
-
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
@@ -641,7 +661,9 @@ def verify_parameters(given_tree: "Tree") -> None:
                 )
             ):
                 # Then it's a "Parameters" node of a function call
-                caller = get_nearest_identifier(child)
+                caller = find_closest_previous_node_with_data(child, [next(key for key, value in TokenType.lexicon.items() if value == "IDENTIFIER"), "print"])
+                if caller is None:
+                    raise ASTPruningError(child, f"Can't find an identifier / print for parentheses at line {child.line_index}")
                 given_tree.children.pop(i)
                 caller.children.append(child)
                 verify_parameters(child)
@@ -650,6 +672,22 @@ def verify_parameters(given_tree: "Tree") -> None:
                 i += 1
         else:
             verify_parameters(child)
+            i += 1
+
+
+def verify_function_defs(given_tree: "Tree") -> None:
+    i = 0
+    while i < len(given_tree.children):
+        child = given_tree.children[i]
+        if child.data == "function":
+            f_id = child.children[0]
+            if len(f_id.children) != 0:
+                parameter_node = f_id.children[0]
+                f_id.children.pop()
+                child.children.insert(1, parameter_node)
+            i += 1
+        else:
+            verify_function_defs(child)
             i += 1
 
 
@@ -676,53 +714,21 @@ def manage_brackets(given_tree: "Tree") -> None:
 
 
 def manage_function_calls(given_tree: "Tree") -> None:
-    def get_nearest_identifier(node: "Tree") -> "Tree":
-        # This will get the nearest (left) identifier
-        def get_nearest_identifier_rec(node: "Tree") -> "Tree":
-            for i in range(len(node.children) - 1, -1, -1):
-                if node.children[
-                    i
-                ].data in TokenType.lexicon.keys() and TokenType.lexicon[
-                    node.children[i].data
-                ] in [
-                    "IDENTIFIER",
-                    "print",
-                ]:
-                    return node.children[i]
-            if node.father is None:
-                raise ASTPruningError(
-                    node, f"Failed to find a function call at line {node.line_index}."
-                )
-            return get_nearest_identifier_rec(node.father)
-
-        father = node.father
-        index = -1
-        for i in range(len(father.children)):
-            if father.children[i] is node:
-                index = i
-
-        for i in range(index, -1, -1):
-            if father.children[
-                i
-            ].data in TokenType.lexicon.keys() and TokenType.lexicon[
-                father.children[i].data
-            ] in [
-                "IDENTIFIER",
-                "print",
-            ]:
-                return father.children[i]
-        return get_nearest_identifier_rec(father.father)
-
     i = 0
     while i < len(given_tree.children):
         child = given_tree.children[i]
-        if child.data == "Parameters" and given_tree.data != "function":
+        if child.data in ["Parameters", "Parentheses"] and given_tree.data not in ["function", next(key for key, value in TokenType.lexicon.items() if value == "print")]:
             # Then it's a "Parameters" node of a function call
-            caller = get_nearest_identifier(child)
+            print(f"Finding function at {child.line_index}")
+            child.data = "Parameters"
+            caller = find_closest_previous_node_with_data(child, [next(key for key, value in TokenType.lexicon.items() if value == "IDENTIFIER"), next(key for key, value in TokenType.lexicon.items() if value == "print")])
+            if caller is None:
+                raise ASTPruningError(child, f"Can't find an identifier / print for parentheses at line {child.line_index}")
             given_tree.children.pop(i)
             caller.children.append(child)
         manage_function_calls(child)
         i += 1
+    pass
 
 
 # --------------------------------------------------------------------------------------------------------------------------
@@ -767,6 +773,7 @@ def manage_lists(given_tree: "Tree") -> None:
         if child.data == "Brackets":
             if has_comma(child):
                 child.data = "LIST"
+                manage_lists(child)
                 remove_banned_characters_until(
                     child, [","], ["Parentheses", "Parameters", "Brackets", "LIST"]
                 )
@@ -822,6 +829,30 @@ def manage_list_search(given_tree: "Tree") -> None:
             manage_list_search(child)
         i += 1
 
+def compact_lists(given_tree: "Tree", _first_call: bool = True) -> None:
+    new_children = []
+
+    for child in given_tree.children:
+        if _first_call and child.data == "LIST":
+            # First-level LIST node, recurse normally
+            compact_lists(child, False)
+            new_children.append(child)
+
+        elif not _first_call and child.data in ["E1", "E2"]:
+            # Flatten this node by lifting its children
+            for grandchild in child.children:
+                compact_lists(grandchild, False)
+                grandchild.father = given_tree  # Update father pointer
+                new_children.append(grandchild)
+            # Do not add this E1/E2 node itself
+
+        else:
+            # Recurse normally and keep the child
+            compact_lists(child, False)
+            new_children.append(child)
+
+    given_tree.children = new_children
+
 
 # --------------------------------------------------------------------------------------------------------------------------
 
@@ -854,7 +885,6 @@ def transform_to_ast(given_tree: "Tree") -> None:
     remove_childless_non_terminal_trees(given_tree)
     manage_E_un(given_tree)
     manage_functions_declaration(given_tree)
-    manage_function_calls(given_tree)
     manage_prints(given_tree)
     compact_non_terminals_chain(given_tree)
     remove_banned_data_until(given_tree, ["E_un", "E1", "E3", "I"])
@@ -869,11 +899,13 @@ def transform_to_ast(given_tree: "Tree") -> None:
         prev_tree = given_tree.copy()
         fuse_chains(given_tree, ["A", "D", "S1", "B", "B1", "C"])
 
-    rename_blocks(given_tree)
     fuse_chains(given_tree, ["E_un", "E1"])
-    fuse_chains(given_tree, ["LIST", "E1", "E2"])
     manage_returns(given_tree)
+    manage_function_calls(given_tree)
     verify_parameters(given_tree)
+    verify_function_defs(given_tree)
+    compact_lists(given_tree)
+    rename_blocks(given_tree)
     reajust_fathers(given_tree)
 
 
