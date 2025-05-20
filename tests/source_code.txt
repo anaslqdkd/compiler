@@ -1,4 +1,2 @@
-a = 5
-def f():
-    print(a)
-f()
+a = "abc" + "def" + "g"
+print(a)

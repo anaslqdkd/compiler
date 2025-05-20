@@ -201,11 +201,15 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 if node.children[1].children[0].data == "LIST" and node.children[1].children[1].data == "LIST":
                     # Concaténation de listes
                     generate_list_concat(node.children[1], englobing_table, current_section)
+                elif (TokenType.lexicon.get(node.children[1].children[0].data) == "STRING" or 
+                      TokenType.lexicon.get(node.children[1].children[1].data) == "STRING"):
+                    # Concaténation de chaînes
+                    generate_string_concat(node.children[1], englobing_table, current_section)
                 else:
                     generate_binary_operation(node.children[1], englobing_table, current_section)
                     current_section["code_section"].append("\tpop rax\n")
                     if has_to_rewind_L:
-                        current_section["code_section"].append(f"\tmov rax, rbp\n")
+                        current_section["code_section"].append(f"\tmov rax, [rbp]\n")
                         current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
                     else:
                         current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
@@ -215,6 +219,49 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 raise AsmGenerationError(f"Unknown assignment type: {node.children[1].data}")
 
         return
+    
+    def generate_string_concat(node: Tree, englobing_table: SymbolTable, current_section: dict):
+        """
+        Génère le code NASM pour la concaténation de chaînes, ex : a = "abc" + "def" + "g"
+        Crée une variable .data pour la chaîne résultante.
+        """
+        var_name = lexer.identifier_lexicon[node.father.children[0].value]
+        concat_label = f"concat_str_{var_name}"
+        
+        # Collecter toutes les chaînes à concaténer
+        string_nodes = []
+        
+        def collect_strings(n):
+            if n.data in TokenType.lexicon.keys() and TokenType.lexicon[n.data] == "STRING":
+                string_nodes.append(n)
+            elif n.data == 40:  # '+'
+                collect_strings(n.children[0])
+                collect_strings(n.children[1])
+        
+        # Collecter les chaînes récursivement
+        collect_strings(node)
+        
+        # Créer la chaîne concaténée 
+        concat_str = ""
+        for str_node in string_nodes:
+            str_value = lexer.constant_lexicon[str_node.value].replace('"', '')
+            concat_str += str_value
+        
+        # Ajouter la chaîne à la section .data
+        data_section.append(f"\t{concat_label} db \"{concat_str}\", 0\n")
+        
+        # Générer un commentaire pour expliquer la concaténation
+        current_section["code_section"].append(f"\t; String concatenation: {var_name} = \"{concat_str}\"\n")
+        
+        # Affecter l'adresse de la nouvelle chaîne à la variable cible
+        left_side_address, has_to_rewind = get_variable_address(englobing_table, node.father.children[0].value)
+        current_section["code_section"].append(f"\tmov rax, {concat_label}\n")
+        
+        if has_to_rewind:
+            current_section["code_section"].append(f"\tmov rbx, [rbp]\n")  # Accède au rbp du scope parent
+            current_section["code_section"].append(f"\tmov [{left_side_address[3:]}], rax\n")
+        else:
+            current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
 
     def generate_list_concat(node: Tree, englobing_table: SymbolTable, current_section: dict):
         """

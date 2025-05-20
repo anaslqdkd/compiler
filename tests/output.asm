@@ -1,4 +1,5 @@
 section .data
+	concat_str_a db "abcdefg", 0
 	newline db 0xA
 	minus_sign db "-"
 
@@ -8,7 +9,6 @@ section .bss
 
 section .text
 	global _start
-	global f
 
 
 ;	---print_rax protocol---
@@ -66,45 +66,25 @@ print_str:
 ;	--------------------
 
 
-f:
-;	---Protocole d'entree---
+_start:
+	; Allocating space for 1 variable(s) & 0 function(s)
 	push rbp
 	mov rbp, rsp
-;	------------------------
+	sub rsp, 8
 
+	; String concatenation: a = "abcdefg"
+	mov rax, concat_str_a
+	mov [rbp - 8], rax
 
 	; print: parameter 1 (a)
-	mov rax, rbp
-	mov rax, [rax - 8]
-	call print_rax
+	mov rax, [rbp - 8]
+	mov rsi, rax
+	call print_str
 	mov rax, 1
 	mov rdi, 1
 	mov rsi, newline
 	mov rdx, 1
 	syscall
-
-;	---Protocole de sortie---
-	mov rsp, rbp
-	pop rbp
-	ret
-;	------------------------
-
-
-_start:
-	; Allocating space for 1 variable(s) & 1 function(s)
-	push rbp
-	mov rbp, rsp
-	sub rsp, 16
-
-	mov rax, 5
-	mov [rbp - 8], rax
-
-;	---Stacking parameters---
-
-;	---Calling the function---
-	call f
-;	---Popping parameters---
-;	--------------------
 
 
 ;	---End of program---
