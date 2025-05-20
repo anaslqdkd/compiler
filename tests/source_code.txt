@@ -1,24 +1,10 @@
-def fn():
-	f = 4
-	if 1 < 0:
-		a = 5
-		print(a)
-	else:
-		if 2 > 1:
-			b = 3
-			print(b)
-		if 1 > 2:
-			f = 0
-			print(f)
-		else:
-			r = 1
-			print(r)
-		a = 6
-		print(a)
-if 4 < 5:
-	f = 13
-	print(f)
-fn()
-l = [1, 2]
-for j in l:
-	print(j)
+a = True
+b = False
+c = None
+d = 1
+e = 2
+print(a)
+print()
+print(b, c)
+print(2 + 5)
+print(d + e)

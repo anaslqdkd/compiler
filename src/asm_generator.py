@@ -132,9 +132,9 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             if has_function_call:
                 # Right-side is a function call (=> return value is stored in "rax")
                 current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
-            elif node.children[1].value in lexer.constant_lexicon.keys() or node.children[1].value in ["True", "False"]:
+            elif node.children[1].value in lexer.constant_lexicon.keys() or node.children[1].value in ["True", "False", "None"]:
                 # Right-side is a constant: mettre la constante dans la registre
-                if node.children[1].value in ["True", "False"]:
+                if node.children[1].value in ["True", "False", "None"]:
                     # Boolean value
                     if node.children[1].value == "True":
                         value = 1
@@ -493,76 +493,154 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             elif node.data in numeric_op:
                 generate_binary_operation(node, englobing_table, current_section)
 
-
     def generate_print(node: Tree, symbol_table: SymbolTable, current_section: dict):
         """Generate code to print values, including numeric results and strings"""
-        to_print = node.children[0].children[0]
-        node_type = TokenType.lexicon[to_print.data]
-
-        value_to_print = lexer.identifier_lexicon[to_print.value] if to_print.value > 0 else lexer.constant_lexicon[to_print.value]
-        current_section["code_section"].append(f"\n\t; print({value_to_print})\n")  # Pop the result to print
-
-        if node_type == "INTEGER":
-            # Pour une constante entière, charger la valeur dans rax et print_rax
-            value = lexer.constant_lexicon[to_print.value]
-            current_section["code_section"].append(f"\tmov rax, {value}\n")
-            current_section["code_section"].append("\tcall print_rax\n")
-        elif node_type == "STRING":
-            # Pour une constante chaîne, charger l'adresse et print (syscall write)
-            str_label = None
-            # Chercher le label de la chaîne dans la data_section
-            for line in data_section:
-                if f'db "' in line and lexer.constant_lexicon[to_print.value] in line:
-                    str_label = line.split()[0]
-                    break
-            if not str_label:
-                # Si la chaîne n'est pas encore dans la data_section, l'ajouter
-                str_label = f'str_{abs(to_print.value)}'
-                str_value = lexer.constant_lexicon[to_print.value].replace('"', '')
-                data_section.append(f"\t{str_label} db \"{str_value}\", 0\n")
-            # Générer le code pour afficher la chaîne
-            current_section["code_section"].append(f"\tmov rax, 1\n")  # syscall write
-            current_section["code_section"].append(f"\tmov rdi, 1\n")  # stdout
-            current_section["code_section"].append(f"\tmov rsi, {str_label}\n")
-            current_section["code_section"].append(f"\tmov rdx, {len(lexer.constant_lexicon[to_print.value])}\n")
+        # Le nœud Parameters est maintenant le premier enfant du nœud print
+        params_node = node.children[0]
+        
+        # S'il n'y a pas de paramètres, on gère le cas print() vide
+        if not params_node.children:
+            current_section["code_section"].append("\n\t; print() - empty print statement\n")
+            current_section["code_section"].append(f"\tmov rax, 1\n")
+            current_section["code_section"].append(f"\tmov rdi, 1\n")
+            current_section["code_section"].append(f"\tmov rsi, newline\n")
+            current_section["code_section"].append(f"\tmov rdx, 1\n")
             current_section["code_section"].append(f"\tsyscall\n")
-        elif node_type == "IDENTIFIER":
-            # Pour une variable, vérifier son type avant d'imprimer
-            var_type = symbol_table.symbols[to_print.value]["type"]
-            left_side_address, has_to_rewind = get_variable_address(symbol_table, to_print.value)
-            
-            # Check if the identifier is a list element (e.g., a[2])
-            if len(to_print.children) > 0 and to_print.children[0].data in TokenType.lexicon.keys() and TokenType.lexicon[to_print.children[0].data] in ["INTEGER"]:
-                # It's a list element access, get the element type
-                list_symbol = find_symbol(symbol_table, to_print.value)
-                if list_symbol and "element_types" in list_symbol:
-                    idx = lexer.constant_lexicon[to_print.children[0].value]
-                    if idx < len(list_symbol["element_types"]):
-                        var_type = list_symbol["element_types"][idx]
-                if has_to_rewind:
-                    current_section["code_section"].append(f"\tmov rax, rbp\n")
-                    current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
-                else:
-                    current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
-                current_section["code_section"].append(f"\tmov rax, [rax + {idx}*8]\n")
-            else:
-                # Regular variable (not a list element)
-                # current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
-                current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
-            
-            if var_type == "STRING":
-                # It's a string, use print_str helper
-                current_section["code_section"].append(f"\n\t; Printing a string variable\n")
-                current_section["code_section"].append(f"\tmov rsi, rax\n")  # rax contains string address
-                current_section["code_section"].append(f"\tcall print_str\n")
-            else:
-                # It's a numeric value, use print_rax
+            return
+        
+        # Itérer sur tous les paramètres à imprimer
+        for i, param in enumerate(params_node.children):
+            # Générer un commentaire pour le paramètre actuel
+            param_repr = f"param_{i+1}"
+            if param.data in numeric_op:
+                generate_binary_operation(param, symbol_table, current_section)
+                current_section["code_section"].append("\tpop rax\n")
                 current_section["code_section"].append("\tcall print_rax\n")
-        else:
-            # Pour les expressions, générer le code puis print_rax
-            generate_expression(to_print, symbol_table, current_section)
-            current_section["code_section"].append("\tpop rax\n")
-            current_section["code_section"].append("\tcall print_rax\n")
+            elif param.value is not None and param.value > 0:
+                param_repr = lexer.identifier_lexicon[param.value]
+            elif param.value is not None and param.value < 0:
+                param_repr = str(lexer.constant_lexicon[param.value])
+            
+            current_section["code_section"].append(f"\n\t; print: parameter {i+1} ({param_repr})\n")
+            
+            # Déterminer le type du paramètre
+            if param.is_terminal:
+                node_type = TokenType.lexicon[param.data]
+                
+                if node_type == "INTEGER":
+                    # Constante entière
+                    value = lexer.constant_lexicon[param.value]
+                    current_section["code_section"].append(f"\tmov rax, {value}\n")
+                    current_section["code_section"].append("\tcall print_rax\n")
+                    
+                elif node_type == "STRING":
+                    # Constante chaîne
+                    str_label = None
+                    str_value = lexer.constant_lexicon[param.value].replace('"', '')
+                    
+                    # Vérifier si la chaîne existe déjà dans la section .data
+                    for line in data_section:
+                        if f'db "{str_value}"' in line:
+                            str_label = line.split()[0]
+                            break
+                            
+                    if not str_label:
+                        # Ajouter la chaîne à la section .data
+                        str_label = f'str_{abs(param.value)}'
+                        data_section.append(f"\t{str_label} db \"{str_value}\", 0\n")
+                    
+                    # Générer le code pour afficher la chaîne
+                    current_section["code_section"].append(f"\tmov rax, 1\n")  # syscall write
+                    current_section["code_section"].append(f"\tmov rdi, 1\n")  # stdout
+                    current_section["code_section"].append(f"\tmov rsi, {str_label}\n")
+                    current_section["code_section"].append(f"\tmov rdx, {len(str_value)}\n")
+                    current_section["code_section"].append(f"\tsyscall\n")
+                    
+                elif node_type == "IDENTIFIER":
+                    # Variable 
+                    # Vérifier si c'est un accès à un tableau (a[0])
+                    # Remplacer ce bloc dans generate_print
+                    if param.children and TokenType.lexicon.get(param.children[0].data) == "INTEGER":
+                        # Accès à un élément de tableau
+                        array_addr, has_to_rewind = get_variable_address(symbol_table, param.value)
+                        idx = lexer.constant_lexicon[param.children[0].value]
+                        
+                        # Charger l'adresse du tableau
+                        if has_to_rewind:
+                            current_section["code_section"].append(f"\tmov rax, rbp\n")
+                            current_section["code_section"].append(f"\tmov rax, [rax{array_addr[3:]}]\n")
+                        else:
+                            current_section["code_section"].append(f"\tmov rax, [{array_addr}]\n")
+                        
+                        # Accéder à l'élément du tableau
+                        current_section["code_section"].append(f"\tmov rax, [rax + {idx}*8]\n")
+                        
+                        # Déterminer s'il s'agit d'une chaîne ou d'un nombre en vérifiant le type dans la définition du tableau
+                        var_name = lexer.identifier_lexicon[param.value]
+                        list_def = f"list_{var_name}"
+                        
+                        # Vérifier dans le tableau initial pour savoir si cet élément est une chaîne
+                        is_string = False
+                        for line in data_section:
+                            if line.startswith(f"\t{list_def} dq"):
+                                elements = line.split('dq ')[1].split(',')
+                                if idx < len(elements) and '_str' in elements[idx].strip():
+                                    is_string = True
+                                    break
+                        
+                        if is_string:
+                            current_section["code_section"].append("\tmov rsi, rax\n")  # Mettre l'adresse de la chaîne dans rsi
+                            current_section["code_section"].append("\tcall print_str\n")
+                        else:
+                            current_section["code_section"].append("\tcall print_rax\n")
+                    else:
+                        # Variable standard (non tableau)
+                        var_type = "INTEGER"  # Type par défaut
+                        
+                        # Récupérer le type de la variable (même dans les scopes parents)
+                        symbol = find_symbol(symbol_table, param.value)
+                        if symbol:
+                            var_type = symbol["type"]
+                        
+                        addr, has_to_rewind = get_variable_address(symbol_table, param.value)
+                        
+                        # Charger la valeur de la variable
+                        if has_to_rewind:
+                            current_section["code_section"].append(f"\tmov rax, rbp\n")
+                            current_section["code_section"].append(f"\tmov rax, [rax{addr[3:]}]\n")
+                        else:
+                            current_section["code_section"].append(f"\tmov rax, [{addr}]\n")
+                        
+                        # Imprimer selon le type
+                        if var_type == "STRING":
+                            current_section["code_section"].append(f"\tmov rsi, rax\n")
+                            current_section["code_section"].append(f"\tcall print_str\n")
+                        else:
+                            current_section["code_section"].append("\tcall print_rax\n")
+            else:
+                # Expression (opération binaire ou autre expression non-terminale)
+                generate_expression(param, symbol_table, current_section)
+                current_section["code_section"].append("\tpop rax\n")
+                current_section["code_section"].append("\tcall print_rax\n")
+            
+            # Si ce n'est pas le dernier paramètre, ajouter un espace
+            if i < len(params_node.children) - 1:
+                space_label = "space_char"
+                if not any("space_char db" in line for line in data_section):
+                    data_section.append(f"\t{space_label} db \" \", 0\n")
+                
+                current_section["code_section"].append(f"\tmov rax, 1\n")
+                current_section["code_section"].append(f"\tmov rdi, 1\n")
+                current_section["code_section"].append(f"\tmov rsi, {space_label}\n")
+                current_section["code_section"].append(f"\tmov rdx, 1\n")
+                current_section["code_section"].append(f"\tsyscall\n")
+        
+        # Ajouter un retour à la ligne après tous les paramètres
+        current_section["code_section"].append(f"\tmov rax, 1\n")
+        current_section["code_section"].append(f"\tmov rdi, 1\n")
+        current_section["code_section"].append(f"\tmov rsi, newline\n")
+        current_section["code_section"].append(f"\tmov rdx, 1\n")
+        current_section["code_section"].append(f"\tsyscall\n")
 
     def setup_print_functions():
         """Add the print_rax and print_str functions to the text section"""
@@ -604,12 +682,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         text_section.append("\tmov rsi, rcx\n")
         text_section.append("\tmov rdx, buffer + 20\n")
         text_section.append("\tsub rdx, rcx\n")
-        text_section.append("\tsyscall\n\n")
-        text_section.append("\t; newline\n")
-        text_section.append("\tmov rax, 1\n")
-        text_section.append("\tmov rdi, 1\n")
-        text_section.append("\tmov rsi, newline\n")
-        text_section.append("\tmov rdx, 1\n")
         text_section.append("\tsyscall\n")
         text_section.append("\tret\n")
         text_section.append(";\t--------------------\n")

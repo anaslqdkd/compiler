@@ -131,9 +131,9 @@ class SymbolTable:
                 if symbol["depl"] >= 0:
                     new_depl = max_positive_depl
                     if new_depl != InfSize:
-                        # Always allocate integer_size bytes for INTEGER, LIST, and STRING variables
+                        # Always allocate integer_size bytes for INTEGER, LIST, STRING, "True", "False" and "None" variables
                         # STRING variables need integer_size bytes for the pointer to the string
-                        if symbol["type"] in ["INTEGER", "LIST", "STRING"]:
+                        if symbol["type"] in ["INTEGER", "LIST", "STRING", "True", "False", "None"]:
                             new_depl += SymbolTable.integer_size
                         else:
                             new_depl = InfSize
@@ -142,8 +142,8 @@ class SymbolTable:
                 else:
                     new_depl = max_negative_depl
                     if new_depl != - InfSize:
-                        # Always allocate integer_size bytes for INTEGER, LIST, and STRING variables
-                        if symbol["type"] in ["INTEGER", "LIST", "STRING"]:
+                        # Always allocate integer_size bytes for INTEGER, LIST, STRING, "True", "False" and "None" variables
+                        if symbol["type"] in ["INTEGER", "LIST", "STRING", "True", "False", "None"]:
                             new_depl -= SymbolTable.integer_size
                         else:
                             new_depl = -InfSize
@@ -317,7 +317,7 @@ class SymbolTable:
 
         Notes:
             - Type inference is attempted for undefined identifiers during operations.
-            - Types like "True" and "False" are treated as "INTEGER"-compatible.
+            - Types like "True", "False" and "None" are treated as "INTEGER"-compatible.
             - Function calls are not directly handled here; they are assumed to have been processed beforehand.
         """
         # If the node is a constant or a list / tuple
@@ -436,8 +436,8 @@ class SymbolTable:
 
                     # Else, if really can't be accepted (i.e. 'True + 1' can be accepted)
                     elif not (
-                        left_type in ["True", "False", "INTEGER"]
-                        and right_type in ["True", "False", "INTEGER"]
+                        left_type in ["True", "False", "None", "INTEGER"]
+                        and right_type in ["True", "False", "None", "INTEGER"]
                     ):
                         raise SemanticError(
                             f"À la ligne {node.line_index}, il est impossible de faire l'opération entre {left_type} et {right_type} !",
@@ -446,9 +446,10 @@ class SymbolTable:
                         )
 
                 # Else, get the corresponding type
-                if left_type in ["True", "False", "INTEGER"] and right_type in [
+                if left_type in ["True", "False", "None", "INTEGER"] and right_type in [
                     "True",
                     "False",
+                    "None",
                     "INTEGER",
                 ]:
                     return "INTEGER"
@@ -634,6 +635,8 @@ class SymbolTable:
                     depl = self.calculate_depl_string(
                         node.father.children[1], lexer, is_parameter
                     )
+                elif type in ["INTEGER", "True", "False", "None"]:
+                    depl = self.calculate_depl(is_parameter)
                 elif type is not None:
                     depl = self.calculate_depl(is_parameter)
 
