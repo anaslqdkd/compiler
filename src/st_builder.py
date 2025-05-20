@@ -334,6 +334,14 @@ class SymbolTable:
             node.element_types = element_types
             return node.data
 
+        # If the node is a constant or a list / tuple
+        if (
+            not node.children
+            and node.data in TokenType.lexicon.keys()
+            and TokenType.lexicon[node.data] != "IDENTIFIER"
+        ):
+            return TokenType.lexicon[node.data]
+        
         if node.data in TokenType.lexicon.keys():
             # If there's an affectation
             if TokenType.lexicon[node.data] == "=":
@@ -404,7 +412,10 @@ class SymbolTable:
                 right_type = self.dfs_type_check(node.children[1], lexer)
                 
                 # Ajoutez ce bloc pour gérer la concaténation de listes
-                if TokenType.lexicon[node.data] == "+" and left_type == "LIST" and right_type == "LIST":
+                if TokenType.lexicon[node.data] == "+" and (
+                    (left_type == "LIST" and (right_type == "LIST" or node.children[1].data == "LIST")) or
+                    ((left_type == "LIST" or node.children[0].data == "LIST") and right_type == "LIST")
+                ):
                     # Collecte les types des éléments de chaque liste
                     left_element_types = []
                     right_element_types = []
@@ -427,9 +438,25 @@ class SymbolTable:
                 if TokenType.lexicon[node.data] == "*":
                     # Cas 1: liste * entier
                     if left_type == "LIST" and right_type in ["INTEGER", "True", "False", "None"]:
-                        # Si les types d'éléments sont disponibles, les répéter
+                        # Obtenir le facteur de multiplication
+                        factor = 0
+                        if hasattr(node.children[1], 'value') and node.children[1].value in lexer.constant_lexicon:
+                            factor = lexer.constant_lexicon[node.children[1].value]
+                        else:
+                            factor = 2  # Par défaut si on ne peut pas déterminer
+                        
+                        # Calculer les types d'éléments répétés
+                        original_types = []
                         if hasattr(node.children[0], 'element_types'):
-                            node.element_types = node.children[0].element_types
+                            original_types = node.children[0].element_types
+                            
+                        multiplied_types = []
+                        for _ in range(factor):
+                            multiplied_types.extend(original_types)
+                        
+                        # Mettre à jour les métadonnées dans le nœud et la table des symboles
+                        node.element_types = multiplied_types
+                        self.update_list_metadata(node, "mult_list", multiplied_types)
                         return "LIST"
                     
                     # Cas 2: entier * liste
@@ -490,6 +517,32 @@ class SymbolTable:
 
             # If no type has been found, then it's undefined
             return "<undefined>"
+        
+    def update_list_metadata(self, node: Tree, list_type: str, element_types: list):
+        """Met à jour les métadonnées d'une liste après une opération (multiplication ou concaténation)"""
+        if not hasattr(node, 'father') or not hasattr(node.father, 'children'):
+            return
+        
+        # Identifier sur lequel on assigne le résultat
+        if len(node.father.children) < 1:
+            return
+            
+        target_id = node.father.children[0].value
+        if target_id in self.symbols:
+            # Préserver le déplacement original (ou le rendre positif s'il était négatif)
+            original_depl = self.symbols[target_id]["depl"]
+            if original_depl < 0:
+                original_depl = abs(original_depl)
+                
+            # Mettre à jour avec les nouvelles informations de liste
+            self.symbols[target_id]["type"] = "LIST"
+            self.symbols[target_id]["element_types"] = element_types
+            self.symbols[target_id]["list_prefix"] = list_type
+            self.symbols[target_id]["depl"] = original_depl
+            
+            # Ajouter aux identifiants de liste si pas déjà dedans
+            if target_id not in self.list_identifiers:
+                self.list_identifiers.add(target_id)
 
     def calculate_depl(self, is_parameter: bool) -> int:
         """

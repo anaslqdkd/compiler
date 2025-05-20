@@ -1,6 +1,4 @@
 section .data
-	mult_list_b dq 1, 2, 3, 1, 2, 3
-	mult_list_b_len dq 6
 	newline db 0xA
 	minus_sign db "-"
 
@@ -68,21 +66,38 @@ print_str:
 
 
 _start:
-	; Allocating space for 1 variable(s) & 0 function(s)
+	; Allocating space for 3 variable(s) & 0 function(s)
 	push rbp
 	mov rbp, rsp
-	sub rsp, 8
+	sub rsp, 24
 
-	; List multiplication: b = [1, 2, 3] * 2
-	mov rax, mult_list_b
+	mov rax, 1
 	mov [rbp - 8], rax
-	pop rax
-	mov [rbp - 8], rax
+	mov rax, 2
+	mov [rbp - 16], rax
+	mov rax, 3
+	push rax
 
-	; print: parameter 1 (b)
+	; Performing * operation
+	pop rbx
+	mov rax, [rbp - 16]
+	imul rax, rbx
+	push rax
+
+	; Performing + operation
 	mov rax, [rbp - 8]
-	mov rax, [rax + 4*8]
+	pop rbx
+	add rax, rbx
+	push rax
+	pop rax
+	mov [rbp - 24], rax
+
+	; print: parameter 1 (c)
+	mov rax, [rbp - 24]
 	call print_rax
+
+
+	; print: end of line
 	mov rax, 1
 	mov rdi, 1
 	mov rsi, newline
