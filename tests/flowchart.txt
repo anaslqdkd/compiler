@@ -8,46 +8,42 @@ style 6 stroke:#caf9fb,stroke-width:2px
 5["IDENTIFIER => 1 (L1)
 father: 51"]
 style 5 stroke:#caf9fb,stroke-width:2px
-13["\+ (L1)
+17["INTEGER => -1 (L1)
 father: 51"]
-style 13 stroke:#caf9fb,stroke-width:2px
-16["LIST (L1)
-father: 40"]
-style 16 stroke:#caf9fb,stroke-width:2px
-27["INTEGER => -1 (L1)
-father: LIST"]
-style 27 stroke:#caf9fb,stroke-width:2px
-44["INTEGER => -2 (L1)
-father: LIST"]
-style 44 stroke:#caf9fb,stroke-width:2px
-58["LIST (L1)
-father: 40"]
-style 58 stroke:#caf9fb,stroke-width:2px
-69["STRING => -3 (L1)
-father: LIST"]
-style 69 stroke:#caf9fb,stroke-width:2px
-86["STRING => -4 (L1)
-father: LIST"]
-style 86 stroke:#caf9fb,stroke-width:2px
-105["print (L2)
+style 17 stroke:#caf9fb,stroke-width:2px
+30["= (L2)
 father: S1"]
-style 105 stroke:#caf9fb,stroke-width:2px
-106["Parameters (L2)
+style 30 stroke:#caf9fb,stroke-width:2px
+29["IDENTIFIER => 2 (L2)
+father: 51"]
+style 29 stroke:#caf9fb,stroke-width:2px
+40["LIST (L2)
+father: 51"]
+style 40 stroke:#caf9fb,stroke-width:2px
+51["INTEGER => -2 (L2)
+father: LIST"]
+style 51 stroke:#caf9fb,stroke-width:2px
+68["IDENTIFIER => 1 (L2)
+father: LIST"]
+style 68 stroke:#caf9fb,stroke-width:2px
+87["print (L3)
+father: S1"]
+style 87 stroke:#caf9fb,stroke-width:2px
+88["Parameters (L3)
 father: 30"]
-style 106 stroke:#caf9fb,stroke-width:2px
-117["IDENTIFIER => 1 (L2)
+style 88 stroke:#caf9fb,stroke-width:2px
+99["IDENTIFIER => 2 (L3)
 father: Parameters"]
-style 117 stroke:#caf9fb,stroke-width:2px
+style 99 stroke:#caf9fb,stroke-width:2px
 0 --> 2
 2 --> 6
 6 --> 5
-6 --> 13
-13 --> 16
-16 --> 27
-16 --> 44
-13 --> 58
-58 --> 69
-58 --> 86
-2 --> 105
-105 --> 106
-106 --> 117
+6 --> 17
+2 --> 30
+30 --> 29
+30 --> 40
+40 --> 51
+40 --> 68
+2 --> 87
+87 --> 88
+88 --> 99
