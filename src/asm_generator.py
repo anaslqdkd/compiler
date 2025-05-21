@@ -201,8 +201,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     else:
                         # fallback: on prend tout après le signe
                         offset = right_side.split('-')[-1].strip() if '-' in right_side else right_side.split('+')[-1].strip()
-                    print(offset
-                    )
+                    print(offset)
                     current_section["code_section"].append(f"\tmov rax, [rax + {access_id}*{offset}]\n")
                     if has_to_rewind_L:
                         current_section["code_section"].append(f"\tmov rax, rbp\n")
@@ -700,224 +699,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         else:
             current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
 
-
-    def generate_binary_operation(node: Tree, englobing_table: SymbolTable, current_section: dict):
-        """Generate assembly code for binary operations (+, -, *, //, %)"""
-        operation = node.data
-
-        # Traitement spécial pour la multiplication de liste
-        if operation == 42:  # '*'
-            # Vérifier si c'est une multiplication liste * entier
-            try:
-                left_type = "unknown"
-                right_type = "unknown"
-
-                if node.children[0].data in TokenType.lexicon:
-                    left_type = TokenType.lexicon[node.children[0].data]
-                if node.children[1].data in TokenType.lexicon:
-                    right_type = TokenType.lexicon[node.children[1].data]
-                # Si c'est string * entier, traiter spécialement
-                if left_type == "STRING" and right_type == "INTEGER":
-                    generate_string_multiplication(node, englobing_table, current_section, True)
-                    return
-                elif left_type == "INTEGER" and right_type == "STRING":
-                    generate_string_multiplication(node, englobing_table, current_section, False)
-                    return
-                
-                if node.children[0].data == "LIST":
-                    left_type = "LIST"
-                elif node.children[0].data in TokenType.lexicon:
-                    left_type = TokenType.lexicon[node.children[0].data]
-                    
-                if node.children[1].data == "LIST":
-                    right_type = "LIST"
-                elif node.children[1].data in TokenType.lexicon:
-                    right_type = TokenType.lexicon[node.children[1].data]
-                    
-                # Si c'est liste * entier, traiter spécialement
-                if left_type == "LIST" and right_type == "INTEGER":
-                    generate_list_multiplication(node, englobing_table, current_section, True)
-                    return
-                elif left_type == "INTEGER" and right_type == "LIST":
-                    generate_list_multiplication(node, englobing_table, current_section, False)
-                    return
-            except Exception as e:
-                # En cas d'erreur, continuer avec la multiplication normale
-                pass
-        
-        # Check if it's a unary minus operation
-        if operation == 41 and len(node.children) == 1:  # '-' with one child
-            # Générer le code pour l'expression opérande
-            current_section["code_section"].append(f"\n\t; Unary negation\n")
-            generate_expression(node.children[0], englobing_table, current_section)
-            
-            node_type = TokenType.lexicon[node.children[0].data]
-            if node_type == "IDENTIFIER":
-                # Si l'opérande est un identifiant, on doit le charger dans rax
-                left_side_address, has_to_rewind = get_variable_address(englobing_table, node.children[0].value)
-                if has_to_rewind:
-                    current_section["code_section"].append(f"\tmov rax, rbp\n")
-                    current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
-                else:
-                    current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
-            else:
-                # Récupérer la valeur et la négation
-                current_section["code_section"].append("\tpop rax\n")
-
-            current_section["code_section"].append("\tneg rax\n")  # Négation unaire
-            current_section["code_section"].append("\tpush rax\n")
-
-            return
-
-        # Générer le code pour empiler les opérandes (gauche puis droite)
-        generate_expression(node.children[0], englobing_table, current_section)
-        generate_expression(node.children[1], englobing_table, current_section)
-
-        if operation in TokenType.lexicon.keys():
-            operation_type = TokenType.lexicon[operation]
-        else:
-            return
-
-        current_section["code_section"].append(f"\n\t; Performing {operation_type} operation\n")
-        
-        # Déterminer les types des opérandes
-        try:
-            left_node_type = TokenType.lexicon[node.children[0].data]
-        except KeyError:
-            # Si le type n'est pas dans le lexicon, vérifier s'il s'agit d'une liste
-            if node.children[0].data == "LIST":
-                left_node_type = "LIST"
-            else:
-                left_node_type = "<unknown>"
-
-        try:
-            right_node_type = TokenType.lexicon[node.children[1].data]
-        except KeyError:
-            # Si le type n'est pas dans le lexicon, vérifier s'il s'agit d'une liste
-            if node.children[1].data == "LIST":
-                right_node_type = "LIST" 
-            else:
-                right_node_type = "<unknown>"
-
-        if left_node_type == "IDENTIFIER" and right_node_type == "IDENTIFIER":
-            print("oui")
-            # If both operands are identifiers, we need to load their values into registers
-            left_side_address, has_to_rewind_L = get_variable_address(englobing_table, node.children[0].value)
-            right_side_address, has_to_rewind_R = get_variable_address(englobing_table, node.children[1].value)
-            if has_to_rewind_L:
-                current_section["code_section"].append(f"\tpop rbx\n")
-                # # NOTE: faut peut être faire + 8 * le nombre de paramètres et ça partout
-                # current_section["code_section"].append(f"\tmov rax, [rbp + 16]\n")
-                # current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
-            else:
-                current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
-            if has_to_rewind_R:
-                current_section["code_section"].append(f"\tpop rax\n")
-                # current_section["code_section"].append(f"\tmov rax, [rbp + 16]\n")
-                # current_section["code_section"].append(f"\tmov rax, [rax{right_side_address[3:]}]\n")
-            else:
-                current_section["code_section"].append(f"\tmov rbx, [{right_side_address}]\n")
-        elif left_node_type == "IDENTIFIER" and right_node_type == "INTEGER":
-            left_side_address, has_to_rewind = get_variable_address(englobing_table, node.children[0].value)
-            current_section["code_section"].append("\tpop rbx\n")
-            if has_to_rewind:
-                current_section["code_section"].append(f"\tpop rax\n")
-                # current_section["code_section"].append(f"\tmov rax, [rbp + 16]\n")
-                # current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
-            else:
-                current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
-        elif left_node_type == "INTEGER" and right_node_type == "IDENTIFIER":
-            right_side_address, has_to_rewind = get_variable_address(englobing_table, node.children[1].value)
-            current_section["code_section"].append("\tpop rax\n")
-            if has_to_rewind:
-                current_section["code_section"].append(f"\tpop rbx\n")
-                # current_section["code_section"].append(f"\tmov rax, [rbp + 16]\n")
-                # current_section["code_section"].append(f"\tmov rax, [rax{right_side_address[3:]}]\n")
-            else:
-                current_section["code_section"].append(f"\tmov rbx, [{right_side_address}]\n")
-        elif (left_node_type in litteral_op and right_node_type == "INTEGER") or \
-             (left_node_type == "INTEGER" and right_node_type in litteral_op):
-            if operation in [41, 43, 45, 46, 47, 48, 49, 50]:
-                # If the operation is - or //, we need to pop the right operand first
-                current_section["code_section"].append("\tpop rbx\n")
-                current_section["code_section"].append("\tpop rax\n")
-            else:
-                current_section["code_section"].append("\tpop rax\n")
-                current_section["code_section"].append("\tpop rbx\n")
-        elif (left_node_type in litteral_op and right_node_type == "IDENTIFIER"):
-            if operation in [40, 41, 43, 45, 46, 47, 48, 49, 50]:
-                # If the operation is - or //, we need to pop the right operand first
-                right_side_address, has_to_rewind = get_variable_address(englobing_table, node.children[1].value)
-                if has_to_rewind:
-                    current_section["code_section"].append(f"\tpop rbx\n")
-                    # current_section["code_section"].append(f"\tmov rax, [rbp + 16]\n")
-                    # current_section["code_section"].append(f"\tmov rax, [rax{right_side_address[3:]}]\n")
-                else:
-                    current_section["code_section"].append(f"\tmov rbx, [{right_side_address}]\n")
-                current_section["code_section"].append("\tpop rax\n")
-            else:
-                current_section["code_section"].append("\tpop rax\n")
-                current_section["code_section"].append("\tpop rbx\n")
-        elif (left_node_type == "IDENTIFIER" and right_node_type in litteral_op):
-            if operation in [40, 41, 43, 45, 46, 47, 48, 49, 50]:
-                left_side_address, has_to_rewind = get_variable_address(englobing_table, node.children[0].value)
-                if has_to_rewind:
-                    current_section["code_section"].append(f"\tpop rax\n")
-                    # current_section["code_section"].append(f"\tmov rax, [rbp + 16]\n")
-                    # current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
-                else:
-                    current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
-                current_section["code_section"].append("\tpop rbx\n")
-            else:
-                # If the operation is - or //, we need to pop the right operand first
-                current_section["code_section"].append("\tpop rbx\n")
-                current_section["code_section"].append("\tpop rax\n")
-        else:
-            current_section["code_section"].append("\tpop rbx\n")  # right operand
-            current_section["code_section"].append("\tpop rax\n")  # left operand 
-        
-        # Générer l'instruction d'opération appropriée
-        if operation == 40:      # +
-            current_section["code_section"].append("\tadd rax, rbx\n")
-        elif operation == 41:    # -
-            current_section["code_section"].append("\tsub rax, rbx\n")
-        elif operation == 42:    # *
-            current_section["code_section"].append("\timul rax, rbx\n")
-        elif operation == 43:    # //
-            current_section["code_section"].append("\txor rdx, rdx\n")
-            current_section["code_section"].append("\tdiv rbx\n")
-        elif operation == 44:    # %
-            current_section["code_section"].append("\txor rdx, rdx\n")
-            current_section["code_section"].append("\tdiv rbx\n")
-            current_section["code_section"].append("\tmov rax, rdx\n")  # Modulo result is in rdx
-        elif operation == 45:    # <=
-            current_section["code_section"].append("\tcmp rax, rbx\n")
-            current_section["code_section"].append("\tmov rax, 0\n")     # Default to 0 (false)
-            current_section["code_section"].append("\tsetle al\n")       # Set al to 1 if less than or equal
-        elif operation == 46:    # >=
-            current_section["code_section"].append("\tcmp rax, rbx\n")
-            current_section["code_section"].append("\tmov rax, 0\n")
-            current_section["code_section"].append("\tsetge al\n")       # Set al to 1 if greater than or equal
-        elif operation == 47:    # >
-            current_section["code_section"].append("\tcmp rax, rbx\n")
-            current_section["code_section"].append("\tmov rax, 0\n")
-            current_section["code_section"].append("\tsetg al\n")        # Set al to 1 if greater than
-        elif operation == 48:    # <
-            current_section["code_section"].append("\tcmp rax, rbx\n")
-            current_section["code_section"].append("\tmov rax, 0\n")
-            current_section["code_section"].append("\tsetl al\n")        # Set al to 1 if less than
-        elif operation == 49:    # !=
-            current_section["code_section"].append("\tcmp rax, rbx\n")
-            current_section["code_section"].append("\tmov rax, 0\n")
-            current_section["code_section"].append("\tsetne al\n")       # Set al to 1 if not equal
-        elif operation == 50:    # ==
-            current_section["code_section"].append("\tcmp rax, rbx\n")
-            current_section["code_section"].append("\tmov rax, 0\n")
-            current_section["code_section"].append("\tsete al\n")        # Set al to 1 if equal
-
-        # Remettre le résultat sur la pile
-        current_section["code_section"].append("\tpush rax\n")
-
     def generate_expression(node: Tree, englobing_table: SymbolTable, current_section: dict):
         """Generate code for expressions (constants, variables, and operations)"""
         if node.is_terminal:
@@ -947,7 +728,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 current_section["code_section"].append(f"\tmov rax, {list_label}\n")
                 current_section["code_section"].append("\tpush rax\n")
                 return
-                
+                    
             # Gérer les types de tokens standard
             try:
                 node_type = TokenType.lexicon[node.data]
@@ -959,29 +740,35 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     current_section["code_section"].append("\tpush rax\n")
                 elif node_type == "IDENTIFIER":
                     # Accès à un élément de tableau ou d'une chaîne?
-                    if len(node.children) > 0 and TokenType.lexicon.get(node.children[0].data) == "INTEGER":
-                         # Récupérer l'adresse de la variable
-                        var_addr, has_to_rewind = get_variable_address(englobing_table, node.value)
-                        idx = lexer.constant_lexicon[node.children[0].value]
+                    var_addr, has_to_rewind = get_variable_address(englobing_table, node.value)
 
-                        # Récupérer le type de la variable
+                    # Suivi du chaînage dynamique une seule fois, en dehors du if
+                    if has_to_rewind:
+                        current_section["code_section"].append(f"\tmov rcx, rbp\n")
+                        for _ in range(has_to_rewind - 1):
+                            current_section["code_section"].append(f"\tmov rcx, [rcx]\n")
+
+                    if len(node.children) > 0 and TokenType.lexicon.get(node.children[0].data) == "INTEGER":
+                        idx = lexer.constant_lexicon[node.children[0].value]
                         var_symbol = find_symbol(englobing_table, node.value)
                         var_type = var_symbol.get("type", "INTEGER") if var_symbol else "INTEGER"
 
                         if has_to_rewind:
-                            current_section["code_section"].append(f"\tmov rax, [rbp + 16]\n")
-                            current_section["code_section"].append(f"\tmov rax, [rax{var_addr[3:]}]\n")
+                            current_section["code_section"].append(f"\tmov rax, [rcx{var_addr[3:]}]\n")
                         else:
                             current_section["code_section"].append(f"\tmov rax, [{var_addr}]\n")
 
-                        # Accès différent selon le type
                         if var_type == "STRING":
-                            # Pour un caractère de chaîne: accès octet par octet
                             current_section["code_section"].append(f"\tmovzx rax, byte [rax + {idx}]\n")  # Zero-extend octet->qword
                         else:
-                            # Pour un élément de liste: accès par blocs de 8 octets
                             current_section["code_section"].append(f"\tmov rax, [rax + {idx}*8]\n")
 
+                        current_section["code_section"].append("\tpush rax\n")
+                    else:
+                        if has_to_rewind:
+                            current_section["code_section"].append(f"\tmov rax, [rcx{var_addr[3:]}]\n")
+                        else:
+                            current_section["code_section"].append(f"\tmov rax, [{var_addr}]\n")
                         current_section["code_section"].append("\tpush rax\n")
                 elif node_type == "True":
                     # Pour le booléen True, charger 1 puis empiler
@@ -992,12 +779,135 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     current_section["code_section"].append(f"\tmov rax, 0\n")
                     current_section["code_section"].append("\tpush rax\n")
                 elif node.data in numeric_op:
+                    # Pour une opération binaire, traiter récursivement
                     generate_binary_operation(node, englobing_table, current_section)
                     
             except KeyError:
                 # Si node.data n'est pas dans lexicon, gérer le cas spécifiquement
                 if node.data in numeric_op:
                     generate_binary_operation(node, englobing_table, current_section)
+                    
+        else:  # Nœud non terminal
+            # Si c'est une opération, traiter chaque opérande et effectuer l'opération
+            if node.data in numeric_op:
+                generate_binary_operation(node, englobing_table, current_section)
+            else:
+                # Pour tout autre type de nœud non terminal, traiter récursivement
+                for child in node.children:
+                    generate_expression(child, englobing_table, current_section)
+
+    def generate_binary_operation(node: Tree, englobing_table: SymbolTable, current_section: dict):
+        """Generate assembly code for binary operations (+, -, *, //, %)"""
+        operation = node.data
+
+        # Traitement spécial pour certaines opérations
+        if operation == 42:  # '*'
+            # Vérifier si c'est une multiplication spéciale
+            try:
+                left_type = "unknown"
+                right_type = "unknown"
+
+                # Déterminer les types des opérandes
+                if node.children[0].data in TokenType.lexicon:
+                    left_type = TokenType.lexicon[node.children[0].data]
+                if node.children[1].data in TokenType.lexicon:
+                    right_type = TokenType.lexicon[node.children[1].data]
+                    
+                # Cas spéciaux de multiplication
+                if left_type == "STRING" and right_type == "INTEGER":
+                    generate_string_multiplication(node, englobing_table, current_section, True)
+                    return
+                elif left_type == "INTEGER" and right_type == "STRING":
+                    generate_string_multiplication(node, englobing_table, current_section, False)
+                    return
+                
+                if node.children[0].data == "LIST":
+                    left_type = "LIST"
+                elif node.children[0].data in TokenType.lexicon:
+                    left_type = TokenType.lexicon[node.children[0].data]
+                    
+                if node.children[1].data == "LIST":
+                    right_type = "LIST"
+                elif node.children[1].data in TokenType.lexicon:
+                    right_type = TokenType.lexicon[node.children[1].data]
+                    
+                # Cas spéciaux pour les listes
+                if left_type == "LIST" and right_type == "INTEGER":
+                    generate_list_multiplication(node, englobing_table, current_section, True)
+                    return
+                elif left_type == "INTEGER" and right_type == "LIST":
+                    generate_list_multiplication(node, englobing_table, current_section, False)
+                    return
+            except Exception as e:
+                pass
+        
+        # Check if it's a unary minus operation
+        if operation == 41 and len(node.children) == 1:  # '-' with one child
+            current_section["code_section"].append(f"\n\t; Unary negation\n")
+            generate_expression(node.children[0], englobing_table, current_section)
+            
+            current_section["code_section"].append("\tpop rax\n")
+            current_section["code_section"].append("\tneg rax\n")  # Négation unaire
+            current_section["code_section"].append("\tpush rax\n")
+            return
+
+        # Générer le code pour les deux opérandes
+        generate_expression(node.children[0], englobing_table, current_section)
+        generate_expression(node.children[1], englobing_table, current_section)
+
+        # Obtenir le nom de l'opération pour les commentaires
+        if operation in TokenType.lexicon.keys():
+            operation_type = TokenType.lexicon[operation]
+        else:
+            return
+
+        current_section["code_section"].append(f"\n\t; Performing {operation_type} operation\n")
+        
+        # Récupérer les opérandes de la pile
+        current_section["code_section"].append("\tpop rbx\n")  # right operand
+        current_section["code_section"].append("\tpop rax\n")  # left operand 
+        
+        # Effectuer l'opération appropriée
+        if operation == 40:      # +
+            current_section["code_section"].append("\tadd rax, rbx\n")
+        elif operation == 41:    # -
+            current_section["code_section"].append("\tsub rax, rbx\n")
+        elif operation == 42:    # *
+            current_section["code_section"].append("\timul rax, rbx\n")
+        elif operation == 43:    # //
+            current_section["code_section"].append("\txor rdx, rdx\n")
+            current_section["code_section"].append("\tdiv rbx\n")
+        elif operation == 44:    # %
+            current_section["code_section"].append("\txor rdx, rdx\n")
+            current_section["code_section"].append("\tdiv rbx\n")
+            current_section["code_section"].append("\tmov rax, rdx\n")  # Modulo result is in rdx
+        elif operation == 45:    # <=
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsetle al\n")
+        elif operation == 46:    # >=
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsetge al\n")
+        elif operation == 47:    # >
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsetg al\n")
+        elif operation == 48:    # <
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsetl al\n")
+        elif operation == 49:    # !=
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsetne al\n")
+        elif operation == 50:    # ==
+            current_section["code_section"].append("\tcmp rax, rbx\n")
+            current_section["code_section"].append("\tmov rax, 0\n")
+            current_section["code_section"].append("\tsete al\n")
+
+        # Remettre le résultat sur la pile
+        current_section["code_section"].append("\tpush rax\n")
 
     def generate_print(node: Tree, symbol_table: SymbolTable, current_section: dict):
         """Generate code to print values, including numeric results and strings"""
@@ -1581,7 +1491,8 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         if_counter += 1
         current_section["code_section"].append(f"\n\t;operations in if\n")
         
-        if TokenType.lexicon[if_node.children[1].data] == "print":
+        # Par cette vérification
+        if if_node.children[1].data in TokenType.lexicon and TokenType.lexicon[if_node.children[1].data] == "print":
             build_components_rec(if_node.children[1], if_table, current_section)
         else:
             for instr in if_node.children[1].children:
