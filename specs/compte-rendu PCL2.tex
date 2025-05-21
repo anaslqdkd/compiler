@@ -22,13 +22,65 @@
 
 \begin{document}
 
+\section{Implémentation des structures de contrôle}
+\subsection{Implémentation des if et if-else}
+\subsubsection{Principe général}
+Dans un premier temps on évalue la condition dans l'instruction \texttt{if} en utilisant la même fonction qui génère/évalue des expressions. 
+
+\renewcommand{\labelitemi}{\textbullet}
+\begin{itemize}
+	\item si la condition est vraie, elle renvoie 1 et le programme exécute les instructions à l'intérieur du bloc if 
+	\item sinon, la condition renvoie un entier different de 1 et la condition sera consideré comme étant fausse, dans ce cas là il passe au bloc else s'il existe, sinon on continue l'exécution du programme
+
+\end{itemize}
+Ce résultat est stocké temporairement dans un registre, qui est ensuite comparé à 1 afin de déterminer quelle branche exécuter. 
+
+\paragraph*{Concrétement} :
+
+\begin{enumerate}
+	\item le registre \texttt{rax} (qui contient l'évaluation de l'expression) est comparé à 1. Si la condition est fausse, on saute directement au label \texttt{else\_...} ou \texttt{end\_if\_...} en utilisant l'instruction \texttt{jne}
+	\item si la condition est vraie, le code du bloc \texttt{if} s'exécute noramelement. A la fin de ce bloc, un saut \texttt{jmp} permet d'éviter le bloc else
+	\item si la condition est fausse et si on a un bloc else \textbf{après le if}, l'éxecution continue au label \texttt{else\_...}, où le bloc else est exécuté
+	\item tous les chemins rejoignenet le label \texttt{end\_if\_...} après l'éxecution du bloc concerné
+	
+\end{enumerate}
 
 
-   - Le rapport est à rendre la veille du  jour de la soutenance, dans le casier de votre enseignant de TP. Je souhaite une version papier, simplement agrafée, pas de reliure.  Pensez à inclure une partie gestion de projet avec entre autres, vos temps de travail estimés et les missions de chaque membre du groupe.
-Prévoyez également une description courte mais pertinente de la structure de votre Table des Symboles.
+\paragraph*{Remarque}(Gestion des labels) \\
+POur chaque structure de contrôle, les labels en assembleur sont nommés de façon systématique en combinant le type du bloc, le numéro du bloc dans le code et lé numéro de ligne dans le code. Par exemple \texttt{else\_0\_5} marqué le début d'un bloc else, qui est le premier bloc else dans le code et qui est situé à la ligne 5. Cette convention permet de se répérer plus facilement et permet d'éviter les doublons eventuels.
 
-Concernant les "schémas de traduction" à présenter : il s'agit de mettre en évidence dans votre dossier comment vous avez traduit en assembleur certaines structures "intéressantes" du langage, comme les appels de fonctions, conditionnelles imbriquées, record, etc.
-Pensez aussi à faire figurer quelques jeux d'essais pertinents, et le source en Mini Python de votre programme de démonstration.
+\subsection{Implémentation des blocs for}
+
+Les boucles \texttt{for} sont traduites sous forme de \textbf{fonctions} en assembleur, avec protocole d'entrée/sortie usuel. Chaque appel à une boucle correspond donc à un appel de fonction. Pour bien gérér la gestion des boucles imbriquées, on a fait le choix de considérer que les paramètres implicides de la fonction for sont : 
+
+\begin{itemize}
+	\item le compteur d'itération \texttt{i}
+	\item l'élement courant de la liste \texttt{list[i]}
+
+\end{itemize}
+Ces deux valeurs son stockés dans la pile avant l'appel du for comme les paramètres classique, le compteur \texttt{i} est initalisé à 0 et mis à jour à chaque iteration et l'élement courant \texttt{list[i]} est mis à jour à chaque tour de boucle. Ainsi, les blocs for peuvent être réutilisés, copiés ou déplacés dans le programme sans dépendre de variables globales ou des registres qui sont susceptibles d'être reécrits.
+
+\paragraph*{Remarque : } Les labels sont gérés de la même manière que pour les blocs \texttt{if} \texttt{else} etc
+
+\subsubsection{Structure générale}
+
+\begin{enumerate}
+	\item avant d’appeler la boucle, on empile les deux paramètres implicites nécessaires à son exécution : le compteur d’itération \texttt{i} et l’élément courant de la liste.
+
+	\item l’exécution du bloc for se fait via un appel standard à la fonction correspondante, utilisant l’instruction call \texttt{for\_...}.
+	\item à l’entrée de la fonction, on réalise le protocole habituel : sauvegarde de la base de pile (rbp) et allocation d’un espace mémoire local sur la pile (sub rsp, ...).
+	\item en début de boucle, on compare la valeur du compteur \texttt{i} à la taille de la liste (stockée dans la section .data). Si \texttt{i} est supérieur ou égal à cette taille, un saut conditionnel (\texttt{jge}) permet de sortir de la boucle en se dirigeant vers le label \texttt{for\_end}. Sinon, l’exécution du corps de la boucle continue normalement.
+	\item à la fin de chaque itération, le compteur est incrémenté, puis un saut inconditionnel (\texttt{jmp}) renvoie au début du test de boucle pour lancer la suivante.
+\end{enumerate}
+
+\paragraph*{Remarque sur ces deux parties :} POur assurer une bonne gestion des variables dans les différentes structures de contrôles, on a fait le choix de créer des \textbf{tables de symbols séparées} pour chaque bloc. POur les boubles for, en plus de la table de symbols propre au bloc, on applique une allocation dynamique des paramètres implicites (le compteur \texttt{i} et l'élément courant \texttt{el}) sur la pile. Ces paramètres sont placés à des offsets négatifs pour ne pas intérférer avec les variables locales et leur déplacements.
+
+%    - Le rapport est à rendre la veille du  jour de la soutenance, dans le casier de votre enseignant de TP. Je souhaite une version papier, simplement agrafée, pas de reliure.  Pensez à inclure une partie gestion de projet avec entre autres, vos temps de travail estimés et les missions de chaque membre du groupe.
+% Prévoyez également une description courte mais pertinente de la structure de votre Table des Symboles.
+%
+% Concernant les "schémas de traduction" à présenter : il s'agit de mettre en évidence dans votre dossier comment vous avez traduit en assembleur certaines structures "intéressantes" du langage, comme les appels de fonctions, conditionnelles imbriquées, record, etc.
+% Pensez aussi à faire figurer quelques jeux d'essais pertinents, et le source en Mini Python de votre programme de démonstration.
+
 
 
 \end{document}

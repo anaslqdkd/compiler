@@ -1213,7 +1213,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
         # initialize the counter at 0
         code.append(f"\tmov r8, 0 ;i = 0\n")
-        code.append(f"\tmov [rbp + 16], r8 ;i = 0\n")
+        code.append(f"\tmov [rbp + 16 + 8], r8 ;i = 0\n")
         el_node = for_node.children[0]
         left_side_address, has_to_rewind = get_variable_address(for_symbol_table, el_node.value)
 
