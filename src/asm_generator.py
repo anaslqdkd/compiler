@@ -805,14 +805,16 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             left_side_address, has_to_rewind_L = get_variable_address(englobing_table, node.children[0].value)
             right_side_address, has_to_rewind_R = get_variable_address(englobing_table, node.children[1].value)
             if has_to_rewind_L:
-                # NOTE: faut peut être faire + 8 * le nombre de paramètres et ça partout
-                current_section["code_section"].append(f"\tmov rax, [rbp + 16]\n")
-                current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
+                current_section["code_section"].append(f"\tpop rbx\n")
+                # # NOTE: faut peut être faire + 8 * le nombre de paramètres et ça partout
+                # current_section["code_section"].append(f"\tmov rax, [rbp + 16]\n")
+                # current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
             else:
                 current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
             if has_to_rewind_R:
-                current_section["code_section"].append(f"\tmov rax, [rbp + 16]\n")
-                current_section["code_section"].append(f"\tmov rax, [rax{right_side_address[3:]}]\n")
+                current_section["code_section"].append(f"\tpop rax\n")
+                # current_section["code_section"].append(f"\tmov rax, [rbp + 16]\n")
+                # current_section["code_section"].append(f"\tmov rax, [rax{right_side_address[3:]}]\n")
             else:
                 current_section["code_section"].append(f"\tmov rbx, [{right_side_address}]\n")
         elif left_node_type == "IDENTIFIER" and right_node_type == "INTEGER":
@@ -828,8 +830,9 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             right_side_address, has_to_rewind = get_variable_address(englobing_table, node.children[1].value)
             current_section["code_section"].append("\tpop rax\n")
             if has_to_rewind:
-                current_section["code_section"].append(f"\tmov rax, [rbp + 16]\n")
-                current_section["code_section"].append(f"\tmov rax, [rax{right_side_address[3:]}]\n")
+                current_section["code_section"].append(f"\tpop rbx\n")
+                # current_section["code_section"].append(f"\tmov rax, [rbp + 16]\n")
+                # current_section["code_section"].append(f"\tmov rax, [rax{right_side_address[3:]}]\n")
             else:
                 current_section["code_section"].append(f"\tmov rbx, [{right_side_address}]\n")
         elif (left_node_type in litteral_op and right_node_type == "INTEGER") or \
@@ -846,8 +849,9 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 # If the operation is - or //, we need to pop the right operand first
                 right_side_address, has_to_rewind = get_variable_address(englobing_table, node.children[1].value)
                 if has_to_rewind:
-                    current_section["code_section"].append(f"\tmov rax, [rbp + 16]\n")
-                    current_section["code_section"].append(f"\tmov rax, [rax{right_side_address[3:]}]\n")
+                    current_section["code_section"].append(f"\tpop rbx\n")
+                    # current_section["code_section"].append(f"\tmov rax, [rbp + 16]\n")
+                    # current_section["code_section"].append(f"\tmov rax, [rax{right_side_address[3:]}]\n")
                 else:
                     current_section["code_section"].append(f"\tmov rbx, [{right_side_address}]\n")
                 current_section["code_section"].append("\tpop rax\n")
@@ -858,8 +862,9 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             if operation in [40, 41, 43, 45, 46, 47, 48, 49, 50]:
                 left_side_address, has_to_rewind = get_variable_address(englobing_table, node.children[0].value)
                 if has_to_rewind:
-                    current_section["code_section"].append(f"\tmov rax, [rbp + 16]\n")
-                    current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
+                    current_section["code_section"].append(f"\tpop rax\n")
+                    # current_section["code_section"].append(f"\tmov rax, [rbp + 16]\n")
+                    # current_section["code_section"].append(f"\tmov rax, [rax{left_side_address[3:]}]\n")
                 else:
                     current_section["code_section"].append(f"\tmov rax, [{left_side_address}]\n")
                 current_section["code_section"].append("\tpop rbx\n")
