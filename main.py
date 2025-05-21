@@ -4,7 +4,7 @@ from src.st_builder import build_sts, print_all_symbol_tables
 from src.asm_generator import generate_asm
 
 def main():
-    with open("tests/source_code.txt", "r") as file:
+    with open("tests/source_code.py", "r") as file:
         source_code = file.read()
 
     lexer = Lexer(source_code)
@@ -25,7 +25,7 @@ def main():
     output_file_path = "tests/output.asm"
     generate_asm(output_file_path, parser.root, lexer, sts)
 
-    print_all_symbol_tables(sts, lexer)
+    # print_all_symbol_tables(sts, lexer)
 
 
 if __name__ == "__main__":
