@@ -72,12 +72,12 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         current_section["start_protocol"].append(";\t------------------------\n")
         current_section["start_protocol"].append("\n")
 
-        # Processing the function's body
-        if TokenType.lexicon[function_node.children[1].data] == "print":
-            build_components_rec(function_node.children[1], function_symbol_table, current_section)
-        else:
-            for instr in function_node.children[1].children:
-                build_components_rec(instr, function_symbol_table, current_section)
+        # # Processing the function's body
+        # if TokenType.lexicon[function_node.children[1].data] == "print":
+        #     build_components_rec(function_node.children[1], function_symbol_table, current_section)
+        # else:
+        for instr in function_node.children[1].children:
+            build_components_rec(instr, function_symbol_table, current_section)
 
         # protocole de sortie
         current_section["end_protocol"].append("\n")
@@ -226,7 +226,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                 elif node.children[1].data == 40:
                     if node.children[1].children[0].data == "LIST" and node.children[1].children[1].data == "LIST":
                         # Concaténation de listes
-                        print("a")
                         generate_list_concat(node.children[1], englobing_table, current_section)
                     elif (TokenType.lexicon.get(node.children[1].children[0].data) == "STRING" or 
                         TokenType.lexicon.get(node.children[1].children[1].data) == "STRING"):
@@ -499,6 +498,23 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             current_section["code_section"].append(f"\tmov [{left_side_address[3:]}], rax\n")
         else:
             current_section["code_section"].append(f"\tmov [{left_side_address}], rax\n")
+
+        element_types = []
+        for lnode in list_nodes:
+            for elem in lnode.children:
+                if TokenType.lexicon[elem.data] == "INTEGER":
+                    element_types.append("INTEGER")
+                elif TokenType.lexicon[elem.data] == "STRING":
+                    element_types.append("STRING")
+                else:
+                    element_types.append("INTEGER")  # Fallback
+
+        # Met à jour le symbole avec la liste des types
+        target_id = node.father.children[0].value
+        if target_id in englobing_table.symbols:
+            englobing_table.symbols[target_id]["type"] = "LIST"
+            englobing_table.symbols[target_id]["element_types"] = element_types
+            englobing_table.symbols[target_id]["list_prefix"] = "concat_list"
 
     def generate_list(node: Tree, englobing_table: SymbolTable, current_section: dict):
         """
@@ -976,14 +992,13 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                                 is_list = True
                                 list_prefix = "concat_list"
                                 break
-                            
+                        
                         if is_list:
                             # Code pour afficher une liste complète
                             current_section["code_section"].append(f"\n\t; Affichage de la liste {var_name}\n")
                             # Sauvegarder l'adresse de la liste
                             current_section["code_section"].append("\tmov rsi, rax\n")
                             # Charger la longueur de la liste
-                            # Utiliser le bon préfixe pour la longueur
                             current_section["code_section"].append(f"\tmov rcx, [{list_prefix}_{var_name}_len]\n")
                             
                             # Afficher '['
@@ -999,6 +1014,16 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                             current_section["code_section"].append(f"\tsyscall\n")
                             current_section["code_section"].append(f"\tpop rcx\n")  # Restaurer la longueur
                             current_section["code_section"].append(f"\tpop rsi\n")  # Restaurer l'adresse de la liste
+
+                            # Récupérer la liste des types pour chaque élément
+                            element_types = []
+                            symbol = find_symbol(symbol_table, param.value)
+                            if symbol and "element_types" in symbol:
+                                element_types = symbol["element_types"]
+                            
+                            # Calculer la longueur totale pour l'indexation
+                            total_length = 0
+                            current_section["code_section"].append(f"\tmov rdx, rcx\n")  # rdx = longueur totale
                             
                             # Étiquette de début de boucle
                             loop_label = f"print_list_{var_name}_loop"
@@ -1008,28 +1033,44 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                             
                             # Afficher l'élément courant
                             current_section["code_section"].append("\tmov rax, [rsi]\n")
-                            
-                            # Vérifier si c'est une chaîne (adresse mémoire qui pointe vers une chaîne)
-                            # Approximation: si l'adresse est dans la section .data, c'est probablement une chaîne
                             current_section["code_section"].append("\tpush rsi\n")
                             current_section["code_section"].append("\tpush rcx\n")
+                            current_section["code_section"].append("\tpush rdx\n")  # Save rdx before function calls
                             
-                            # Test pour voir si c'est une chaîne - approximatif, voir si rax pointe vers une section .data
-                            # Pour simplifier, on va considérer que si c'est au-dessus de 0x1000000, c'est une chaîne
-                            # sinon c'est un nombre (heuristique simplifiée)
-                            current_section["code_section"].append("\tcmp rax, 0x1000000\n")
-                            current_section["code_section"].append(f"\tjae {loop_label}_string\n")
+                            # Déterminer le type de l'élément actuel: index = total_length - rcx
+                            current_section["code_section"].append("\tmov rbx, rdx\n")
+                            current_section["code_section"].append("\tsub rbx, rcx\n")  # rbx = index (0-based)
                             
-                            # C'est un nombre
-                            current_section["code_section"].append("\tcall print_rax\n")
-                            current_section["code_section"].append(f"\tjmp {loop_label}_next\n")
-                            
-                            # C'est une chaîne
-                            current_section["code_section"].append(f"{loop_label}_string:\n")
-                            current_section["code_section"].append("\tmov rsi, rax\n")
-                            current_section["code_section"].append("\tcall print_str\n")
+                            # Si element_types n'est pas vide, utiliser les informations de type
+                            if element_types:
+                                # Génération du code de branchement basé sur l'index
+                                for i, type_name in enumerate(element_types):
+                                    current_section["code_section"].append(f"\tcmp rbx, {i}\n")
+                                    current_section["code_section"].append(f"\tjne skip_type_{i}_{var_name}\n")
+                                    
+                                    if type_name == "STRING":
+                                        current_section["code_section"].append("\tmov rsi, rax\n")
+                                        current_section["code_section"].append("\tcall print_str\n")
+                                    else:  # INTEGER ou autre type numérique
+                                        current_section["code_section"].append("\tcall print_rax\n")
+                                        
+                                    current_section["code_section"].append(f"\tjmp {loop_label}_next\n")
+                                    current_section["code_section"].append(f"skip_type_{i}_{var_name}:\n")
+                                
+                                # Cas par défaut (si l'index est hors limites)
+                                current_section["code_section"].append("\tcall print_rax\n")  # Fallback vers print_rax
+                            else:
+                                # Fallback vers l'ancienne méthode si element_types est vide
+                                current_section["code_section"].append("\tcmp rax, 0x1000000\n")
+                                current_section["code_section"].append(f"\tjae {loop_label}_string\n")
+                                current_section["code_section"].append("\tcall print_rax\n")
+                                current_section["code_section"].append(f"\tjmp {loop_label}_next\n")
+                                current_section["code_section"].append(f"{loop_label}_string:\n")
+                                current_section["code_section"].append("\tmov rsi, rax\n")
+                                current_section["code_section"].append("\tcall print_str\n")
                             
                             current_section["code_section"].append(f"{loop_label}_next:\n")
+                            current_section["code_section"].append("\tpop rdx\n")  # Restore rdx after function calls
                             current_section["code_section"].append("\tpop rcx\n")
                             current_section["code_section"].append("\tpop rsi\n")
                             
@@ -1044,11 +1085,13 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                                 data_section.append(f"\t{comma_space_label} db \", \"\n")
                             current_section["code_section"].append(f"\tpush rsi\n")
                             current_section["code_section"].append(f"\tpush rcx\n")
+                            current_section["code_section"].append(f"\tpush rdx\n")  # Also save rdx here
                             current_section["code_section"].append(f"\tmov rax, 1\n")
                             current_section["code_section"].append(f"\tmov rdi, 1\n")
                             current_section["code_section"].append(f"\tmov rsi, {comma_space_label}\n")
                             current_section["code_section"].append(f"\tmov rdx, 2\n")
                             current_section["code_section"].append(f"\tsyscall\n")
+                            current_section["code_section"].append(f"\tpop rdx\n")  # Restore rdx after syscall
                             current_section["code_section"].append(f"\tpop rcx\n")
                             current_section["code_section"].append(f"\tpop rsi\n")
                             

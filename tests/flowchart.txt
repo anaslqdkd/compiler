@@ -1,42 +1,53 @@
 graph TD
 0["axiome"]
-5["print (L1)
+2["S1
 father: axiome"]
-style 5 stroke:#caf9fb,stroke-width:2px
-6["Parameters (L1)
-father: 30"]
+6["= (L1)
+father: S1"]
 style 6 stroke:#caf9fb,stroke-width:2px
+5["IDENTIFIER => 1 (L1)
+father: 51"]
+style 5 stroke:#caf9fb,stroke-width:2px
 13["\+ (L1)
-father: Parameters"]
+father: 51"]
 style 13 stroke:#caf9fb,stroke-width:2px
-14["\* (L1)
+16["LIST (L1)
 father: 40"]
-style 14 stroke:#caf9fb,stroke-width:2px
-15["\- (L1)
-father: 42"]
-style 15 stroke:#caf9fb,stroke-width:2px
-19["INTEGER => -1 (L1)
-father: 41"]
-style 19 stroke:#caf9fb,stroke-width:2px
-25["INTEGER => -2 (L1)
-father: 42"]
-style 25 stroke:#caf9fb,stroke-width:2px
-30["\* (L1)
+style 16 stroke:#caf9fb,stroke-width:2px
+27["INTEGER => -1 (L1)
+father: LIST"]
+style 27 stroke:#caf9fb,stroke-width:2px
+44["INTEGER => -2 (L1)
+father: LIST"]
+style 44 stroke:#caf9fb,stroke-width:2px
+58["LIST (L1)
 father: 40"]
-style 30 stroke:#caf9fb,stroke-width:2px
-33["INTEGER => -3 (L1)
-father: 42"]
-style 33 stroke:#caf9fb,stroke-width:2px
-39["INTEGER => -4 (L1)
-father: 42"]
-style 39 stroke:#caf9fb,stroke-width:2px
-0 --> 5
-5 --> 6
+style 58 stroke:#caf9fb,stroke-width:2px
+69["STRING => -3 (L1)
+father: LIST"]
+style 69 stroke:#caf9fb,stroke-width:2px
+86["STRING => -4 (L1)
+father: LIST"]
+style 86 stroke:#caf9fb,stroke-width:2px
+105["print (L2)
+father: S1"]
+style 105 stroke:#caf9fb,stroke-width:2px
+106["Parameters (L2)
+father: 30"]
+style 106 stroke:#caf9fb,stroke-width:2px
+117["IDENTIFIER => 1 (L2)
+father: Parameters"]
+style 117 stroke:#caf9fb,stroke-width:2px
+0 --> 2
+2 --> 6
+6 --> 5
 6 --> 13
-13 --> 14
-14 --> 15
-15 --> 19
-14 --> 25
-13 --> 30
-30 --> 33
-30 --> 39
+13 --> 16
+16 --> 27
+16 --> 44
+13 --> 58
+58 --> 69
+58 --> 86
+2 --> 105
+105 --> 106
+106 --> 117
