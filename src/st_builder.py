@@ -466,6 +466,12 @@ class SymbolTable:
                             node.element_types = node.children[1].element_types
                         return "LIST"
                 
+                if TokenType.lexicon[node.data] == "*" and (
+                    (left_type == "STRING" and right_type in ["INTEGER", "True", "False", "None"]) or
+                    (right_type == "STRING" and left_type in ["INTEGER", "True", "False", "None"])
+                ):
+                    return "STRING"
+                
                 # Reste du code existant pour les autres opérations
                 if left_type != right_type:
 

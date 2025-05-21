@@ -1,12 +1,9 @@
 section .data
-	mult_list_a dq 1, 2, 3, 1, 2, 3
-	mult_list_a_len dq 6
-	list1_b dq 4, 5
-	list2_b dq 6, 7
-	concat_list_b dq 0, 0, 0, 0	; 4 elements for concatenation
-	concat_list_b_len dq 4
-	str_8 db "Résultat: ", 0
-	space_char db " ", 0
+	list_b dq 1, 0
+	list_b_len dq 2
+	open_bracket_b db "["
+	comma_space db ", "
+	close_bracket_b db "]"
 	newline db 0xA
 	minus_sign db "-"
 
@@ -74,49 +71,85 @@ print_str:
 
 
 _start:
-	; Allocating space for 3 variable(s) & 0 function(s)
+	; Allocating space for 2 variable(s) & 0 function(s)
 	push rbp
 	mov rbp, rsp
-	sub rsp, 24
+	sub rsp, 16
 
-	; List multiplication: a = [1, 2, 3] * 2
-	mov rax, mult_list_a
-	mov [rbp - 8], rax
+	mov rax, 5
 	mov [rbp - 8], rax
 
-	; print: parameter 1 (a)
+	; b = [1, a]
+	; Mise à jour de l'élément 1 avec la valeur de a
 	mov rax, [rbp - 8]
-	mov rax, [rax + 3*8]
-	call print_rax
-
-
-	; print: end of line
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, newline
-	mov rdx, 1
-	syscall
-	; Concatenation : b = [4, 5, 6, 7]
-	mov rsi, list1_b
-	mov rax, [rsi]
-	mov [concat_list_b], rax
-	mov rax, [rsi+8]
-	mov [concat_list_b+8], rax
-
-	mov rsi, list2_b
-	mov rax, [rsi]
-	mov [concat_list_b+16], rax
-	mov rax, [rsi+8]
-	mov [concat_list_b+24], rax
-
-	mov rax, concat_list_b
+	mov [list_b + 8], rax
+	mov rax, list_b
 	mov [rbp - 16], rax
 
 	; print: parameter 1 (b)
 	mov rax, [rbp - 16]
-	mov rax, [rax + 2*8]
-	call print_rax
 
+	; Affichage de la liste b
+	mov rsi, rax
+	mov rcx, [list_b_len]
+	mov rax, 1
+	mov rdi, 1
+	mov rdx, 1
+	push rsi
+	push rcx
+	mov rsi, open_bracket_b
+	syscall
+	pop rcx
+	pop rsi
+	mov rdx, rcx
+
+print_list_b_loop:
+	test rcx, rcx
+	jz print_list_b_end
+	mov rax, [rsi]
+	push rsi
+	push rcx
+	push rdx
+	mov rbx, rdx
+	sub rbx, rcx
+	cmp rbx, 0
+	jne skip_type_0_b
+	call print_rax
+	jmp print_list_b_loop_next
+skip_type_0_b:
+	cmp rbx, 1
+	jne skip_type_1_b
+	call print_rax
+	jmp print_list_b_loop_next
+skip_type_1_b:
+	call print_rax
+print_list_b_loop_next:
+	pop rdx
+	pop rcx
+	pop rsi
+	dec rcx
+	test rcx, rcx
+	jz print_list_b_loop_advance
+	push rsi
+	push rcx
+	push rdx
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, comma_space
+	mov rdx, 2
+	syscall
+	pop rdx
+	pop rcx
+	pop rsi
+print_list_b_loop_advance:
+	add rsi, 8
+	jmp print_list_b_loop
+print_list_b_end:
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, close_bracket_b
+	mov rdx, 1
+	syscall
 
 	; print: end of line
 	mov rax, 1
@@ -124,49 +157,7 @@ _start:
 	mov rsi, newline
 	mov rdx, 1
 	syscall
-	mov rax, 1
-	push rax
-	mov rax, 2
-	push rax
-	mov rax, 3
-	push rax
 
-	; Performing * operation
-	pop rbx
-	pop rax
-	imul rax, rbx
-	push rax
-
-	; Performing + operation
-	pop rax
-	pop rbx
-	add rax, rbx
-	push rax
-	mov [rbp - 24], rax
-
-	; print: parameter 1 ("Résultat: ")
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, str_8
-	mov rdx, 10
-	syscall
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, space_char
-	mov rdx, 1
-	syscall
-
-	; print: parameter 2 (c)
-	mov rax, [rbp - 24]
-	call print_rax
-
-
-	; print: end of line
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, newline
-	mov rdx, 1
-	syscall
 
 
 ;	---End of program---
