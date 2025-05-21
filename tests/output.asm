@@ -1,9 +1,6 @@
 section .data
-	list_b dq 1, 0
-	list_b_len dq 2
-	open_bracket_b db "["
-	comma_space db ", "
-	close_bracket_b db "]"
+	list_a dq 5, 7
+	list_a_len dq 2
 	newline db 0xA
 	minus_sign db "-"
 
@@ -13,6 +10,7 @@ section .bss
 
 section .text
 	global _start
+	global f
 
 
 ;	---print_rax protocol---
@@ -70,86 +68,57 @@ print_str:
 ;	--------------------
 
 
-_start:
-	; Allocating space for 2 variable(s) & 0 function(s)
+f:
+;	---Protocole d'entree---
 	push rbp
 	mov rbp, rsp
-	sub rsp, 16
+	sub rsp, 8
+;	------------------------
 
-	mov rax, 5
+	mov rax, [rbp + 16]
+	mov rax, [rax - 8]
+	mov rax, [rax + 1*8]
+	push rax
+	mov rax, 1
+	push rax
+
+	; Performing + operation
+	pop rbx
+	pop rax
+	add rax, rbx
+	push rax
 	mov [rbp - 8], rax
 
-	; b = [1, a]
-	; Mise à jour de l'élément 1 avec la valeur de a
-	mov rax, [rbp - 8]
-	mov [list_b + 8], rax
-	mov rax, list_b
+;	---Protocole de sortie---
+	mov rsp, rbp
+	pop rbp
+	ret
+;	------------------------
+
+
+_start:
+	; Allocating space for 2 variable(s) & 1 function(s)
+	push rbp
+	mov rbp, rsp
+	sub rsp, 24
+
+
+	; a = [5, 7]
+	mov rax, list_a
+	mov [rbp - 8], rax
+
+;	---Stacking parameters---
+	push rbp
+
+;	---Calling the function---
+	call f
+;	---Popping parameters---
+;	--------------------
 	mov [rbp - 16], rax
 
-	; print: parameter 1 (b)
+	; print: parameter 1 (x)
 	mov rax, [rbp - 16]
-
-	; Affichage de la liste b
-	mov rsi, rax
-	mov rcx, [list_b_len]
-	mov rax, 1
-	mov rdi, 1
-	mov rdx, 1
-	push rsi
-	push rcx
-	mov rsi, open_bracket_b
-	syscall
-	pop rcx
-	pop rsi
-	mov rdx, rcx
-
-print_list_b_loop:
-	test rcx, rcx
-	jz print_list_b_end
-	mov rax, [rsi]
-	push rsi
-	push rcx
-	push rdx
-	mov rbx, rdx
-	sub rbx, rcx
-	cmp rbx, 0
-	jne skip_type_0_b
 	call print_rax
-	jmp print_list_b_loop_next
-skip_type_0_b:
-	cmp rbx, 1
-	jne skip_type_1_b
-	call print_rax
-	jmp print_list_b_loop_next
-skip_type_1_b:
-	call print_rax
-print_list_b_loop_next:
-	pop rdx
-	pop rcx
-	pop rsi
-	dec rcx
-	test rcx, rcx
-	jz print_list_b_loop_advance
-	push rsi
-	push rcx
-	push rdx
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, comma_space
-	mov rdx, 2
-	syscall
-	pop rdx
-	pop rcx
-	pop rsi
-print_list_b_loop_advance:
-	add rsi, 8
-	jmp print_list_b_loop
-print_list_b_end:
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, close_bracket_b
-	mov rdx, 1
-	syscall
 
 	; print: end of line
 	mov rax, 1
