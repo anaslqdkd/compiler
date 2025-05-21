@@ -194,33 +194,21 @@ class Tree:
 def find_closest_previous_node_with_data(start_node: Tree, target_datas: List[int]) -> Optional[Tree]:
     current = start_node
     
-    # Continue until we reach the root
     while current.father is not None:
-        # Get the parent
         parent = current.father
-        
-        # Find the index of the current node in its parent's children
         current_index = parent.get_child_id(current)
-        
-        # Check siblings to the left (earlier in the parent's children list)
+
         for i in range(current_index - 1, -1, -1):
             sibling = parent.children[i]
-            
-            # Check if this sibling has the target data
             if sibling.data in target_datas:
                 return sibling
-            
-            # Check descendants of this sibling, from right to left
             result = _search_descendants_right_to_left(sibling, target_datas)
             if result is not None:
                 return result
         
-        # If we haven't found a match, move up to the parent
         if parent.data in target_datas:
             return parent
         current = parent
-    
-    # If we reach here, we've searched up to the root without finding a match
     return None
 
 def _search_descendants_right_to_left(node: Tree, target_datas: List[int]) -> Optional[Tree]:
@@ -727,7 +715,6 @@ def manage_function_calls(given_tree: "Tree") -> None:
         child = given_tree.children[i]
         if child.data in ["Parameters", "Parentheses"] and given_tree.data not in ["function", next(key for key, value in TokenType.lexicon.items() if value == "print")]:
             # Then it's a "Parameters" node of a function call
-            print(f"Finding function at {child.line_index}")
             child.data = "Parameters"
             caller = find_closest_previous_node_with_data(child, [next(key for key, value in TokenType.lexicon.items() if value == "IDENTIFIER"), next(key for key, value in TokenType.lexicon.items() if value == "print")])
             if caller is None:
@@ -909,6 +896,7 @@ def transform_to_ast(given_tree: "Tree") -> None:
 
     fuse_chains(given_tree, ["E_un", "E1", "E2"])
     manage_returns(given_tree)
+    reajust_fathers(given_tree)
     manage_function_calls(given_tree)
     verify_parameters(given_tree)
     verify_function_defs(given_tree)
