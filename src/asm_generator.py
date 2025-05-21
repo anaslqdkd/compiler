@@ -1308,6 +1308,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         for_symbol_table.set_type(for_node.children[0], "INTEGER", lexer, True)
         if for_node.children[1].data == "LIST":
             var_name = f"{for_node.line_index}"
+            # FIXME: remettre la bonne fonction
             generate_list(for_node.children[1], englobing_table, current_section, var_name)
         else:
             var_name = lexer.identifier_lexicon[for_node.children[1].value]  
@@ -1426,6 +1427,30 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         else_child_number = 1 
         if_child = 0
 
+        # get the if label
+        if_label = f"if_{if_counter}_{if_node.line_index}"
+        current_section["code_section"].append(f"\tcall {if_label}\n")
+        # if_label_loop = f"loop_if_{if_counter}_{if_node.line_index}"
+
+        section_name = if_label
+        sections[section_name] = {}
+        current_section = sections[section_name]
+        current_section["start_protocol"] = []
+        current_section["code_section"] = []
+        code = current_section["code_section"]
+        current_section["end_protocol"] = []
+        # code.append(f"\tcall {if_label_loop}\n")
+        current_section["start_protocol"].append("\n;\t---Protocole d'entree---\n")
+        current_section["start_protocol"].append("\tpush rbp\n")
+        current_section["start_protocol"].append("\tmov rbp, rsp\n")
+
+        # code.append(f"{if_label_loop}:\n")
+
+        # current_section["start_protocol"].append(f"\tsub rsp, {size_to_allocate}\n")
+
+        current_section["start_protocol"].append(";\t------------------------\n")
+        current_section["start_protocol"].append("\n")
+
         # get the index of the current if child to check if the next one is an else node
         for i in range(0, len(if_node.father.children)):
             if if_node.father.children[i] == if_node:
@@ -1441,10 +1466,10 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
         current_section["code_section"].append(f"\n\t;--------if {if_counter}------\n")
         expr = if_node.children[0]
-        generate_expression(expr, englobing_table, current_section)
+        if_table = englobing_table.symbols[if_st_label]['symbol table']
+        generate_expression(expr, if_table, current_section)
 
         # get the table symbol for the current if
-        if_table = englobing_table.symbols[if_st_label]['symbol table']
 
         line_number = if_node.line_index
 
@@ -1481,6 +1506,16 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
 
         else:
             current_section["code_section"].append(f"{jump_label}:\n")
+        # protocole de sortie
+        current_section["end_protocol"].append("\n")
+        current_section["end_protocol"].append(";\t---Protocole de sortie---\n")
+        current_section["end_protocol"].append("\tmov rsp, rbp\n") 
+        current_section["end_protocol"].append("\tpop rbp\n") # restore base pointer
+        current_section["end_protocol"].append("\tret\n") # return to the caller
+        current_section["end_protocol"].append(";\t------------------------\n")
+        current_section["end_protocol"].append("\n\n")
+
+
 
     def generate_end_of_program(current_section: dict):
         current_section["code_section"].append("\n\n")
