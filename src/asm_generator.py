@@ -745,7 +745,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     # Suivi du chaînage dynamique une seule fois, en dehors du if
                     if has_to_rewind:
                         current_section["code_section"].append(f"\tmov rcx, rbp\n")
-                        for _ in range(has_to_rewind - 1):
+                        for _ in range(has_to_rewind):
                             current_section["code_section"].append(f"\tmov rcx, [rcx]\n")
 
                     if len(node.children) > 0 and TokenType.lexicon.get(node.children[0].data) == "INTEGER":
@@ -1178,6 +1178,15 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                             current_section["code_section"].append(f"\tmov rsi, {close_bracket_label}\n")
                             current_section["code_section"].append(f"\tmov rdx, 1\n")
                             current_section["code_section"].append(f"\tsyscall\n")
+                            # Afficher un espace après le close bracket
+                            space_after_bracket_label = f"space_after_bracket_{var_name}"
+                            if not any(f"{space_after_bracket_label} db" in line for line in data_section):
+                                data_section.append(f"\t{space_after_bracket_label} db 32\n")
+                            current_section["code_section"].append(f"\tmov rax, 1\n")
+                            current_section["code_section"].append(f"\tmov rdi, 1\n")
+                            current_section["code_section"].append(f"\tmov rsi, {space_after_bracket_label}\n")
+                            current_section["code_section"].append(f"\tmov rdx, 1\n")
+                            current_section["code_section"].append(f"\tsyscall\n")
                             
                         else:
                             # Imprimer selon le type
@@ -1594,7 +1603,11 @@ def get_variable_address(symbol_table: SymbolTable, variable_id: int, rewind_ste
     elif symbol_table.englobing_table == None:
         raise AsmGenerationError(f"Variable {variable_id} not found in symbol table.")
     else:
-        return get_variable_address(symbol_table.englobing_table, variable_id, rewind_steps + 1)
+        # On ne compte pas les scopes if/else dans le rewind
+        if any(str(k).startswith("if") or str(k).startswith("else") for k in symbol_table.symbols.keys()):
+            return get_variable_address(symbol_table.englobing_table, variable_id, rewind_steps)
+        else:
+            return get_variable_address(symbol_table.englobing_table, variable_id, rewind_steps + 1)
 
 # -------------------------------------------------------------------------------------------------
 

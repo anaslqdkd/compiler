@@ -4,6 +4,7 @@ section .data
 	open_bracket_a db "["
 	comma_space db ", "
 	close_bracket_a db "]"
+	space_after_bracket_a db 32
 	list1_b_str1 db "a", 0
 	list1_b dq 1, list1_b_str1
 	list2_b_str1 db "b", 0
@@ -12,6 +13,7 @@ section .data
 	concat_list_b_len dq 4
 	open_bracket_b db "["
 	close_bracket_b db "]"
+	space_after_bracket_b db 32
 	str_str db "hello", 0
 	space_char db " ", 0
 	char_temp_6_1 db 0, 0
@@ -19,6 +21,7 @@ section .data
 	list_tab_len dq 3
 	open_bracket_tab db "["
 	close_bracket_tab db "]"
+	space_after_bracket_tab db 32
 	newline db 0xA
 	minus_sign db "-"
 
@@ -256,6 +259,11 @@ print_list_a_end:
 	mov rsi, close_bracket_a
 	mov rdx, 1
 	syscall
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, space_after_bracket_a
+	mov rdx, 1
+	syscall
 
 	; print: parameter 2 (a)
 	mov rax, [rbp - 8]
@@ -348,6 +356,11 @@ print_list_b_end:
 	mov rax, 1
 	mov rdi, 1
 	mov rsi, close_bracket_b
+	mov rdx, 1
+	syscall
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, space_after_bracket_b
 	mov rdx, 1
 	syscall
 
@@ -470,6 +483,11 @@ print_list_tab_end:
 	mov rax, 1
 	mov rdi, 1
 	mov rsi, close_bracket_tab
+	mov rdx, 1
+	syscall
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, space_after_bracket_tab
 	mov rdx, 1
 	syscall
 
