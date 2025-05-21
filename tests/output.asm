@@ -1,11 +1,4 @@
 section .data
-	list1_a dq 5, 7
-	list2_a dq 0, 5
-	concat_list_a dq 5, 7, 0, 5
-	concat_list_a_len dq 4
-	open_bracket_a db "["
-	comma_space db ", "
-	close_bracket_a db "]"
 	newline db 0xA
 	minus_sign db "-"
 
@@ -16,7 +9,6 @@ section .bss
 section .text
 	global _start
 	global fn
-	global f
 
 
 ;	---print_rax protocol---
@@ -78,143 +70,57 @@ fn:
 ;	---Protocole d'entree---
 	push rbp
 	mov rbp, rsp
-	sub rsp, 8
 ;	------------------------
 
-
-	; Unary negation
-	mov rax, rbp
-	mov rax, [rax]
-	mov rax, [rax - 8]
-	mov rax, [rax + 0*8]
-	push rax
-	pop rax
-	neg rax
-	push rax
-	mov rax, 3
-	push rax
-	mov rax, rbp
-	mov rax, [rax]
-	mov rax, [rax - 8]
-	mov rax, [rax + 3*8]
-	push rax
-
-	; Performing * operation
-	pop rbx
-	pop rax
-	imul rax, rbx
-	push rax
-
-	; Performing + operation
-	pop rbx
-	pop rax
-	add rax, rbx
-	push rax
-	mov [rbp - 8], rax
-
-	; print: parameter 1 (c)
-	mov rax, [rbp - 8]
-	call print_rax
-
-	; print: end of line
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, newline
-	mov rdx, 1
-	syscall
-
+	call if_0_6
+	call if_2_10
 
 ;	---Protocole de sortie---
-	pop rax
 	mov rsp, rbp
 	pop rbp
 	ret
 ;	------------------------
 
 
-f:
+if_0_6:
 ;	---Protocole d'entree---
 	push rbp
 	mov rbp, rsp
 ;	------------------------
 
 
-	; print: parameter 1 (a)
+	;--------if 0------
 	mov rax, rbp
 	mov rax, [rax]
+	mov rax, [rax]
+	mov rax, [rax - 16]
+	push rax
+	mov rax, rbp
+	mov rax, [rax]
+	mov rax, [rax]
 	mov rax, [rax - 8]
+	push rax
 
-	; Affichage de la liste a
-	mov rsi, rax
-	mov rcx, [concat_list_a_len]
-	mov rax, 1
-	mov rdi, 1
-	mov rdx, 1
-	push rsi
-	push rcx
-	mov rsi, open_bracket_a
-	syscall
-	pop rcx
-	pop rsi
-	mov rdx, rcx
+	; Performing > operation
+	pop rbx
+	pop rax
+	cmp rax, rbx
+	mov rax, 0
+	setg al
+	push rax
 
-print_list_a_loop:
-	test rcx, rcx
-	jz print_list_a_end
-	mov rax, [rsi]
-	push rsi
-	push rcx
-	push rdx
-	mov rbx, rdx
-	sub rbx, rcx
-	cmp rbx, 0
-	jne skip_type_0_a
+	cmp rax, 1
+	jne end_if_0_6
+
+	;operations in if
+	call if_1_7
+
+	; print: parameter 1 (b)
+	mov rax, rbp
+	mov rax, [rax]
+	mov rax, [rax]
+	mov rax, [rax - 16]
 	call print_rax
-	jmp print_list_a_loop_next
-skip_type_0_a:
-	cmp rbx, 1
-	jne skip_type_1_a
-	call print_rax
-	jmp print_list_a_loop_next
-skip_type_1_a:
-	cmp rbx, 2
-	jne skip_type_2_a
-	call print_rax
-	jmp print_list_a_loop_next
-skip_type_2_a:
-	cmp rbx, 3
-	jne skip_type_3_a
-	call print_rax
-	jmp print_list_a_loop_next
-skip_type_3_a:
-	call print_rax
-print_list_a_loop_next:
-	pop rdx
-	pop rcx
-	pop rsi
-	dec rcx
-	test rcx, rcx
-	jz print_list_a_loop_advance
-	push rsi
-	push rcx
-	push rdx
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, comma_space
-	mov rdx, 2
-	syscall
-	pop rdx
-	pop rcx
-	pop rsi
-print_list_a_loop_advance:
-	add rsi, 8
-	jmp print_list_a_loop
-print_list_a_end:
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, close_bracket_a
-	mov rdx, 1
-	syscall
 
 	; print: end of line
 	mov rax, 1
@@ -223,6 +129,186 @@ print_list_a_end:
 	mov rdx, 1
 	syscall
 
+end_if_0_6:
+
+;	---Protocole de sortie---
+	mov rsp, rbp
+	pop rbp
+	ret
+;	------------------------
+
+
+if_1_7:
+;	---Protocole d'entree---
+	push rbp
+	mov rbp, rsp
+;	------------------------
+
+
+	;--------if 1------
+	mov rax, rbp
+	mov rax, [rax]
+	mov rax, [rax]
+	mov rax, [rax]
+	mov rax, [rax - 16]
+	push rax
+	mov rax, 6
+	push rax
+
+	; Performing == operation
+	pop rbx
+	pop rax
+	cmp rax, rbx
+	mov rax, 0
+	sete al
+	push rax
+
+	cmp rax, 1
+	jne end_if_1_7
+
+	;operations in if
+
+	; print: parameter 1 (3)
+	mov rax, 3
+	call print_rax
+
+	; print: end of line
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, newline
+	mov rdx, 1
+	syscall
+
+end_if_1_7:
+
+;	---Protocole de sortie---
+	mov rsp, rbp
+	pop rbp
+	ret
+;	------------------------
+
+
+if_2_10:
+;	---Protocole d'entree---
+	push rbp
+	mov rbp, rsp
+;	------------------------
+
+
+	;--------if 2------
+	mov rax, rbp
+	mov rax, [rax]
+	mov rax, [rax]
+	mov rax, [rax - 8]
+	push rax
+	mov rax, rbp
+	mov rax, [rax]
+	mov rax, [rax]
+	mov rax, [rax - 32]
+	push rax
+
+	; Performing < operation
+	pop rbx
+	pop rax
+	cmp rax, rbx
+	mov rax, 0
+	setl al
+	push rax
+
+	cmp rax, 1
+	jne else_0_10
+
+	;operations in if
+
+	; print: parameter 1 (10)
+	mov rax, 10
+	call print_rax
+
+	; print: end of line
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, newline
+	mov rdx, 1
+	syscall
+
+	jmp end_if_3_10
+else_0_10:
+	; else section
+	call if_3_13
+
+	; print: parameter 1 (r)
+	mov rax, rbp
+	mov rax, [rax]
+	mov rax, [rax]
+	mov rax, [rax - 32]
+	call print_rax
+
+	; print: end of line
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, newline
+	mov rdx, 1
+	syscall
+
+end_if_3_10:
+
+;	---Protocole de sortie---
+	mov rsp, rbp
+	pop rbp
+	ret
+;	------------------------
+
+
+if_3_13:
+;	---Protocole d'entree---
+	push rbp
+	mov rbp, rsp
+;	------------------------
+
+
+	;--------if 3------
+	mov rax, rbp
+	mov rax, [rax]
+	mov rax, [rax]
+	mov rax, [rax]
+	mov rax, [rax - 16]
+	push rax
+	mov rax, rbp
+	mov rax, [rax]
+	mov rax, [rax]
+	mov rax, [rax]
+	mov rax, [rax - 8]
+	push rax
+
+	; Performing > operation
+	pop rbx
+	pop rax
+	cmp rax, rbx
+	mov rax, 0
+	setg al
+	push rax
+
+	cmp rax, 1
+	jne end_if_3_13
+
+	;operations in if
+
+	; print: parameter 1 (a)
+	mov rax, rbp
+	mov rax, [rax]
+	mov rax, [rax]
+	mov rax, [rax]
+	mov rax, [rax - 8]
+	call print_rax
+
+	; print: end of line
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, newline
+	mov rdx, 1
+	syscall
+
+end_if_3_13:
 
 ;	---Protocole de sortie---
 	mov rsp, rbp
@@ -232,15 +318,19 @@ print_list_a_end:
 
 
 _start:
-	; Allocating space for 2 variable(s) & 2 function(s)
+	; Allocating space for 4 variable(s) & 1 function(s)
 	push rbp
 	mov rbp, rsp
-	sub rsp, 32
+	sub rsp, 40
 
-
-	; Concatenation : a = liste concaténée
-	mov rax, concat_list_a
+	mov rax, 5
 	mov [rbp - 8], rax
+	mov rax, 6
+	mov [rbp - 16], rax
+	mov rax, 2
+	mov [rbp - 24], rax
+	mov rax, 1
+	mov [rbp - 32], rax
 
 ;	---Stacking parameters---
 	push rbp
@@ -248,26 +338,6 @@ _start:
 ;	---Calling the function---
 	call fn
 ;	--------------------
-	mov [rbp - 16], rax
-
-;	---Stacking parameters---
-	push rbp
-
-;	---Calling the function---
-	call f
-;	--------------------
-
-	; print: parameter 1 (x)
-	mov rax, [rbp - 16]
-	call print_rax
-
-	; print: end of line
-	mov rax, 1
-	mov rdi, 1
-	mov rsi, newline
-	mov rdx, 1
-	syscall
-
 
 
 ;	---End of program---

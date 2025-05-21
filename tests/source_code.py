@@ -1,10 +1,17 @@
-a = [5, 7] + [0 , 5]
+a = 5
+b = 6
+c = 2
+r = 1
 def fn():
-    c = - a[0] + 3 * a[3] 
-    print(c)
-    return c
-x = fn()
-def f():
-    print(a)
-f()
-print(x)
+    if b > a:
+        if b == 6:
+            print(3)
+        print(b)
+    if a < r:
+        print(10)
+    else:
+        if b > a:
+            print(a)
+        print(r)
+
+fn()
