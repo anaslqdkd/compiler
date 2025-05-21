@@ -1,149 +1,42 @@
 graph TD
 0["axiome"]
-2["S1
+5["print (L1)
 father: axiome"]
-6["= (L1)
-father: S1"]
-style 6 stroke:#caf9fb,stroke-width:2px
-5["IDENTIFIER => 1 (L1)
-father: 51"]
 style 5 stroke:#caf9fb,stroke-width:2px
+6["Parameters (L1)
+father: 30"]
+style 6 stroke:#caf9fb,stroke-width:2px
+13["\+ (L1)
+father: Parameters"]
+style 13 stroke:#caf9fb,stroke-width:2px
 14["\* (L1)
-father: 51"]
+father: 40"]
 style 14 stroke:#caf9fb,stroke-width:2px
-16["LIST (L1)
+15["\- (L1)
 father: 42"]
-style 16 stroke:#caf9fb,stroke-width:2px
-27["INTEGER => -1 (L1)
-father: LIST"]
-style 27 stroke:#caf9fb,stroke-width:2px
-44["INTEGER => -2 (L1)
-father: LIST"]
-style 44 stroke:#caf9fb,stroke-width:2px
-61["INTEGER => -3 (L1)
-father: LIST"]
-style 61 stroke:#caf9fb,stroke-width:2px
-74["INTEGER => -2 (L1)
+style 15 stroke:#caf9fb,stroke-width:2px
+19["INTEGER => -1 (L1)
+father: 41"]
+style 19 stroke:#caf9fb,stroke-width:2px
+25["INTEGER => -2 (L1)
 father: 42"]
-style 74 stroke:#caf9fb,stroke-width:2px
-86["print (L2)
-father: S1"]
-style 86 stroke:#caf9fb,stroke-width:2px
-87["Parameters (L2)
-father: 30"]
-style 87 stroke:#caf9fb,stroke-width:2px
-97["IDENTIFIER => 1 (L2)
-father: Parameters"]
-style 97 stroke:#caf9fb,stroke-width:2px
-110["INTEGER => -3 (L2)
-father: 10"]
-style 110 stroke:#caf9fb,stroke-width:2px
-132["= (L3)
-father: S1"]
-style 132 stroke:#caf9fb,stroke-width:2px
-131["IDENTIFIER => 2 (L3)
-father: 51"]
-style 131 stroke:#caf9fb,stroke-width:2px
-139["\+ (L3)
-father: 51"]
-style 139 stroke:#caf9fb,stroke-width:2px
-142["LIST (L3)
+style 25 stroke:#caf9fb,stroke-width:2px
+30["\* (L1)
 father: 40"]
-style 142 stroke:#caf9fb,stroke-width:2px
-153["INTEGER => -4 (L3)
-father: LIST"]
-style 153 stroke:#caf9fb,stroke-width:2px
-170["INTEGER => -5 (L3)
-father: LIST"]
-style 170 stroke:#caf9fb,stroke-width:2px
-184["LIST (L3)
-father: 40"]
-style 184 stroke:#caf9fb,stroke-width:2px
-195["INTEGER => -6 (L3)
-father: LIST"]
-style 195 stroke:#caf9fb,stroke-width:2px
-212["INTEGER => -7 (L3)
-father: LIST"]
-style 212 stroke:#caf9fb,stroke-width:2px
-231["print (L4)
-father: S1"]
-style 231 stroke:#caf9fb,stroke-width:2px
-232["Parameters (L4)
-father: 30"]
-style 232 stroke:#caf9fb,stroke-width:2px
-242["IDENTIFIER => 2 (L4)
-father: Parameters"]
-style 242 stroke:#caf9fb,stroke-width:2px
-255["INTEGER => -2 (L4)
-father: 10"]
-style 255 stroke:#caf9fb,stroke-width:2px
-277["= (L5)
-father: S1"]
-style 277 stroke:#caf9fb,stroke-width:2px
-276["IDENTIFIER => 3 (L5)
-father: 51"]
-style 276 stroke:#caf9fb,stroke-width:2px
-284["\+ (L5)
-father: 51"]
-style 284 stroke:#caf9fb,stroke-width:2px
-288["INTEGER => -1 (L5)
-father: 40"]
-style 288 stroke:#caf9fb,stroke-width:2px
-293["\* (L5)
-father: 40"]
-style 293 stroke:#caf9fb,stroke-width:2px
-296["INTEGER => -2 (L5)
+style 30 stroke:#caf9fb,stroke-width:2px
+33["INTEGER => -3 (L1)
 father: 42"]
-style 296 stroke:#caf9fb,stroke-width:2px
-302["INTEGER => -3 (L5)
+style 33 stroke:#caf9fb,stroke-width:2px
+39["INTEGER => -4 (L1)
 father: 42"]
-style 302 stroke:#caf9fb,stroke-width:2px
-314["print (L6)
-father: S1"]
-style 314 stroke:#caf9fb,stroke-width:2px
-315["Parameters (L6)
-father: 30"]
-style 315 stroke:#caf9fb,stroke-width:2px
-326["STRING => -8 (L6)
-father: Parameters"]
-style 326 stroke:#caf9fb,stroke-width:2px
-343["IDENTIFIER => 3 (L6)
-father: Parameters"]
-style 343 stroke:#caf9fb,stroke-width:2px
-0 --> 2
-2 --> 6
-6 --> 5
-6 --> 14
-14 --> 16
-16 --> 27
-16 --> 44
-16 --> 61
-14 --> 74
-2 --> 86
-86 --> 87
-87 --> 97
-97 --> 110
-2 --> 132
-132 --> 131
-132 --> 139
-139 --> 142
-142 --> 153
-142 --> 170
-139 --> 184
-184 --> 195
-184 --> 212
-2 --> 231
-231 --> 232
-232 --> 242
-242 --> 255
-2 --> 277
-277 --> 276
-277 --> 284
-284 --> 288
-284 --> 293
-293 --> 296
-293 --> 302
-2 --> 314
-314 --> 315
-315 --> 326
-315 --> 343
+style 39 stroke:#caf9fb,stroke-width:2px
+0 --> 5
+5 --> 6
+6 --> 13
+13 --> 14
+14 --> 15
+15 --> 19
+14 --> 25
+13 --> 30
+30 --> 33
+30 --> 39
