@@ -13,3 +13,7 @@ print()
 g = [a, 5]
 print(g)
 print()
+
+h = [1, "abc"] * 3
+print(h[2], h[5])
+print()

@@ -19,6 +19,10 @@ section .data
 	list_g_len dq 2
 	open_bracket_g db "["
 	close_bracket_g db "]"
+	mult_list_h_str1 db "abc", 0
+	mult_list_h dq 1, mult_list_h_str1, 1, mult_list_h_str1, 1, mult_list_h_str1
+	mult_list_h_len dq 6
+	space_char db " ", 0
 	newline db 0xA
 	minus_sign db "-"
 
@@ -86,10 +90,10 @@ print_str:
 
 
 _start:
-	; Allocating space for 7 variable(s) & 0 function(s)
+	; Allocating space for 8 variable(s) & 0 function(s)
 	push rbp
 	mov rbp, rsp
-	sub rsp, 56
+	sub rsp, 64
 
 	mov rax, str_a
 	mov [rbp - 8], rax
@@ -295,6 +299,41 @@ print_list_g_end:
 	mov rsi, close_bracket_g
 	mov rdx, 1
 	syscall
+
+	; print: end of line
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, newline
+	mov rdx, 1
+	syscall
+
+
+	; print() - empty print statement
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, newline
+	mov rdx, 1
+	syscall
+	; List multiplication: h = [1, "abc"] * 3
+	mov rax, mult_list_h
+	mov [rbp - 64], rax
+	mov [rbp - 64], rax
+
+	; print: parameter 1 (h)
+	mov rax, [rbp - 64]
+	mov rax, [rax + 2*8]
+	call print_rax
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, space_char
+	mov rdx, 1
+	syscall
+
+	; print: parameter 2 (h)
+	mov rax, [rbp - 64]
+	mov rax, [rax + 5*8]
+	mov rsi, rax
+	call print_str
 
 	; print: end of line
 	mov rax, 1

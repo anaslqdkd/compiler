@@ -1020,6 +1020,8 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             # Déterminer le type du paramètre
             if param.is_terminal:
                 node_type = TokenType.lexicon[param.data]
+
+                print(node_type)
                 
                 if node_type == "INTEGER":
                     # Constante entière
@@ -1056,6 +1058,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     # Remplacer ce bloc dans generate_print
                     # Dans la fonction generate_print, modifier la section qui traite l'accès aux tableaux:
                     if param.children and TokenType.lexicon.get(param.children[0].data) == "INTEGER":
+                        print("a")
                         # Accès à un élément de tableau ou d'une chaîne
                         array_addr, has_to_rewind = get_variable_address(symbol_table, param.value)
                         idx = lexer.constant_lexicon[param.children[0].value]
@@ -1063,6 +1066,8 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                         # Récupérer le type de la variable
                         var_symbol = find_symbol(symbol_table, param.value)
                         var_type = var_symbol.get("type", "INTEGER") if var_symbol else "INTEGER"
+
+                        print(var_type)
                         
                         # Charger l'adresse
                         if has_to_rewind:
@@ -1092,9 +1097,8 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                             # Pour tableau standard: accéder par blocs de 8 octets
                             current_section["code_section"].append(f"\tmov rax, [rax + {idx}*8]\n")
                             
-                            # Reste du code existant pour déterminer si c'est une chaîne ou un nombre
-                            is_string = False
-                            # [Votre code existant pour détecter si c'est une chaîne]
+                            # Détection si c'est une chaîne (pour print(a[0]) où a est une liste de chaînes)
+                            is_string = var_symbol['element_types'][idx] == "STRING" if var_symbol and "element_types" in var_symbol else False
                             
                             if is_string:
                                 current_section["code_section"].append("\tmov rsi, rax\n")
@@ -1138,6 +1142,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                                 list_prefix = "concat_list"
                                 break
                         
+                        print(is_list)
                         if is_list:
                             # Code pour afficher une liste complète
                             current_section["code_section"].append(f"\n\t; Affichage de la liste {var_name}\n")
@@ -1187,9 +1192,11 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                             current_section["code_section"].append("\tsub rbx, rcx\n")  # rbx = index (0-based)
                             
                             # Si element_types n'est pas vide, utiliser les informations de type
+                            print("oui")
                             if element_types:
                                 # Génération du code de branchement basé sur l'index
                                 for i, type_name in enumerate(element_types):
+                                    print(type_name)
                                     current_section["code_section"].append(f"\tcmp rbx, {i}\n")
                                     current_section["code_section"].append(f"\tjne skip_type_{i}_{var_name}\n")
                                     
