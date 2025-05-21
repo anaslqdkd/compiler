@@ -1,6 +1,4 @@
 section .data
-	list_a dq 5, 7
-	list_a_len dq 2
 	newline db 0xA
 	minus_sign db "-"
 
@@ -10,7 +8,6 @@ section .bss
 
 section .text
 	global _start
-	global f
 
 
 ;	---print_rax protocol---
@@ -68,56 +65,49 @@ print_str:
 ;	--------------------
 
 
-f:
-;	---Protocole d'entree---
-	push rbp
-	mov rbp, rsp
-	sub rsp, 8
-;	------------------------
-
-	mov rax, [rbp + 16]
-	mov rax, [rax - 8]
-	mov rax, [rax + 1*8]
-	push rax
-	mov rax, 1
-	push rax
-
-	; Performing + operation
-	pop rbx
-	pop rax
-	add rax, rbx
-	push rax
-	mov [rbp - 8], rax
-
-;	---Protocole de sortie---
-	mov rsp, rbp
-	pop rbp
-	ret
-;	------------------------
-
-
 _start:
-	; Allocating space for 2 variable(s) & 1 function(s)
+	; Allocating space for 3 variable(s) & 0 function(s)
 	push rbp
 	mov rbp, rsp
 	sub rsp, 24
 
-
-	; a = [5, 7]
-	mov rax, list_a
+	mov rax, 5
 	mov [rbp - 8], rax
-
-;	---Stacking parameters---
-	push rbp
-
-;	---Calling the function---
-	call f
-;	---Popping parameters---
-;	--------------------
+	mov rax, 6
 	mov [rbp - 16], rax
 
-	; print: parameter 1 (x)
+	;--------if 0------
+
+	; Performing > operation
 	mov rax, [rbp - 16]
+	mov rbx, [rbp - 8]
+	cmp rax, rbx
+	mov rax, 0
+	setg al
+	push rax
+
+	cmp rax, 1
+	jne end_if_0_3
+
+	;operations in if
+
+	; print: parameter 1 (b)
+	mov rax, rbp
+	mov rax, [rax]
+	mov rax, [rax - 16]
+	call print_rax
+
+	; print: end of line
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, newline
+	mov rdx, 1
+	syscall
+
+end_if_0_3:
+
+	; print: parameter 1 (a)
+	mov rax, [rbp - 8]
 	call print_rax
 
 	; print: end of line

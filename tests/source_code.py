@@ -1,6 +1,5 @@
-a = [5, 7]
-def f():
-    b = a[1] + 1
-    return b
-x = f()
-print(x)
+a = 5
+b = 6
+if b > a:
+    print(b)
+print(a)
