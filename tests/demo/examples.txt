@@ -1,0 +1,71 @@
+#### # test simple
+a = 5
+b = 3
+if a > b:
+    print("a est supérieur à b")
+else:
+    print("b est supérieur à a")
+
+# if imbriqué
+x = 10
+if x > 5:
+    if x < 20:
+        print("x est entre 0 et 20")
+    else:
+        print("x est 20 ou plus")
+else:
+    print("x est inférieur à 5")
+
+# boucle for simple
+l = [1, 2, 3]
+for el in l:
+    print(el)
+for el in [4, 5, 6]:
+    print(el)
+
+# boucle avec opération
+l = [1, 2, 3]
+incr = 1
+for el in l:
+    a = incr + el
+    print(a)
+
+# boucle for imbriquée
+for i in [1, 2]:
+    for j in [3, 5]:
+        print(i)
+
+
+# fonction avec retour
+def fn(x):
+    return 2 * x
+
+r = fn(4)
+print(r)
+
+# concaténation de chaines de caractères
+s1 = "au"
+s2 = "secours"
+s3 = s1 + s2
+print(s3)
+
+
+# fonction complexe
+def fn(l1, l2):
+	a = 5
+	b = 2
+    for i in l1:
+        for j in l2:
+            if i > j:
+                print("i sup j", i, j)
+            if i > j:
+                print("i sup j :", i, j)
+            if i == j:
+                print("i égale j:", i, j)
+            if i < j:
+                print("i inf j:", i, j)
+	return b < a
+l1 = [1, 2, 3]
+l2 = [2, 3]
+fn(l1, l2)
+
