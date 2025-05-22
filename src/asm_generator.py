@@ -79,11 +79,11 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         # protocole de sortie
         current_section["end_protocol"].append("\n")
         current_section["end_protocol"].append(";\t---Protocole de sortie---\n")
-        if englobant_st.function_return[function_node.children[0].value]["return_type"] != "unknown":
-            current_section["end_protocol"].append("\tpop rax\n") 
+        if size_to_allocate > 0:
+            current_section["end_protocol"].append(f"\tadd rsp, {size_to_allocate}\n")
         current_section["end_protocol"].append("\tmov rsp, rbp\n") 
         current_section["end_protocol"].append("\tpop rbp\n") # restore base pointer
-        current_section["end_protocol"].append("\tret\n") # return to the caller
+        current_section["end_protocol"].append("\tret\n") # return to the caller        
         current_section["end_protocol"].append(";\t------------------------\n")
         current_section["end_protocol"].append("\n\n")
         return
@@ -117,6 +117,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         current_section["code_section"].append("\n;\t---Calling the function---\n")
         current_section["code_section"].append(f"\tcall {function_name}\n")
 
+        current_section["code_section"].append("\n;\t---Unstacking parameters---\n")
         for i in range(len(node.children[0].children)):
             current_section["code_section"].append("\tpop rbx\n")
         current_section["code_section"].append(";\t--------------------\n")
@@ -178,8 +179,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
                     else:
                         # fallback: on prend tout après le signe
                         offset = right_side.split('-')[-1].strip() if '-' in right_side else right_side.split('+')[-1].strip()
-                    print(offset
-                    )
                     current_section["code_section"].append(f"\tmov rax, [rax + {access_id}*{offset}]\n")
                     left_side = get_variable_address(englobing_table, node.children[1].value, current_section, "rbx")
                     current_section["code_section"].append(f"\tmov {left_side}, rax\n")
@@ -565,16 +564,23 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             englobing_table.symbols[target_id]["element_types"] = element_types
             englobing_table.symbols[target_id]["list_prefix"] = "concat_list"
 
-    def generate_list(node: Tree, englobing_table: SymbolTable, current_section: dict):
+    def generate_list(node: Tree, englobing_table: SymbolTable, current_section: dict, id_name = None):
         """
         Génère le code NASM pour une liste de type a = [1, 2, "a", "b"]
         - Alloue la liste dans la section .data (ou .bss si besoin)
         - Stocke les entiers directement, les chaînes comme pointeurs
         - Remplit la variable 'a' avec l'adresse de la liste
         """
-        var_name = lexer.identifier_lexicon[node.father.children[0].value]
-        list_label = f"list_{var_name}"
-        elements = node.children
+        is_for_list = id_name is not None
+        var_name: str
+        if id_name is not None:
+            var_name = id_name
+            list_label = f"list_{id_name}"
+            elements = node.children
+        else:
+            var_name = lexer.identifier_lexicon[node.father.children[0].value]
+            list_label = f"list_{var_name}"
+            elements = node.children
         
         # Collecter les informations sur les éléments
         list_items = []
@@ -620,9 +626,10 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             current_section["code_section"].append(f"\tmov [{list_label} + {idx*8}], rax\n")
         
         # Affectation de l'adresse de la liste à la variable
-        current_section["code_section"].append(f"\tmov rax, {list_label}\n")
-        left_side_address = get_variable_address(englobing_table, node.father.children[0].value, current_section, "rax")
-        current_section["code_section"].append(f"\tmov {left_side_address}, rax\n")
+        if not is_for_list:
+            current_section["code_section"].append(f"\tmov rax, {list_label}\n")
+            left_side_address = get_variable_address(englobing_table, node.father.children[0].value, current_section, "rax")
+            current_section["code_section"].append(f"\tmov {left_side_address}, rax\n")
 
     def generate_binary_operation(node: Tree, englobing_table: SymbolTable, current_section: dict):
         """Generate assembly code for binary operations (+, -, *, //, %)"""
@@ -1221,10 +1228,11 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
             elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "for":
                 generate_for_call(current_node, current_table, current_section)
                 generate_for(current_node, current_table, current_section)
+            elif current_node.data in TokenType.lexicon.keys() and TokenType.lexicon[current_node.data] == "return":
+                generate_return(current_node, current_table, current_section)
         else:
             for child in current_node.children:
                 build_components_rec(child, current_table, current_section)
-
 
     def generate_for_call(for_node, englobing_table: SymbolTable, current_section: Dict):
         global for_counter
@@ -1232,6 +1240,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         for_symbol_table = englobing_table.symbols[st_for_label]['symbol table']
         for_symbol_table.set_type(for_node.children[0], "INTEGER", lexer, True)
         if for_node.children[1].data == "LIST":
+            # TODO: add list to the .data
             var_name = f"{for_node.line_index}"
             generate_list(for_node.children[1], englobing_table, current_section, var_name)
         else:
@@ -1246,16 +1255,13 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         code.append(f"\tpush rax\n")
         code.append(f"\tcall {name_label}\n")
 
-
-
     def generate_for(for_node: Tree, englobing_table: SymbolTable, current_section: Dict):
         global for_counter
 
         if for_node.children[1].data == "LIST":
             var_name = f"{for_node.line_index}"
         else:
-            var_name = lexer.identifier_lexicon[for_node.children[1].value]  
-
+            var_name = lexer.identifier_lexicon[for_node.children[1].value]
 
         # get the list name
         list_name = f"list_{var_name}"
@@ -1312,7 +1318,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         code.append(f"\tshl rbx, 3\n")
         code.append(f"\tmov rax, [{list_name} + rbx]\n")
         left_side_address = get_variable_address(for_symbol_table, el_node.value, code, "rax")
-        code.append(f"\tmov [{left_side_address}], rax\n")
+        code.append(f"\tmov {left_side_address}, rax\n")
 
         for_counter += 1
 
@@ -1354,7 +1360,6 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         # get the if label
         if_label = f"if_{if_counter}_{if_node.line_index}"
         current_section["code_section"].append(f"\tcall {if_label}\n")
-        # if_label_loop = f"loop_if_{if_counter}_{if_node.line_index}"
 
         section_name = if_label
         sections[section_name] = {}
@@ -1363,14 +1368,9 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         current_section["code_section"] = []
         code = current_section["code_section"]
         current_section["end_protocol"] = []
-        # code.append(f"\tcall {if_label_loop}\n")
         current_section["start_protocol"].append("\n;\t---Protocole d'entree---\n")
         current_section["start_protocol"].append("\tpush rbp\n")
         current_section["start_protocol"].append("\tmov rbp, rsp\n")
-
-        # code.append(f"{if_label_loop}:\n")
-
-        # current_section["start_protocol"].append(f"\tsub rsp, {size_to_allocate}\n")
 
         current_section["start_protocol"].append(";\t------------------------\n")
         current_section["start_protocol"].append("\n")
@@ -1402,6 +1402,7 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         else:
             jump_label = f"end_if_{if_counter}_{line_number}"
 
+        current_section["code_section"].append(f"\n\tpop rax")
         current_section["code_section"].append(f"\n\tcmp rax, 1")
         current_section["code_section"].append(f"\n\t{comparison_label} {jump_label}\n")
 
@@ -1437,6 +1438,11 @@ def generate_asm(output_file_path: str, ast: Tree, lexer: Lexer, global_table: S
         current_section["end_protocol"].append("\tret\n") # return to the caller
         current_section["end_protocol"].append(";\t------------------------\n")
         current_section["end_protocol"].append("\n\n")
+
+    def generate_return(return_node: Tree, englobing_table: SymbolTable, current_section: Dict):
+        current_section["code_section"].append(";\t---Getting return value---\n")
+        generate_expression(return_node.children[0], englobing_table, current_section)
+        current_section["code_section"].append(f"\tpop rax\n")
 
     def generate_end_of_program(current_section: dict):
         current_section["code_section"].append("\n\n")

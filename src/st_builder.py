@@ -861,7 +861,7 @@ class SymbolTable:
                 node_counter_for += 1
 
             newST = SymbolTable(str(new_label), self.imbrication_level + 1, self)
-            if newST.name == str(TokenType.lexicon[function_node.data] + " " + str(node_counter_for-1)):
+            if TokenType.lexicon[function_node.data] == "for":
                 newST.symbols[function_node.children[0].value] = {"type": "<undefined>", "depl": -8}
                 newST.symbols[f"{function_node.children[0].value}_i"] = {"type": "<undefined>", "depl": -8}
             self.symbols[str(new_label)] = {"type": type_label, "symbol table": newST}

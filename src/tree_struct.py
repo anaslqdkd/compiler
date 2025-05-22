@@ -646,7 +646,6 @@ def verify_parameters(given_tree: "Tree") -> None:
     while i < len(given_tree.children):
         child = given_tree.children[i]
         if child.data == "Parentheses":
-            print("A", child.line_index)
             if (
                 len(child.children) == 0
                 or len(child.children) == 1
